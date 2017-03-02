@@ -40,9 +40,10 @@ def ajouter_gipp(repGipp,repTravIn,tuile):
 
 def ajouter_DTM(repMNT,repTravIn,tuile):
     print repMNT+"/*%s*/*"%tuile
-    for fic in glob.glob(repMNT+"/*%s*/*"%tuile):
+    for fic in glob.glob(repMNT+"/S2_*%s*/*"%tuile):
         print fic 
         base=os.path.basename(fic)
+        print fic,repTravIn+base
         os.symlink(fic,repTravIn+base)
 
 def ajouter_conf(repConf,repTravConf):
