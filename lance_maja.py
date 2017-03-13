@@ -17,7 +17,7 @@ class OptionParser (optparse.OptionParser):
       if getattr(self.values, option.dest) is None:
           self.error("%s option not supplied" % option)
           
-#=============== Modules de copie et liens de fichiers
+#=============== Module to copy and link files
 def remplace_nom_tuile(fic_in,fic_out,tuile_in,tuile_out):
     with file(fic_in) as f_in :
         with file(fic_out,"w") as f_out :
@@ -41,9 +41,7 @@ def ajouter_gipp(repGipp,repTravIn,tuile):
 def ajouter_DTM(repMNT,repTravIn,tuile):
     print repMNT+"/*%s*/*"%tuile
     for fic in glob.glob(repMNT+"/S2_*%s*/*"%tuile):
-        print fic 
         base=os.path.basename(fic)
-        print fic,repTravIn+base
         os.symlink(fic,repTravIn+base)
 
 def ajouter_conf(repConf,repTravConf):
@@ -58,7 +56,7 @@ if len(sys.argv) == 1:
 	print "        ou : ", prog, " -h"
 
 	print "exemple : "
-	print "\t python lance_maja.py -c moinsdombres -t 40KCB -s Reunion"
+	print "\t python %s -c nominal -t 40KCB -s Reunion -d 20160401 "%sys.argv[0]
      
 	sys.exit(-1)  
 else:
@@ -75,7 +73,11 @@ else:
 			help="site name", type="string",default='Arles')
 
         parser.add_option("-o", "--orbit", dest="orbit", action="store", \
-			  help="orbit numbere", type="string",default=None)
+			  help="orbit number", type="string",default=None)
+
+        
+        parser.add_option("-d", "--startDate", dest="startDate", action="store", \
+			  help="start date for processing (optional)", type="string",default="20150623")
 
         (options, args) = parser.parse_args()
 
@@ -91,7 +93,7 @@ repConf=repCode+"/userconf"
 repDtm =repCode+"/DTM"
 repGipp=repCode+"/GIPP_%s"%contexte
 
-repTrav= "/mnt/data/SENTINEL2/MAJA/%s/%s/"%(site,contexte)
+repTrav= "/mnt/data/SENTINEL2/MAJA/%s/%s/%s/"%(site,tuile,contexte)
 repL1  = "/mnt/data/SENTINEL2/L1C_PDGS/%s/"%site
 repL2  = "/mnt/data/SENTINEL2/L2A_MAJA/%s/%s/%s/"%(site,tuile,contexte)
 
@@ -112,7 +114,7 @@ dateAcq=[]
 listeProdFiltree=[]
 for elem in listeProd:
     date_asc=os.path.basename(elem).split('_')[7][1:9]
-    if date_asc>= "20160401":
+    if date_asc>= options.startDate:
         dateAcq.append(date_asc)
         dateProd.append(os.path.basename(elem).split('_')[5])
         listeProdFiltree.append(elem)
