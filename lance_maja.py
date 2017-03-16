@@ -102,24 +102,40 @@ maja  = "/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja"
 if not os.path.exists(repL2):
     os.makedirs(repL2)
     
-print repL1+"/*%s*.SAFE"%(orbite)
+print repL1+"/S2?_OPER_PRD_MSIL1C*_%s_*.SAFE/GRANULE/*%s*"%(orbite,tuile)
 if orbite!=None :
-    listeProd=glob.glob(repL1+"/*MSIL1C*%s*.SAFE"%(orbite))
+    listeProd=glob.glob(repL1+"/S2?_OPER_PRD_MSIL1C*%s_*.SAFE/GRANULE/*%s*"%(orbite,tuile))
+    listeProd=listeProd+glob.glob(repL1+"/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*"%(orbite,tuile))
 else :
-    listeProd=glob.glob(repL1+"/*MSIL1C*.SAFE")
+    listeProd=glob.glob(repL1+"/S2?_OPER_PRD_MSIL1C*.SAFE/GRANULE/*%s*"%(tuile))
+    listeProd=listeProd+glob.glob(repL1+"/S2?_MSIL1C*.SAFE/GRANULE/*%s*"%(tuile))
 
 # liste des images à traiter
 dateProd=[]
 dateAcq=[]
 listeProdFiltree=[]
 for elem in listeProd:
-    date_asc=os.path.basename(elem).split('_')[7][1:9]
+    rac=elem.split("/")[-3]
+    elem='/'.join(elem.split("/")[0:-2])
+    print elem
+    rac=os.path.basename(elem)
+    print rac
+                   
+    if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C") :
+        date_asc=rac.split('_')[7][1:9]
+    else:
+        date_asc=rac.split('_')[6][0:8]
+    print date_asc
     if date_asc>= options.startDate:
         dateAcq.append(date_asc)
-        dateProd.append(os.path.basename(elem).split('_')[5])
+        if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C") :
+            dateProd.append(rac.split('_')[5])
+        else:
+            dateProd.append(rac.split('_')[2])
         listeProdFiltree.append(elem)
         
 #filtrage des doublons
+ 
 dates_diff=list(set(dateAcq))
 dates_diff.sort()
 
@@ -196,11 +212,11 @@ for i in range(nb_dates):
             #recherche du L2 précédent
             for dAnterieure in dates_diff[0:i]:
                 nom_courant="%s/%s"%(repL2,nomL2_par_dateAcq[dAnterieure])
+                print nom_courant
                 if os.path.exists(nom_courant):
                     nomL2=nom_courant
+                print nomL2
             print "precedent L2 : ", nomL2
-
-            
             os.symlink(prod_par_dateAcq[d],repTrav+"/in/"+os.path.basename(prod_par_dateAcq[d]))
             os.symlink(nomL2,repTrav+"/in/"+os.path.basename(nomL2))
             os.symlink(nomL2.replace("DBL.DIR","HDR"),repTrav+"/in/"+os.path.basename(nomL2).replace("DBL.DIR","HDR"))
