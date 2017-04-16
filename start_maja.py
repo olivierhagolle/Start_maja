@@ -1,5 +1,12 @@
 #! /usr/bin/env python
 # -*- coding: iso-8859-1 -*-
+"""
+Processes a Sentinel-2 time series for a tile using MAJA processor for atmospheric correction and cloud screening.
+
+MAJA was developped by CS-SI, under a CNES contract, using a multi-temporal method developped at CESBIO, for the MACCS processor and including methods developped by DLR for ATCOR.
+
+This tool, developped by O.Hagolle (CNES:CESBIO) is a very basic one to show how to use MAJA to process a time series. If anything does not go as anticipated, the tool will probably crash 
+"""
 
 import glob
 import os, os.path
@@ -18,37 +25,39 @@ class OptionParser (optparse.OptionParser):
           self.error("%s option not supplied" % option)
           
 #=============== Module to copy and link files
-def remplace_nom_tuile(fic_in,fic_out,tuile_in,tuile_out):
+
+# replace tile name in example files
+def replace_tile_name(fic_in,fic_out,tile_in,tile_out):
     with file(fic_in) as f_in :
         with file(fic_out,"w") as f_out :
             lignes=f_in.readlines()
             for l in lignes:
-                if l.find(tuile_in)>0 :
-                    l=l.replace(tuile_in,tuile_out)
+                if l.find(tile_in)>0 :
+                    l=l.replace(tile_in,tile_out)
                 f_out.write(l)
 
 
-def ajouter_gipp(repGipp,repTravIn,tuile):
+def add_parameter_files(repGipp,repWorkIn,tile):
     for fic in glob.glob(repGipp+"/*"):
 
         base=os.path.basename(fic)
         if fic.find("36JTT")>0:
-             remplace_nom_tuile(fic,repTravIn+'/'+base.replace("36JTT",tuile),"36JTT",tuile)
+             replace_tile_name(fic,repWorkIn+'/'+base.replace("36JTT",tile),"36JTT",tile)
         else :
-            os.symlink(fic,repTravIn+'/'+base)
+            os.symlink(fic,repWorkIn+'/'+base)
         
 
-def ajouter_DTM(repMNT,repTravIn,tuile):
-    print repMNT+"/*%s*/*"%tuile
-    for fic in glob.glob(repMNT+"/S2_*%s*/*"%tuile):
+def add_DEM(repDEM,repWorkIn,tile):
+    print repDEM+"/*%s*/*"%tile
+    for fic in glob.glob(repDEM+"/S2_*%s*/*"%tile):
         base=os.path.basename(fic)
-        os.symlink(fic,repTravIn+base)
+        os.symlink(fic,repWorkIn+base)
 
-def ajouter_conf(repConf,repTravConf):
-    os.symlink(repConf,repTravConf)
+def add_config_files(repConf,repWorkConf):
+    os.symlink(repConf,repWorkConf)
 
 
-#========== Paramètres
+#========== command line
 if len(sys.argv) == 1:
 	prog = os.path.basename(sys.argv[0])
 	print '      '+sys.argv[0]+' [options]' 
@@ -81,38 +90,38 @@ else:
 
         (options, args) = parser.parse_args()
 
-tuile=options.tile
+tile=options.tile
 site=options.site
-orbite=options.orbit
-contexte=options.context
+orbit=options.orbit
+context=options.context
 nb_backward=6
 
 #=================directories
 repCode="/mnt/data/home/hagolleo/PROG/S2/lance_maja"
 repConf=repCode+"/userconf"
 repDtm =repCode+"/DTM"
-repGipp=repCode+"/GIPP_%s"%contexte
+repGipp=repCode+"/GIPP_%s"%context
 
-repTrav= "/mnt/data/SENTINEL2/MAJA/%s/%s/%s/"%(site,tuile,contexte)
+repWork= "/mnt/data/SENTINEL2/MAJA/%s/%s/%s/"%(site,tile,context)
 repL1  = "/mnt/data/SENTINEL2/L1C_PDGS/%s/"%site
-repL2  = "/mnt/data/SENTINEL2/L2A_MAJA/%s/%s/%s/"%(site,tuile,contexte)
+repL2  = "/mnt/data/SENTINEL2/L2A_MAJA/%s/%s/%s/"%(site,tile,context)
 
 maja  = "/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja"
 
 if not os.path.exists(repL2):
     os.makedirs(repL2)
     
-print repL1+"/S2?_OPER_PRD_MSIL1C*_%s_*.SAFE/GRANULE/*%s*"%(orbite,tuile)
-if orbite!=None :
-    listeProd=glob.glob(repL1+"/S2?_OPER_PRD_MSIL1C*%s_*.SAFE/GRANULE/*%s*"%(orbite,tuile))
-    listeProd=listeProd+glob.glob(repL1+"/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*"%(orbite,tuile))
+print repL1+"/S2?_OPER_PRD_MSIL1C*_%s_*.SAFE/GRANULE/*%s*"%(orbit,tile)
+if orbit!=None :
+    listeProd=glob.glob(repL1+"/S2?_OPER_PRD_MSIL1C*%s_*.SAFE/GRANULE/*%s*"%(orbit,tile))
+    listeProd=listeProd+glob.glob(repL1+"/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*"%(orbit,tile))
 else :
-    listeProd=glob.glob(repL1+"/S2?_OPER_PRD_MSIL1C*.SAFE/GRANULE/*%s*"%(tuile))
-    listeProd=listeProd+glob.glob(repL1+"/S2?_MSIL1C*.SAFE/GRANULE/*%s*"%(tuile))
+    listeProd=glob.glob(repL1+"/S2?_OPER_PRD_MSIL1C*.SAFE/GRANULE/*%s*"%(tile))
+    listeProd=listeProd+glob.glob(repL1+"/S2?_MSIL1C*.SAFE/GRANULE/*%s*"%(tile))
 
-# liste des images à traiter
+# list of images to process
 dateProd=[]
-dateAcq=[]
+dateImg=[]
 listeProdFiltree=[]
 for elem in listeProd:
     rac=elem.split("/")[-3]
@@ -127,80 +136,80 @@ for elem in listeProd:
         date_asc=rac.split('_')[6][0:8]
     print date_asc
     if date_asc>= options.startDate:
-        dateAcq.append(date_asc)
+        dateImg.append(date_asc)
         if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C") :
             dateProd.append(rac.split('_')[5])
         else:
             dateProd.append(rac.split('_')[2])
         listeProdFiltree.append(elem)
         
-#filtrage des doublons
+#removing multiple images with same date and tile
  
-dates_diff=list(set(dateAcq))
+dates_diff=list(set(dateImg))
 dates_diff.sort()
 
-prod_par_dateAcq={}
-nomL2_par_dateAcq={}
+prod_par_dateImg={}
+nomL2_par_dateImg={}
 for d in dates_diff:
-    nb=dateAcq.count(d)
+    nb=dateImg.count(d)
  
     dpmax=""
     ind=-1
-    #on cherche la dernière date de production
+    #search the most recent production date
     for i in range(0,nb):
-        ind=dateAcq.index(d,ind+1)
+        ind=dateImg.index(d,ind+1)
         dp=dateProd[ind]
         if dp>dpmax :
             dpmax=dp
 
  
-    #on garde les produits avec la date de production la plus récente
+    #keep only the products with the most recent date
     ind=dateProd.index(dpmax)
     print dpmax, ind
-    prod_par_dateAcq[d]=listeProdFiltree[ind]
-    nomL2_par_dateAcq[d]="S2A_OPER_SSC_L2VALD_%s____%s.DBL.DIR"%(tuile,d)
+    prod_par_dateImg[d]=listeProdFiltree[ind]
+    nomL2_par_dateImg[d]="S2A_OPER_SSC_L2VALD_%s____%s.DBL.DIR"%(tile,d)
 
-    print d,prod_par_dateAcq[d]
+    print d,prod_par_dateImg[d]
 
 print
-#Recherche de la première date à traiter
+#find the first image to process
 
 derniereDate=""
 for d in dates_diff:
-    nomL2="%s/%s"%(repL2,nomL2_par_dateAcq[d])
+    nomL2="%s/%s"%(repL2,nomL2_par_dateImg[d])
     if os.path.exists(nomL2):
         derniereDate=d
 
 
-print "dernière date traitee :", derniereDate
+print "Most recent processed date :", derniereDate
 
-###############Boucle sur les produits
+############### For each product
 nb_dates=len(dates_diff)
 
 
-if not(os.path.exists(repTrav)):
-    os.makedirs(repTrav)
-if not(os.path.exists(repTrav+"userconf")):
-    print "creation de"+ repTrav+"userconf"
-    ajouter_conf(repConf,repTrav+"userconf")
+if not(os.path.exists(repWork)):
+    os.makedirs(repWork)
+if not(os.path.exists(repWork+"userconf")):
+    print "create "+ repWork+"userconf"
+    add_config_files(repConf,repWork+"userconf")
 
 for i in range(nb_dates):
     d=dates_diff[i]
     if d>derniereDate:
-        if os.path.exists(repTrav+"/in"):            
-            shutil.rmtree(repTrav+"/in")
-        os.makedirs(repTrav+"/in")  
+        if os.path.exists(repWork+"/in"):            
+            shutil.rmtree(repWork+"/in")
+        os.makedirs(repWork+"/in")  
         #Mode Backward
         if i==0 :
             nb_prod_backward=min(len(dates_diff),nb_backward)
             for date_backward in dates_diff[0:nb_prod_backward]:
                 print "#### dates à traiter", date_backward
-                print prod_par_dateAcq[date_backward]
-                os.symlink(prod_par_dateAcq[date_backward],repTrav+"/in/"+os.path.basename(prod_par_dateAcq[date_backward]))
-            ajouter_gipp(repGipp,repTrav+"/in/",tuile)
-            ajouter_DTM(repDtm,repTrav+"/in/",tuile)
+                print prod_par_dateImg[date_backward]
+                os.symlink(prod_par_dateImg[date_backward],repWork+"/in/"+os.path.basename(prod_par_dateImg[date_backward]))
+            add_parameter_files(repGipp,repWork+"/in/",tile)
+            add_DEM(repDtm,repWork+"/in/",tile)
  
-            commande= "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s"%(maja,repTrav+"/in",repL2,repTrav+"/userconf",tuile)
+            commande= "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s"%(maja,repWork+"/in",repL2,repWork+"/userconf",tile)
             print "#################################"
             print "#################################"
             print commande
@@ -209,24 +218,24 @@ for i in range(nb_dates):
             os.system(commande)
          #else mode nominal
         else :
-            #recherche du L2 précédent
+            #Search for previous L2 product
             for dAnterieure in dates_diff[0:i]:
-                nom_courant="%s/%s"%(repL2,nomL2_par_dateAcq[dAnterieure])
+                nom_courant="%s/%s"%(repL2,nomL2_par_dateImg[dAnterieure])
                 print nom_courant
                 if os.path.exists(nom_courant):
                     nomL2=nom_courant
                 print nomL2
-            print "precedent L2 : ", nomL2
-            os.symlink(prod_par_dateAcq[d],repTrav+"/in/"+os.path.basename(prod_par_dateAcq[d]))
-            os.symlink(nomL2,repTrav+"/in/"+os.path.basename(nomL2))
-            os.symlink(nomL2.replace("DBL.DIR","HDR"),repTrav+"/in/"+os.path.basename(nomL2).replace("DBL.DIR","HDR"))
-            os.symlink(nomL2.replace("DIR",""),repTrav+"/in/"+os.path.basename(nomL2).replace("DIR",""))
+            print "previous L2 : ", nomL2
+            os.symlink(prod_par_dateImg[d],repWork+"/in/"+os.path.basename(prod_par_dateImg[d]))
+            os.symlink(nomL2,repWork+"/in/"+os.path.basename(nomL2))
+            os.symlink(nomL2.replace("DBL.DIR","HDR"),repWork+"/in/"+os.path.basename(nomL2).replace("DBL.DIR","HDR"))
+            os.symlink(nomL2.replace("DIR",""),repWork+"/in/"+os.path.basename(nomL2).replace("DIR",""))
                         
 
-            ajouter_gipp(repGipp,repTrav+"/in/",tuile)
-            ajouter_DTM(repDtm,repTrav+"/in/",tuile)
+            add_parameter_files(repGipp,repWork+"/in/",tile)
+            add_DEM(repDtm,repWork+"/in/",tile)
 
-            commande= "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s"%(maja,repTrav+"/in",repL2,repTrav+"/userconf",tuile)
+            commande= "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s"%(maja,repWork+"/in",repL2,repWork+"/userconf",tile)
             print "#################################"
             print "#################################"
             print commande
