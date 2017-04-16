@@ -5,6 +5,10 @@ This tool enables to process successively all files in a time series of MAJA ima
 
 To use this tool, you will need to configure the directories within the code (I know, it's not very professional).
 
+## Get MAJA Sofware
+MAJA can be downloaded as a binary code from https://logiciels.cnes.fr/content/maja?language=en
+It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code.
+
 ## Getting the Sentinel-2 data :
 The use of peps_download.py is recommended :
 https://github.com/olivierhagolle/peps_download
