@@ -7,14 +7,14 @@ To use this tool, you will need to configure the directories within the code (I 
 
 ## Get MAJA Sofware
 MAJA can be downloaded as a binary code from https://logiciels.cnes.fr/content/maja?language=en
-It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code.
+It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code. For a licence extended to commercial use, please contact CNES (Gérard Lassalle-Balier).
 
 ## Getting the Sentinel-2 data :
 The use of peps_download.py is recommended :
 https://github.com/olivierhagolle/peps_download
 
 ## Parameters
-The tool needs a lot of configuration files which are provided in two directories "userconf" and "GIPP_nominal". I tend to never change the "userconf", but the GIPP_nominal contains the parameters and look-up tables, which you might want to change. Most of the parameters lie within the L2COMM file. When I want to test different sets of parameters, I create a new GIPP folder, which I name GIPP_<context>, where <context> is spassed as a parameter of the command line.
+The tool needs a lot of configuration files which are provided in two directories "userconf" and "GIPP_nominal". I tend to never change the "userconf", but the GIPP_nominal contains the parameters and look-up tables, which you might want to change. Most of the parameters lie within the L2COMM file. When I want to test different sets of parameters, I create a new GIPP folder, which I name GIPP_context, where *context* is passed as a parameter of the command line with option -c 
 
 
 ## DTM
