@@ -1,4 +1,4 @@
-v# Basic Supervisor for MAJA processor
+## Basic Supervisor for MAJA processor
 
 MAJA stands for MACCS-ATCOR joint algorithm. It is based [on MACCS processor](http://www.cesbio.ups-tlse.fr/multitemp/?p=6203), developped for CNES by CS-SI company, from a method and a prototyped developped at CESBIO, <sup>[1](#ref1)</sup> <sup>[2](#ref2)</sup> <sup>[3](#ref3)</sup>. Recently, thanks to an agreement between CNES and DLR and to some funding from ESA, we started adding methods from ATCOR into MACCS. MACCS then became MAJA. The current distributed version is the first version resulting from this collaboration : MAJA V1-0. 
 
