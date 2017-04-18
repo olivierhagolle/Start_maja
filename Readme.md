@@ -34,7 +34,7 @@ Example : python ./start_maja.py -c nominal -t 40KCB -s Reunion -d 20160401
 
 ## Known Errors
 
-Some Sentinel-2 L1C products lack the angle information which is required by MAJA. In this case, MAJA stop processing with an error message. This causes issues particularly in the backward mode. These products were acquired in February and March 2016 and have not been reprocessed by ESA (despited repeated asks from my side). You should remove them from the folder which contains the list of L1C products to process.
+Some Sentinel-2 L1C products lack the angle information which is required by MAJA. In this case, MAJA stops processing with an error message. This causes issues particularly in the backward mode. These products were acquired in February and March 2016 and have not been reprocessed by ESA (despited repeated asks from my side). You should remove them from the folder which contains the list of L1C products to process.
 
 
 
