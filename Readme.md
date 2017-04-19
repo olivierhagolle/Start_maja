@@ -30,14 +30,18 @@ An example DTM is provided for tile 31TFJ in this repository
 Once you have installed maja and cloned the current repository, here is how to process a set of data above tile 31TFJ, near Avignon in Provence, France. To process any other tile, you will need to prepare the DTM and store the data in the DTM folder.
 
 ## Install
-install MAJA
-clone the current repository
+
+Install MAJA
+
+Clone the current repository
 `git clone https://github.com/olivierhagolle/Start_maja`
 
 ## Retrieve Sentinel-2 L1C data.
-For instance, with peps_download (you need to have registered at https://peps.cnes.fr and store the id in a file name peps.txt
+For instance, with peps_download.py (you need to have registered at https://peps.cnes.fr and store the id in a file name peps.txt
 
 `python ./peps_download.py -c S2ST -l 'Avignon' -a peps.txt -d 2017-01-01 -f 2017-04-01 -w "/path/to/L1C_DATA/Avignon`
+
+Unzip the files in /path/to/L1C_DATA/Avignon
 
 ## Create DTM
 if your tile is not 31TFJ, follow DTM generation instructions : http://tully.ups-tlse.fr/olivier/prepare_mnt
