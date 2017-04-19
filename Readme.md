@@ -41,12 +41,12 @@ For instance, with peps_download.py (you need to have registered at https://peps
 
 `python ./peps_download.py -c S2ST -l 'Avignon' -a peps.txt -d 2017-01-01 -f 2017-04-01 -w "/path/to/L1C_DATA/Avignon`
 
-Unzip the files in /path/to/L1C_DATA/Avignon
+Unzip the LIC files in /path/to/L1C_DATA/Avignon
 
 ## Create DTM
 if your tile is not 31TFJ, follow DTM generation instructions : http://tully.ups-tlse.fr/olivier/prepare_mnt
 
-2. Execute MAJA
+## Execute MAJA
 
 To use the start_maja script, you need to configure the directories
 ```
