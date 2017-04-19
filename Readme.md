@@ -23,7 +23,7 @@ The tool needs a lot of configuration files which are provided in two directorie
 ## DTM
 A DTM file is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, it is available here : http://tully.ups-tlse.fr/olivier/prepare_mnt
 
-An example DTM is provided for tile 31TFJ in this repository
+I will try to find a way to provide an example DTM file for tile T31TFJ, but there are size limitations for files in github...
 
 # Example workflow
 
@@ -44,15 +44,17 @@ For instance, with peps_download.py (you need to have registered at https://peps
 Unzip the LIC files in /path/to/L1C_DATA/Avignon
 
 ## Create DTM
-if your tile is not 31TFJ, follow DTM generation instructions : http://tully.ups-tlse.fr/olivier/prepare_mnt
+Follow DTM generation instructions : http://tully.ups-tlse.fr/olivier/prepare_mnt
 
 ## Execute MAJA
 
-To use the start_maja script, you need to configure the directories
+To use the start_maja script, you need to configure the directories, within the script...
 ```
 repCode="/path/to/start_maja"
 repL1  = "/path/to/L1C_DATA/[site]" (site will be added automatically)
 repL2  = "/path/to/L2A_DATA/[site]/[tile]/[context]" (site, tile and context will be added automatically)
+maja  = "/path/to/maja/maja/core/1.0/bin/maja/"
+rep_work ="/path/to/temporary_work_files/"
 ```
 
 Here is an example of command line
