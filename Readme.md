@@ -23,11 +23,22 @@ The tool needs a lot of configuration files which are provided in two directorie
 ## DTM
 A DTM file is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, it is available here : http://tully.ups-tlse.fr/olivier/prepare_mnt
 
+An example DTM is provided for tile 31TFJ in this repository
+
 # Command line
+
+Once you have installed maja and cloned the current repository, here is how to process a set of data above tile 31TFJ, near Avignon in Provence, France. To process any other tile, you will need to prepare the DTM and store the data in the DTM folder.
+
+1.Retrieve Sentinel-2 L1C data.
+For instance, with peps_download (you need to have registered at https://peps.cnes.fr and store the id in a file name peps.txt
+
+`python ./peps_download.py -c S2ST -l 'Avignon' -a peps.txt -d 2017-01-01 -f 2017-04-01 -w "/path/to/L1C_DATA/Avignon``
+
+2. Execute MAJA
 Here is an example of command line
 ```
 Usage   : python ./start_maja.py -c <context> -t <tile name> -s <Site Name> -d <start date>
-Example : python ./start_maja.py -c nominal -t 40KCB -s Reunion -d 20160401
+Example : python ./start_maja.py -c nominal -t 31TFJ -s Avignon -d 20170101
 ```
 
 *When a product has more than 90% of clouds, the L2A is not issued*
