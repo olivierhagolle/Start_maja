@@ -6,12 +6,6 @@ MAJA has a very unique feature among all atmospheric correction processors : it 
 
 The basic supervisor **start_maja** enables to process successively all files in a time series of Sentinel-2 images for a given tile, stored in a folder. The initialisation of the time series is performed with the "backward mode", and then all the dates are processed in "nominal" mode. Tha backward mode takes much more times than the nominal mode. On my computer, which is a fast one, nominal mode takes 15 minutes. No control is done on the outputs, and it does not check if the time elapsed between two successive products is not too long and would require restarting the initialisation in backward mode.
 
-repCode=/mnt/data/home/hagolleo/PROG/S2/lance_maja
-repWork=/mnt/data/SENTINEL2/MAJA
-repL1  =/mnt/data/SENTINEL2/L1C_PDGS
-repL2  =/mnt/data/SENTINEL2/L2A_MAJA
-repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
-
 To use this tool, you will need to configure the directories within the folder.txt file.
 
 ## Get MAJA Sofware
@@ -41,19 +35,11 @@ Here is how to process a set of data above tile 31TFJ, near Avignon in Provence,
 - Clone the current repository
 `git clone https://github.com/olivierhagolle/Start_maja`
 
-- To use the start_maja script, you need to configure the directories, within the folder.txt file.
-Here is my own configuration, also provided in the folders.txt file in this repository.
-```
-repCode=/mnt/data/home/hagolleo/PROG/S2/lance_maja
-repWork=/mnt/data/SENTINEL2/MAJA
-repL1  =/mnt/data/SENTINEL2/L1C_PDGS
-repL2  =/mnt/data/SENTINEL2/L2A_MAJA
-repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
-```
+
 
 
 ## Retrieve Sentinel-2 L1C data.
-- For instance, with peps_download.py (you need to have registered at https://peps.cnes.fr and store the id in a file name peps.txt
+- For instance, with peps_download.py (you need to have registered at https://peps.cnes.fr and store the account and password in peps.txt file.
 
 `python ./peps_download.py -c S2ST -l 'Avignon' -a peps.txt -d 2017-01-01 -f 2017-04-01 -w "/path/to/L1C_DATA/Avignon`
 
@@ -64,14 +50,23 @@ Follow DTM generation instructions : http://tully.ups-tlse.fr/olivier/prepare_mn
 
 ## Execute MAJA
 
+- To use the start_maja script, you need to configure the directories, within the folder.txt file.
+Here is my own configuration, also provided in the folders.txt file in this repository.
+```
+repCode=/mnt/data/home/hagolleo/PROG/S2/lance_maja
+repWork=/mnt/data/SENTINEL2/MAJA
+repL1  =/mnt/data/SENTINEL2/L1C_PDGS
+repL2  =/mnt/data/SENTINEL2/L2A_MAJA
+repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
+```
 
-Here is an example of command line
+- Here is an example of command line
 ```
 Usage   : python ./start_maja.py -f <folder_file>-c <context> -t <tile name> -s <Site Name> -d <start date>
 Example : python ./start_maja.py -f folders.txt -c nominal -t 31TFJ -s Avignon -d 20170101
 ```
 
-Caution, *When a product has more than 90% of clouds, the L2A is not issued*. However, a folder with _NOTVALD_ is created.
+Caution, *when a product has more than 90% of clouds, the L2A is not issued*. However, a folder with _NOTVALD_ is created.
 
 ## Known Errors
 
