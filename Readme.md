@@ -2,9 +2,9 @@
 
 MAJA stands for Maccs-Atcor Joint Algorithm. This atmospheric correction and cloud screening software is based [on MACCS processor](http://www.cesbio.ups-tlse.fr/multitemp/?p=6203), developped for CNES by CS-SI company, from a method and a prototype developped at CESBIO, <sup>[1](#ref1)</sup> <sup>[2](#ref2)</sup> <sup>[3](#ref3)</sup>. Recently, thanks to an agreement between CNES and DLR and to some funding from ESA, we started adding methods from DLR 's atmospheric correction software ATCOR into MACCS. MACCS then became MAJA. The current distributed version is the first version resulting from this collaboration : MAJA V1-0. 
 
-MAJA has a very unique feature among all atmospheric correction processors : it uses multi-temporal criteria to improve cloud detection and aerosol retrieval. Because of this feature, it is important to use MAJA to process *time series* of images and not single images. Moreover, these images have to be processed chronogically.
+MAJA has a very unique feature among all atmospheric correction processors : it uses multi-temporal criteria to improve cloud detection and aerosol retrieval. Because of this feature, it is important to use MAJA to process *time series* of images and not single images. Moreover, these images have to be processed chronogically. To initialise processing of a time series, a special mode is used, named "backward mode". To get a correct first product, we process in fact a small number of products in anti-chronological order (default value of number of images processed in backward mode is 8, but consider increasing it if your region is very cloudy). Then all the products are processed in "nominal" mode and chronological order. When a product is fully or nearly fully cloudy, it is not issued to save processing time and disk space.
 
-The basic supervisor **start_maja** enables to process successively all files in a time series of Sentinel-2 images for a given tile, stored in a folder. The initialisation of the time series is performed with the "backward mode", and then all the dates are processed in "nominal" mode. But no control is done on the outputs, and it does not check if the time elapsed between two successive products is not too long and would require restarting the initialisation in backward mode.
+The basic supervisor **start_maja** enables to process successively all files in a time series of Sentinel-2 images for a given tile, stored in a folder. The initialisation of the time series is performed with the "backward mode", and then all the dates are processed in "nominal" mode. Tha backward mode takes much more times than the nominal mode. On my computer, which is a fast one, nominal mode takes 15 minutes. No control is done on the outputs, and it does not check if the time elapsed between two successive products is not too long and would require restarting the initialisation in backward mode.
 
 repCode=/mnt/data/home/hagolleo/PROG/S2/lance_maja
 repWork=/mnt/data/SENTINEL2/MAJA
@@ -32,28 +32,16 @@ I will try to find a way to provide an example DTM file for tile T31TFJ, but the
 
 # Example workflow
 
-Once you have installed maja and cloned the current repository, here is how to process a set of data above tile 31TFJ, near Avignon in Provence, France. To process any other tile, you will need to prepare the DTM and store the data in the DTM folder.
+Here is how to process a set of data above tile 31TFJ, near Avignon in Provence, France. To process any other tile, you will need to prepare the DTM and store the data in the DTM folder.
 
 ## Install
 
-Install MAJA
+- Install MAJA
 
-Clone the current repository
+- Clone the current repository
 `git clone https://github.com/olivierhagolle/Start_maja`
 
-## Retrieve Sentinel-2 L1C data.
-For instance, with peps_download.py (you need to have registered at https://peps.cnes.fr and store the id in a file name peps.txt
-
-`python ./peps_download.py -c S2ST -l 'Avignon' -a peps.txt -d 2017-01-01 -f 2017-04-01 -w "/path/to/L1C_DATA/Avignon`
-
-Unzip the LIC files in /path/to/L1C_DATA/Avignon
-
-## Create DTM
-Follow DTM generation instructions : http://tully.ups-tlse.fr/olivier/prepare_mnt
-
-## Execute MAJA
-
-To use the start_maja script, you need to configure the directories, within the folder.txt file.
+- To use the start_maja script, you need to configure the directories, within the folder.txt file.
 Here is my own configuration, also provided in the folders.txt file in this repository.
 ```
 repCode=/mnt/data/home/hagolleo/PROG/S2/lance_maja
@@ -62,6 +50,20 @@ repL1  =/mnt/data/SENTINEL2/L1C_PDGS
 repL2  =/mnt/data/SENTINEL2/L2A_MAJA
 repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
 ```
+
+
+## Retrieve Sentinel-2 L1C data.
+- For instance, with peps_download.py (you need to have registered at https://peps.cnes.fr and store the id in a file name peps.txt
+
+`python ./peps_download.py -c S2ST -l 'Avignon' -a peps.txt -d 2017-01-01 -f 2017-04-01 -w "/path/to/L1C_DATA/Avignon`
+
+- Unzip the LIC files in /path/to/L1C_DATA/Avignon
+
+## Create DTM
+Follow DTM generation instructions : http://tully.ups-tlse.fr/olivier/prepare_mnt
+
+## Execute MAJA
+
 
 Here is an example of command line
 ```
