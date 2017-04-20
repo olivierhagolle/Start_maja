@@ -23,6 +23,23 @@ class OptionParser (optparse.OptionParser):
       # Assumes the option's 'default' is set to None!
       if getattr(self.values, option.dest) is None:
           self.error("%s option not supplied" % option)
+
+##################################### Lecture de fichier de parametres "Mot_clé=Valeur"
+def read_folders(fic_txt):
+    with file(fic_txt, 'r') as f :
+        for ligne in f.readlines() :
+            if ligne.find('repCode')==0:
+                repCode = (ligne.split('=')[1]).strip()
+            if ligne.find('repWork')==0:
+                repWork = (ligne.split('=')[1]).strip()
+            if ligne.find('repL1')==0:
+                repL1   = (ligne.split('=')[1]).strip()
+            if ligne.find('repL2')==0:
+                repL2   = (ligne.split('=')[1]).strip()
+            if ligne.find('repMaja')==0:
+                repMaja = (ligne.split('=')[1]).strip()
+
+    return(repCode,repWork,repL1,repL2,repMaja)
           
 #=============== Module to copy and link files
 
@@ -65,8 +82,7 @@ if len(sys.argv) == 1:
 	print "        ou : ", prog, " -h"
 
 	print "exemple : "
-	print "\t python %s -c nominal -t 40KCB -s Reunion -d 20160401 "%sys.argv[0]
-     
+	print "\t python %s -f folders.txt -c nominal -t 40KCB -s Reunion  -d 20160401 "%sys.argv[0]     
 	sys.exit(-1)  
 else:
 	usage = "usage: %prog [options] "
@@ -84,7 +100,9 @@ else:
         parser.add_option("-o", "--orbit", dest="orbit", action="store", \
 			  help="orbit number", type="string",default=None)
 
-        
+        parser.add_option("-f", "--folder", dest="folder_file", action="store", type="string", \
+			help="folder definition file",default=None)
+            
         parser.add_option("-d", "--startDate", dest="startDate", action="store", \
 			  help="start date for processing (optional)", type="string",default="20150623")
 
@@ -94,22 +112,29 @@ tile=options.tile
 site=options.site
 orbit=options.orbit
 context=options.context
-nb_backward=6
+folder_file=options.folder_file
+
+nb_backward=8 # number of images to process in backward mode
 
 #=================directories
-repCode="/mnt/data/home/hagolleo/PROG/S2/lance_maja"
+(repCode,repWork,repL1,repL2,maja)=read_folders(folder_file)
+
 repConf=repCode+"/userconf"
 repDtm =repCode+"/DTM"
 repGipp=repCode+"/GIPP_%s"%context
 
-repWork= "/mnt/data/SENTINEL2/MAJA/%s/%s/%s/"%(site,tile,context)
-repL1  = "/mnt/data/SENTINEL2/L1C_PDGS/%s/"%site
-repL2  = "/mnt/data/SENTINEL2/L2A_MAJA/%s/%s/%s/"%(site,tile,context)
+repWork= "%s/%s/%s/%s/"%(repWork,site,tile,context)
+repL1  = "%s/%s/"%(repL1,site)
+repL2  = "%s/%s/%s/%s/"%(repL2,site,tile,context)
 
-maja  = "/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja"
+#check existence of folders
+if not (os.path.exists(repL1) and os.path.exists(repCode) and os.path.exists(repWork) and os.path.exists(maja)):
+    print "ERROR : One of the folders defined in %s does not exist"%folder_file
+    sys.exit(-1)
 
 if not os.path.exists(repL2):
     os.makedirs(repL2)
+    
     
 print repL1+"/S2?_OPER_PRD_MSIL1C*_%s_*.SAFE/GRANULE/*%s*"%(orbit,tile)
 if orbit!=None :
