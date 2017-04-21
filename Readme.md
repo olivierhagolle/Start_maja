@@ -24,7 +24,9 @@ A DTM file is needed to process data with MAJA. Of course, it depends on the til
 
 An example of MNT file is available here for tile 31TFJ in Provence, France, near Avignon. Both files should be placed in a folder named DTM/S2__TEST_AUX_REFDE2_T31TFJ_0001 in the start_maja directory.
 
+
 http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0001.DBL
+
 http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0001.HDR
 
 The DBL file is a tar file (I am innocent for this choice...) that can be opend with tar xvf 
