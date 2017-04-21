@@ -22,7 +22,12 @@ The tool needs a lot of configuration files which are provided in two directorie
 ## DTM
 A DTM file is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, it is available here : http://tully.ups-tlse.fr/olivier/prepare_mnt
 
-I will try to find a way to provide an example DTM file for tile T31TFJ, but there are size limitations for files in github...
+An example of MNT file is available here for tile 31TFJ in Provence, France, near Avignon. Both files should be placed in a folder named DTM/S2__TEST_AUX_REFDE2_T31TFJ_0001 in the start_maja directory.
+
+http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0001.DBL
+http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0001.HDR
+
+The DBL file is a tar file (I am innocent for this choice...) that can be opend with tar xvf 
 
 # Example workflow
 
