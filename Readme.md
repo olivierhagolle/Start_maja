@@ -1,6 +1,8 @@
-1. [Basic Supervisor for MAJA processor](#Basic-Supervisor-for-MAJA-processor)
-2. [Example workflow](#Example-workflow)
+# Contents
+1. [Intro : Basic Supervisor for MAJA processor](#Basic)
+2. [Example workflow](#workflow)
 
+<a name="Basic"></a>
 # Basic Supervisor for MAJA processor
 
 MAJA stands for Maccs-Atcor Joint Algorithm. This atmospheric correction and cloud screening software is based [on MACCS processor](http://www.cesbio.ups-tlse.fr/multitemp/?p=6203), developped for CNES by CS-SI company, from a method and a prototype developped at CESBIO, <sup>[1](#ref1)</sup> <sup>[2](#ref2)</sup> <sup>[3](#ref3)</sup>. Recently, thanks to an agreement between CNES and DLR and to some funding from ESA, we started adding methods from DLR 's atmospheric correction software ATCOR into MACCS. MACCS then became MAJA. The current distributed version is the first version resulting from this collaboration : MAJA V1-0. 
@@ -43,6 +45,7 @@ http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0
 
 The DBL file is a tar file (I am innocent for this choice...) that can be opend with `tar xvf `. MAJA can use both the archive or un-archived version. My tool above does not provide the archived version.
 
+<a name="workflow"></a>
 # Example workflow
 
 Here is how to process a set of data above tile 31TFJ, near Avignon in Provence, France. To process any other tile, you will need to prepare the DTM and store the data in the DTM folder.
