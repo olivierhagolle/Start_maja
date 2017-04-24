@@ -21,10 +21,10 @@ It is provided as a binary code and compiled for *Linux Red Hat and CentOS versi
 We provide a test data set, to verify your installation of MAJA. Please download the following pacakge and follow the provided documentation.
 
 ### Test Data set
-http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2_NOMINAL.tgz
+http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/S2_NOMINAL.tgz
 
 ### Test Documentation
-http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2_NOMINAL-dataset-description.docx
+http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/S2_NOMINAL-dataset-description.docx
 
 ## Downloading Sentinel-2 data :
 The use of peps_download.py to download Sentinel-2 l1c PRODUCTS is recommended :
