@@ -29,7 +29,7 @@ http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0
 
 http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0001.HDR
 
-The DBL file is a tar file (I am innocent for this choice...) that can be opend with tar xvf 
+The DBL file is a tar file (I am innocent for this choice...) that can be opend with `tar xvf `. MAJA can use both the archive or un-archived version. My tool above does not provide the archived version.
 
 # Example workflow
 
