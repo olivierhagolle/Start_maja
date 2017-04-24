@@ -1,5 +1,5 @@
-1. [Basic Supervisor for MAJA processor](# Basic Supervisor for MAJA processor)
-2. [# Example workflow](# Example workflow)
+1. [Basic Supervisor for MAJA processor](#Basic-Supervisor-for-MAJA-processor)
+2. [Example workflow](#Example-workflow)
 
 # Basic Supervisor for MAJA processor
 
