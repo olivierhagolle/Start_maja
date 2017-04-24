@@ -12,7 +12,16 @@ To use this tool, you will need to configure the directories within the folder.t
 MAJA can be downloaded as a binary code from https://logiciels.cnes.fr/content/maja?language=en
 It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code. For a licence allowing commercial use, please contact CNES (Gérard Lassalle-Balier).
 
-## Getting the Sentinel-2 data :
+## Test MAJA with a test data_set
+We provide a test data set, to verify your installation of MAJA. Please download the following pacakge and follow the provided documentation.
+
+### Test Data set
+http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2_NOMINAL.tgz
+
+### Test Documentation
+http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2_NOMINAL-dataset-description.docx
+
+## Downloading Sentinel-2 data :
 The use of peps_download.py to download Sentinel-2 l1c PRODUCTS is recommended :
 https://github.com/olivierhagolle/peps_download
 
