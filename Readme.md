@@ -1,6 +1,7 @@
 # Contents
 1. [Intro : Basic Supervisor for MAJA processor](#Basic)
 2. [Example workflow](#workflow)
+3. [Docker](#docker)
 
 <a name="Basic"></a>
 # Basic Supervisor for MAJA processor
@@ -96,7 +97,30 @@ If you see this message : "ERROR 1:  Not a TIFF file, bad magic number 0 (0x0) "
 
 Some Sentinel-2 L1C products lack the angle information which is required by MAJA. In this case, MAJA stops processing with an error message. This causes issues particularly in the backward mode. These products were acquired in February and March 2016 and have not been reprocessed by ESA (despited repeated asks from my side). You should remove them from the folder which contains the list of L1C products to process.
 
- 
+
+<a name="docker"></a>
+# Docker
+
+Dániel Kristóf provided us with a Dockerfile (Thank you Dániel), which, on any linux system retrieves the CentOS System, installs what is necessary and configures MAJA. I am really not a Docker expert, and when I tried, my system engeneer immedialtely told me that there are some securities issues with Docker...
+
+But if we follow Daniel's guidelines :
+
+- First, download the test data set and store them in ~/MAJA/S2_NOMINAL
+- Then configure the folders.txt file according to your configuration
+- Then :
+```
+sudo docker build -t maja .
+
+(or behind a proxy)
+sudo docker build -t maja --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy --build-arg ftp_proxy=$ftp_proxy .
+```
+And then, you may run MAJA with the test data sets with
+```
+sudo docker run -v ~/maja/S2_NOMINAL:/data maja /opt/maja/core/1.0/bin/maja -i /data/input_maja1.0 -o /data/output_maja1.0 -m L2NOMINAL -ucs /data/userconf --TileId 36JTT
+
+```
+
+
 ## References :
 <a name="ref1">1</a>: A multi-temporal method for cloud detection, applied to FORMOSAT-2, VENµS, LANDSAT and SENTINEL-2 images, O Hagolle, M Huc, D. Villa Pascual, G Dedieu, Remote Sensing of Environment 114 (8), 1747-1755
 
