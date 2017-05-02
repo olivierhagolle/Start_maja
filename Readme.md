@@ -59,6 +59,13 @@ repL1  =/mnt/data/SENTINEL2/L1C_PDGS
 repL2  =/mnt/data/SENTINEL2/L2A_MAJA
 repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
 ```
+repCode is where Start_maja.py is stored, together with the DTM, userconf and GIPP directories
+repWork is a directory to store the temporary files
+repL1 is where to find the L1C data (without the site name which is added aferward)
+repL2 is for the L2A data (without the site name which is added aferward)
+repMAJA is where the Maja binary code is
+
+
 
 - Here is an example of command line
 ```
