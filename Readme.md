@@ -1,4 +1,10 @@
-## Basic Supervisor for MAJA processor
+# Contents
+1. [Intro : Basic Supervisor for MAJA processor](#Basic)
+2. [Example workflow](#workflow)
+3. [Docker](#docker)
+
+<a name="Basic"></a>
+# Basic Supervisor for MAJA processor
 
 MAJA stands for Maccs-Atcor Joint Algorithm. This atmospheric correction and cloud screening software is based [on MACCS processor](http://www.cesbio.ups-tlse.fr/multitemp/?p=6203), developped for CNES by CS-SI company, from a method and a prototype developped at CESBIO, <sup>[1](#ref1)</sup> <sup>[2](#ref2)</sup> <sup>[3](#ref3)</sup>. Recently, thanks to an agreement between CNES and DLR and to some funding from ESA, we started adding methods from DLR 's atmospheric correction software ATCOR into MACCS. MACCS then became MAJA. The current distributed version is the first version resulting from this collaboration : MAJA V1-0. 
 
@@ -12,7 +18,16 @@ To use this tool, you will need to configure the directories within the folder.t
 MAJA can be downloaded as a binary code from https://logiciels.cnes.fr/content/maja?language=en
 It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code. For a licence allowing commercial use, please contact CNES (Gérard Lassalle-Balier).
 
-## Getting the Sentinel-2 data :
+## Test MAJA with a test data_set
+We provide a test data set, to verify your installation of MAJA. Please download the following pacakge and follow the provided documentation.
+
+### Test Data set
+http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/S2_NOMINAL.tgz
+
+### Test Documentation
+http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/S2_NOMINAL-dataset-description.docx
+
+## Downloading Sentinel-2 data :
 The use of peps_download.py to download Sentinel-2 l1c PRODUCTS is recommended :
 https://github.com/olivierhagolle/peps_download
 
@@ -22,8 +37,16 @@ The tool needs a lot of configuration files which are provided in two directorie
 ## DTM
 A DTM file is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, it is available here : http://tully.ups-tlse.fr/olivier/prepare_mnt
 
-I will try to find a way to provide an example DTM file for tile T31TFJ, but there are size limitations for files in github...
+An example of MNT file is available here for tile 31TFJ in Provence, France, near Avignon. Both files should be placed in a folder named DTM/S2__TEST_AUX_REFDE2_T31TFJ_0001 in the start_maja directory.
 
+
+http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0001.DBL
+
+http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0001.HDR
+
+The DBL file is a tar file (I am innocent for this choice...) that can be opend with `tar xvf `. MAJA can use both the archive or un-archived version. My tool above does not provide the archived version.
+
+<a name="workflow"></a>
 # Example workflow
 
 Here is how to process a set of data above tile 31TFJ, near Avignon in Provence, France. To process any other tile, you will need to prepare the DTM and store the data in the DTM folder.
@@ -81,7 +104,30 @@ If you see this message : "ERROR 1:  Not a TIFF file, bad magic number 0 (0x0) "
 
 Some Sentinel-2 L1C products lack the angle information which is required by MAJA. In this case, MAJA stops processing with an error message. This causes issues particularly in the backward mode. These products were acquired in February and March 2016 and have not been reprocessed by ESA (despited repeated asks from my side). You should remove them from the folder which contains the list of L1C products to process.
 
- 
+
+<a name="docker"></a>
+# Docker
+
+Dániel Kristóf provided us with a Dockerfile (Thank you Dániel), which, on any linux system retrieves the CentOS System, installs what is necessary and configures MAJA. I am really not a Docker expert, and when I tried, my system engeneer immedialtely told me that there are some securities issues with Docker...
+
+But if we follow Daniel's guidelines :
+
+- First, download the test data set and store them in ~/MAJA/S2_NOMINAL
+- Then configure the folders.txt file according to your configuration
+- Then :
+```
+sudo docker build -t maja .
+
+(or behind a proxy)
+sudo docker build -t maja --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy --build-arg ftp_proxy=$ftp_proxy .
+```
+And then, you may run MAJA with the test data sets with
+```
+sudo docker run -v ~/maja/S2_NOMINAL:/data maja /opt/maja/core/1.0/bin/maja -i /data/input_maja1.0 -o /data/output_maja1.0 -m L2NOMINAL -ucs /data/userconf --TileId 36JTT
+
+```
+
+
 ## References :
 <a name="ref1">1</a>: A multi-temporal method for cloud detection, applied to FORMOSAT-2, VENµS, LANDSAT and SENTINEL-2 images, O Hagolle, M Huc, D. Villa Pascual, G Dedieu, Remote Sensing of Environment 114 (8), 1747-1755
 
