@@ -1,19 +1,19 @@
-# Contents
-1. [Intro : Basic Supervisor for MAJA processor](#Basic)
-2. [Example workflow](#workflow)
-3. [Docker](#docker)
-
-<a name="Basic"></a>
-# Basic Supervisor for MAJA processor
+# Introduction
 
 MAJA stands for Maccs-Atcor Joint Algorithm. This atmospheric correction and cloud screening software is based [on MACCS processor](http://www.cesbio.ups-tlse.fr/multitemp/?p=6203), developped for CNES by CS-SI company, from a method and a prototype developped at CESBIO, <sup>[1](#ref1)</sup> <sup>[2](#ref2)</sup> <sup>[3](#ref3)</sup>. Recently, thanks to an agreement between CNES and DLR and to some funding from ESA, we started adding methods from DLR 's atmospheric correction software ATCOR into MACCS. MACCS then became MAJA. The current distributed version is the first version resulting from this collaboration : MAJA V1-0. 
 
 MAJA has a very unique feature among all atmospheric correction processors : it uses multi-temporal criteria to improve cloud detection and aerosol retrieval. Because of this feature, it is important to use MAJA to process *time series* of images and not single images. Moreover, these images have to be processed chronogically. To initialise processing of a time series, a special mode is used, named "backward mode". To get a correct first product, we process in fact a small number of products in anti-chronological order (default value of number of images processed in backward mode is 8, but consider increasing it if your region is very cloudy). Then all the products are processed in "nominal" mode and chronological order. When a product is fully or nearly fully cloudy, it is not issued to save processing time and disk space.
 
-The basic supervisor **start_maja** enables to process successively all files in a time series of Sentinel-2 images for a given tile, stored in a folder. The initialisation of the time series is performed with the "backward mode", and then all the dates are processed in "nominal" mode. Tha backward mode takes much more times than the nominal mode. On my computer, which is a fast one, nominal mode takes 15 minutes. No control is done on the outputs, and it does not check if the time elapsed between two successive products is not too long and would require restarting the initialisation in backward mode.
 
-To use this tool, you will need to configure the directories within the folder.txt file.
+# Contents
 
+1. [Test maja with the test data set](#test)
+2. [Use a basic supervisor for MAJA processor](#Basic)
+3. [Example workflow](#workflow)
+4. [Docker](#docker)
+
+<a name="test"></a>
+# Test maja with the test data set
 ## Get MAJA Sofware
 MAJA can be downloaded as a binary code from https://logiciels.cnes.fr/content/maja?language=en
 It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code. For a licence allowing commercial use, please contact CNES (Gérard Lassalle-Balier).
@@ -26,8 +26,18 @@ http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/S2_NOMINAL.tgz
 
 ### Test Documentation
 http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/S2_NOMINAL-dataset-description.docx
+<a name="Basic"></a>
 
-## Downloading Sentinel-2 data :
+# Basic Supervisor for MAJA processor
+
+
+The basic supervisor **start_maja** enables to process successively all files in a time series of Sentinel-2 images for a given tile, stored in a folder. The initialisation of the time series is performed with the "backward mode", and then all the dates are processed in "nominal" mode. The backward mode takes much more time than the nominal mode. On my computer, which is a fast one, the nominal mode takes 15 minutes, backward mode takes almost one hour. No control is done on the outputs, and it does not check if the time elapsed between two successive products is not too long and would require restarting the initialisation in backward mode.
+
+To use this tool, you will need to configure the directories within the folder.txt file.
+
+
+
+## Download Sentinel-2 data :
 The use of peps_download.py to download Sentinel-2 l1c PRODUCTS is recommended :
 https://github.com/olivierhagolle/peps_download
 
