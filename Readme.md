@@ -4,7 +4,7 @@ MAJA stands for Maccs-Atcor Joint Algorithm. This atmospheric correction and clo
 
 MAJA has a very unique feature among all atmospheric correction processors : it uses multi-temporal criteria to improve cloud detection and aerosol retrieval. Because of this feature, it is important to use MAJA to process *time series* of images and not single images. Moreover, these images have to be processed chronogically. To initialise processing of a time series, a special mode is used, named "backward mode". To get a correct first product, we process in fact a small number of products in anti-chronological order (default value of number of images processed in backward mode is 8, but consider increasing it if your region is very cloudy). Then all the products are processed in "nominal" mode and chronological order. When a product is fully or nearly fully cloudy, it is not issued to save processing time and disk space.
 
-
+For more information about MAJA methods, please read : http://www.cesbio.ups-tlse.fr/multitemp/?p=6203
 
 ## Data format 
 MAJA's native output data format is explained in the document "user, installation and operating manual ([MU] SETG-MU-MAJA-010-CS.pdf)", in the document folder downloaded with MAJA). A simplified explanation of the format is provided here: http://www.cesbio.ups-tlse.fr/multitemp/?page_id=10464
