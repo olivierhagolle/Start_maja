@@ -9,10 +9,7 @@ MAJA has a very unique feature among all atmospheric correction processors : it 
 ## Data format 
 MAJA's native output data format is explained in the document "user, installation and operating manual ([MU] SETG-MU-MAJA-010-CS.pdf)", in the document folder downloaded with MAJA). A simplified explanation of the format is provided here: http://www.cesbio.ups-tlse.fr/multitemp/?page_id=10464
 
-<a style="color: #ff0080; line-height: 21.45px; text-decoration: none;" href="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2017/05/SIte_Madagascar.png"><img class="alignright size-medium wp-image-10449" style="line-height: 21.45px;" title="SIte_Madagascar" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2017/05/SIte_Madagascar-220x300.png" alt="" width="220" height="300" /></a>
-
-
-# Contents
+<a href="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2017/05/20160406.png"><img  title="Ambaro Bay, Madagascar" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2017/05/20160406-300x300.png" alt="" width="300" height="300" align="middle"  /></a>
 
 1. [Test maja with the test data set](#test)
 2. [Use a basic supervisor for MAJA processor](#Basic)
