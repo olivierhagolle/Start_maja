@@ -11,6 +11,8 @@ MAJA's native output data format is explained in the document "user, installatio
 
 <a href="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2017/05/20160406.png"><img  title="Ambaro Bay, Madagascar" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2017/05/20160406-300x300.png" alt="" width="300" height="300" align="middle"  /></a>
 
+# Content
+
 1. [Test maja with the test data set](#test)
 2. [Use a basic supervisor for MAJA processor](#Basic)
 3. [Example workflow](#workflow)
