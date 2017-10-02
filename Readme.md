@@ -1,11 +1,18 @@
+<img  title="logo CNES" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_cnes.jpg" alt="" width="130"  /> <img  title="logo CESBIO" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_cesbio.png" alt="" width="110"  /> <img  title="logo DLR" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_DLR.jpg" alt="" width="90"  /> <img  title="logo MAJA" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_maja.png" alt="" width="80"  /> 
 # Introduction
 
 MAJA stands for Maccs-Atcor Joint Algorithm. This atmospheric correction and cloud screening software is based [on MACCS processor](http://www.cesbio.ups-tlse.fr/multitemp/?p=6203), developped for CNES by CS-SI company, from a method and a prototype developped at CESBIO, <sup>[1](#ref1)</sup> <sup>[2](#ref2)</sup> <sup>[3](#ref3)</sup>. Recently, thanks to an agreement between CNES and DLR and to some funding from ESA, we started adding methods from DLR 's atmospheric correction software ATCOR into MACCS. MACCS then became MAJA. The current distributed version is the first version resulting from this collaboration : MAJA V1-0. 
 
 MAJA has a very unique feature among all atmospheric correction processors : it uses multi-temporal criteria to improve cloud detection and aerosol retrieval. Because of this feature, it is important to use MAJA to process *time series* of images and not single images. Moreover, these images have to be processed chronogically. To initialise processing of a time series, a special mode is used, named "backward mode". To get a correct first product, we process in fact a small number of products in anti-chronological order (default value of number of images processed in backward mode is 8, but consider increasing it if your region is very cloudy). Then all the products are processed in "nominal" mode and chronological order. When a product is fully or nearly fully cloudy, it is not issued to save processing time and disk space.
 
+For more information about MAJA methods, please read : http://www.cesbio.ups-tlse.fr/multitemp/?p=6203
 
-# Contents
+## Data format 
+MAJA's native output data format is explained in the document "user, installation and operating manual ([MU] SETG-MU-MAJA-010-CS.pdf)", in the document folder downloaded with MAJA). A simplified explanation of the format is provided here: http://www.cesbio.ups-tlse.fr/multitemp/?page_id=10464
+
+<a href="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2017/05/20160406.png"><img  title="Ambaro Bay, Madagascar" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2017/05/20160406-300x300.png" alt="" width="300" height="300" align="middle"  /></a>
+
+# Content
 
 1. [Test maja with the test data set](#test)
 2. [Use a basic supervisor for MAJA processor](#Basic)
@@ -15,7 +22,7 @@ MAJA has a very unique feature among all atmospheric correction processors : it 
 <a name="test"></a>
 # Test maja with the test data set
 ## Get MAJA Sofware
-MAJA can be downloaded as a binary code from https://logiciels.cnes.fr/content/maja?language=en
+MAJA can be downloaded as a binary code from https://logiciels.cnes.fr/en/content/maja
 It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code. For a licence allowing commercial use, please contact CNES (Gérard Lassalle-Balier).
 
 ## install MAJA
@@ -96,15 +103,17 @@ repL1  =/mnt/data/SENTINEL2/L1C_PDGS
 repL2  =/mnt/data/SENTINEL2/L2A_MAJA
 repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
 ```
-repCode is where Start_maja.py is stored, together with the DTM, userconf and GIPP directories
-repWork is a directory to store the temporary files
-repL1 is where to find the L1C data (without the site name which is added aferward)
-repL2 is for the L2A data (without the site name which is added aferward)
-repMAJA is where the Maja binary code is
+- repCode is where Start_maja.py is stored, together with the DTM, userconf and GIPP directories
+- repWork is a directory to store the temporary files
+- repL1 is where to find the L1C data (without the site name which is added aferward)
+  - Les produits SAFE doivent donc être stockés à l'emplacement suivant : repL1  = repL1/site
+- repL2 is for the L2A data (without the site name which is added aferward)
+- repMAJA is where the Maja binary code is
 
 
 
-- Here is an example of command line
+
+Here is an example of command line
 ```
 Usage   : python ./start_maja.py -f <folder_file>-c <context> -t <tile name> -s <Site Name> -d <start date>
 Example : python ./start_maja.py -f folders.txt -c nominal -t 31TFJ -s Avignon -d 20170101
