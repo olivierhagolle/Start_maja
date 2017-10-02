@@ -124,13 +124,20 @@ repDtm =repCode+"/DTM"
 repGipp=repCode+"/GIPP_%s"%context
 
 repWork= "%s/%s/%s/%s/"%(repWork,site,tile,context)
+if  not (os.path.exists(repWork)):
+    try :
+        os.mkdir(repWork)
+    except :
+        print "something wrong when creating %s"%repWork
+        sys.exit(1)
 repL1  = "%s/%s/"%(repL1,site)
 repL2  = "%s/%s/%s/%s/"%(repL2,site,tile,context)
 
 #check existence of folders
-if not (os.path.exists(repL1) and os.path.exists(repCode) and os.path.exists(repWork) and os.path.exists(maja)):
-    print "ERROR : One of the folders defined in %s does not exist"%folder_file
-    sys.exit(-1)
+for fic in repL1,repCode,repWork,maja:
+    if not (os.path.exists(fic)):
+        print "ERROR : %s does not exist"%fic
+        sys.exit(-1)
 
 if not os.path.exists(repL2):
     os.makedirs(repL2)
