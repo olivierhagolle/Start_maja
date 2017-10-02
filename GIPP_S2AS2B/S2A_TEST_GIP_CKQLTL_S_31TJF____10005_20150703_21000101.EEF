@@ -5,7 +5,7 @@
 			<File_Name>S2A_TEST_GIP_CKQLTL_S_31TJF____10005_20150703_21000101</File_Name>
 			<File_Description>QuicklookTool</File_Description>
 			<Notes/>
-			<Mission>SENTINEL2A</Mission>
+			<Mission>SENTINEL-2A</Mission>
 			<File_Class>TEST</File_Class>
 			<File_Type>GIP_CKQLTL</File_Type>
 			<Validity_Period>

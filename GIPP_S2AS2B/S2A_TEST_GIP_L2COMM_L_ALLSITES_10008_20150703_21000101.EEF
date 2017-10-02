@@ -6,7 +6,7 @@
 			<File_Name>S2A_TEST_GIP_L2COMM_L_ALLSITES_10006_20150703_21000101</File_Name>
 			<File_Description>L2CommonParameters</File_Description>
 			<Notes/>
-			<Mission>SENTINEL2A</Mission>
+			<Mission>SENTINEL-2A</Mission>
 			<File_Class>TEST</File_Class>
 			<File_Type>GIP_L2COMM</File_Type>
 			<Validity_Period>

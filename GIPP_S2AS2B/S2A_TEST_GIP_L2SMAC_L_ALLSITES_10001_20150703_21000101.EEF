@@ -5,7 +5,7 @@
 			<File_Name>S2A_TEST_GIP_L2SMAC_L_ALLSITES_10001_20150703_21000101</File_Name>
 			<File_Description>L2SMACParameters</File_Description>
 			<Notes/>
-			<Mission>SENTINEL2A</Mission>
+			<Mission>SENTINEL-2A</Mission>
 			<File_Class>TEST</File_Class>
 			<File_Type>GIP_L2SMAC</File_Type>
 			<Validity_Period>

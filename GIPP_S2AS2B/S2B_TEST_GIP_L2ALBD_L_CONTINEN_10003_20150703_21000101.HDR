@@ -4,7 +4,7 @@
 		<File_Name>S2B_TEST_GIP_L2ALBD_L_CONTINEN_10003_20150703_21000101</File_Name>
 		<File_Description>L2LutOfDirectTransmission</File_Description>
 		<Notes>String</Notes>
-		<Mission>SENTINEL2B</Mission>
+		<Mission>SENTINEL-2B</Mission>
 		<File_Class>TEST</File_Class>
 		<File_Type>GIP_L2ALBD</File_Type>
 		<Validity_Period>

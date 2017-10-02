@@ -5,7 +5,7 @@
             <File_Name>S2__TEST_GIP_L2SITE_S_31TJF____10001_00000000_99999999</File_Name>
             <File_Description>L2SiteParameters</File_Description>
             <Notes/>
-            <Mission>SENTINEL2_</Mission>
+            <Mission>SENTINEL-2_</Mission>
             <File_Class>TEST</File_Class>
             <File_Type>GIP_L2SITE</File_Type>
             <Validity_Period>
