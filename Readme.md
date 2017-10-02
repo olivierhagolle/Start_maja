@@ -53,7 +53,7 @@ The use of peps_download.py to download Sentinel-2 l1c PRODUCTS is recommended :
 https://github.com/olivierhagolle/peps_download
 
 ## Parameters
-The tool needs a lot of configuration files which are provided in two directories "userconf" and "GIPP_nominal". I tend to never change the "userconf", but the GIPP_nominal contains the parameters and look-up tables, which you might want to change. Most of the parameters lie within the L2COMM file. When I want to test different sets of parameters, I create a new GIPP folder, which I name GIPP_context, where *context* is passed as a parameter of the command line with option -c 
+The tool needs a lot of configuration files which are provided in two directories "userconf" and "GIPP_S2AS2B". I tend to never change the "userconf", but the GIPP_S2AS2B contains the parameters and look-up tables, which you might want to change. Most of the parameters lie within the L2COMM file. When I want to test different sets of parameters, I create a new GIPP folder, which I name GIPP_context, where *context* is passed as a parameter of the command line with option -c 
 
 ## DTM
 A DTM file is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, it is available here : http://tully.ups-tlse.fr/olivier/prepare_mnt
@@ -116,7 +116,7 @@ repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
 Here is an example of command line
 ```
 Usage   : python ./start_maja.py -f <folder_file>-c <context> -t <tile name> -s <Site Name> -d <start date>
-Example : python ./start_maja.py -f folders.txt -c nominal -t 31TFJ -s Avignon -d 20170101
+Example : python ./start_maja.py -f folders.txt -c S2AS2B -t 31TFJ -s Avignon -d 20170101
 ```
 
 Caution, *when a product has more than 90% of clouds, the L2A is not issued*. However, a folder with _NOTVALD_ is created.
