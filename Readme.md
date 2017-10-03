@@ -9,7 +9,7 @@ For more information about MAJA methods, please read : http://www.cesbio.ups-tls
 
 ## What's new in this version (2017/10/02)
 - this version of start_maja works with both S2A and S2B
-- we have found errors, especially regarding water vapour, in the parameters we used provide in the "GIPP_nominal" folder. These parameters have been removed and we strongly advise you to do the same.
+- we have found errors, especially regarding water vapour, in the parameters we provided in the "GIPP_nominal" folder. These parameters have been removed and we strongly advise you to do the same.
 - we have updated the parameters and provided them for both S2A and S2B in the folder GIPP_S2AS2B
 
 
