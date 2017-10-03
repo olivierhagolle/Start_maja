@@ -7,6 +7,12 @@ MAJA has a very unique feature among all atmospheric correction processors : it 
 
 For more information about MAJA methods, please read : http://www.cesbio.ups-tlse.fr/multitemp/?p=6203
 
+## What's new in this version (2017/10/02)
+- this version of start-maja works with both S2A and S2B
+- we have found errors, especially regarding water vapour, in the parameters we used provide in the "GIPP-nominal" folder. These parameters have been removes and we stronly advise you to do the same.
+- we have updated the parameters and provided them for both S2A and S2B in the folder GIPP_S2AS2B
+
+
 ## Data format 
 MAJA's native output data format is explained in the document "user, installation and operating manual ([MU] SETG-MU-MAJA-010-CS.pdf)", in the document folder downloaded with MAJA). A simplified explanation of the format is provided here: http://www.cesbio.ups-tlse.fr/multitemp/?page_id=10464
 
