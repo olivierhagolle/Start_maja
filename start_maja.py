@@ -209,7 +209,7 @@ print
 derniereDate=""
 for d in dates_diff:
     try :
-        nomL2=glob.glob("%s/%s"%(repL2,nomL2_par_dateImg[d]))[0]
+        nomL2init=glob.glob("%s/%s"%(repL2,nomL2_par_dateImg[d]))[0]
         derniereDate=d
     except :
         pass
@@ -250,17 +250,20 @@ for i in range(nb_dates):
             print "#################################"
             print "#################################"
             os.system(commande)
-         #else mode nominal
+        #else mode nominal
         else :
             #Search for previous L2 product
-            for dAnterieure in dates_diff[0:i]:
-                nom_courant="%s/%s"%(repL2,nomL2_par_dateImg[dAnterieure])
+            for PreviousDate in dates_diff[0:i]:
+                nom_courant="%s/%s"%(repL2,nomL2_par_dateImg[PreviousDate])
                 try :
-                    nomL2=glob.glob("%s/%s"%(repL2,nomL2_par_dateImg[d]))[0]
+                    print nom_courant
+                    nomL2=glob.glob(nom_courant)[0]
+                    print "Previous L2 names, per increasing date :",nomL2
                 except :
+                    print "pas de L2 pour :", nom_courant
                     pass
             print "previous L2 : ", nomL2
-            os.symlink(prod_par_dateImg[d],repWork+"/in/"+os.path.basename(prod_par_dateImg[d]))
+            os.symlink(prod_par_dateImg[PreviousDate],repWork+"/in/"+os.path.basename(prod_par_dateImg[PreviousDate]))
             os.symlink(nomL2,repWork+"/in/"+os.path.basename(nomL2))
             os.symlink(nomL2.replace("DBL.DIR","HDR"),repWork+"/in/"+os.path.basename(nomL2).replace("DBL.DIR","HDR"))
             os.symlink(nomL2.replace("DIR",""),repWork+"/in/"+os.path.basename(nomL2).replace("DIR",""))
