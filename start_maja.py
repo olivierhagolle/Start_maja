@@ -199,7 +199,7 @@ for d in dates_diff:
     ind=dateProd.index(dpmax)
     print dpmax, ind
     prod_par_dateImg[d]=listeProdFiltree[ind]
-    nomL2_par_dateImg[d]="S2A_OPER_SSC_L2VALD_%s____%s.DBL.DIR"%(tile,d)
+    nomL2_par_dateImg[d]="S2?_OPER_SSC_L2VALD_%s____%s.DBL.DIR"%(tile,d)
 
     print d,prod_par_dateImg[d]
 
@@ -208,9 +208,11 @@ print
 
 derniereDate=""
 for d in dates_diff:
-    nomL2="%s/%s"%(repL2,nomL2_par_dateImg[d])
-    if os.path.exists(nomL2):
+    try :
+        nomL2=glob.glob("%s/%s"%(repL2,nomL2_par_dateImg[d]))[0]
         derniereDate=d
+    except :
+        pass
 
 
 print "Most recent processed date :", derniereDate
@@ -253,10 +255,10 @@ for i in range(nb_dates):
             #Search for previous L2 product
             for dAnterieure in dates_diff[0:i]:
                 nom_courant="%s/%s"%(repL2,nomL2_par_dateImg[dAnterieure])
-                print nom_courant
-                if os.path.exists(nom_courant):
-                    nomL2=nom_courant
-                print nomL2
+                try :
+                    nomL2=glob.glob("%s/%s"%(repL2,nomL2_par_dateImg[d]))[0]
+                except :
+                    pass
             print "previous L2 : ", nomL2
             os.symlink(prod_par_dateImg[d],repWork+"/in/"+os.path.basename(prod_par_dateImg[d]))
             os.symlink(nomL2,repWork+"/in/"+os.path.basename(nomL2))
