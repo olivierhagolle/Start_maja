@@ -24,7 +24,7 @@ class OptionParser (optparse.OptionParser):
       if getattr(self.values, option.dest) is None:
           self.error("%s option not supplied" % option)
 
-##################################### Lecture de fichier de parametres "Mot_clé=Valeur"
+##################################### Lecture de fichier de parametres "Mot_clÃ©=Valeur"
 def read_folders(fic_txt):
     with file(fic_txt, 'r') as f :
         for ligne in f.readlines() :
@@ -126,7 +126,7 @@ repGipp=repCode+"/GIPP_%s"%context
 repWork= "%s/%s/%s/%s/"%(repWork,site,tile,context)
 if  not (os.path.exists(repWork)):
     try :
-        os.mkdir(repWork)
+        os.makedirs(repWork)
     except :
         print "something wrong when creating %s"%repWork
         sys.exit(1)
@@ -237,7 +237,7 @@ for i in range(nb_dates):
         if i==0 :
             nb_prod_backward=min(len(dates_diff),nb_backward)
             for date_backward in dates_diff[0:nb_prod_backward]:
-                print "#### dates à traiter", date_backward
+                print "#### dates Ã  traiter", date_backward
                 print prod_par_dateImg[date_backward]
                 os.symlink(prod_par_dateImg[date_backward],repWork+"/in/"+os.path.basename(prod_par_dateImg[date_backward]))
             add_parameter_files(repGipp,repWork+"/in/",tile)
