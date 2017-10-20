@@ -7,7 +7,7 @@ MAJA has a very unique feature among all atmospheric correction processors : it 
 
 For more information about MAJA methods, please read : http://www.cesbio.ups-tlse.fr/multitemp/?p=6203
 
-## What's new in this version (2017/10/20)
+## What's new in this version (v1.0 2017/10/20)
 Following discovery of errors in previous version, we went through all the files and found other updates to make. If most files have been updated, differences in the results are quite small compared to results obtained from version below.
 
 ## What's new in version of (2017/10/02)
