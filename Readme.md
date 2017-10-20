@@ -29,7 +29,7 @@ MAJA's native output data format is explained in the document "user, installatio
 # Test maja with the test data set
 ## Get MAJA Sofware
 MAJA can be downloaded as a binary code from https://logiciels.cnes.fr/en/content/maja
-It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code. For a licence allowing commercial use, please contact CNES (Gérard Lassalle-Balier).
+It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code. For a licence allowing commercial use, please contact CNES (Olivier Hagolle).
 
 ## install MAJA
 This is explained in the documentation pfocided with MAJA software.
