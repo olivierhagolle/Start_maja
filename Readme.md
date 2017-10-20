@@ -7,7 +7,10 @@ MAJA has a very unique feature among all atmospheric correction processors : it 
 
 For more information about MAJA methods, please read : http://www.cesbio.ups-tlse.fr/multitemp/?p=6203
 
-## What's new in this version (2017/10/02)
+## What's new in this version (2017/10/20)
+Following discovery of errors in previous version, we went through all the files and found other updates to make. If most files have been updated, differences in the results are quite small compared to results obtained from version below.
+
+## What's new in version of (2017/10/02)
 - this version of start_maja works with both S2A and S2B
 - we have found errors, especially regarding water vapour, in the parameters we provided in the "GIPP_nominal" folder. These parameters have been removed and we strongly advise you to do the same.
 - we have updated the parameters and provided them for both S2A and S2B in the folder GIPP_S2AS2B
@@ -122,7 +125,7 @@ repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
 Here is an example of command line
 ```
 Usage   : python ./start_maja.py -f <folder_file>-c <context> -t <tile name> -s <Site Name> -d <start date>
-Example : python ./start_maja.py -f folders.txt -c S2AS2B -t 31TFJ -s Avignon -d 20170101
+Example : python ./start_maja.py -f folders.txt -c MAJA_1_0_S2AS2B_NATIF -t 31TFJ -s Avignon -d 20170101
 ```
 
 Caution, *when a product has more than 90% of clouds, the L2A is not issued*. However, a folder with _NOTVALD_ is created.
