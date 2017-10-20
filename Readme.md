@@ -8,9 +8,11 @@ MAJA has a very unique feature among all atmospheric correction processors : it 
 For more information about MAJA methods, please read : http://www.cesbio.ups-tlse.fr/multitemp/?p=6203
 
 ## What's new in this version (v1.0 2017/10/20)
-Following discovery of errors in previous version, we went through all the files and found other updates to make. If most files have been updated, differences in the results are quite small compared to results obtained from version below.
+Following discovery of errors in previous version, we went through all the files and found other updates to make. If most files have been updated, differences in the results are quite small (<0.001 in reflectance) compared to results obtained from version 0.9.
 
-## What's new in version of (2017/10/02)
+We have also set-up [an internal repository](http://tully.ups-tlse.fr/olivier/gipp/tree/master) containing parameters for all sensors actually processed by MAJA, includng Venµs and LANDSAT 8. This repository will be updated more frequently. 
+
+## What's new in version of (v0.9 2017/10/02)
 - this version of start_maja works with both S2A and S2B
 - we have found errors, especially regarding water vapour, in the parameters we provided in the "GIPP_nominal" folder. These parameters have been removed and we strongly advise you to do the same.
 - we have updated the parameters and provided them for both S2A and S2B in the folder GIPP_S2AS2B
