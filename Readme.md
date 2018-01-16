@@ -38,6 +38,11 @@ It is provided as a binary code and compiled for *Linux Red Hat and CentOS versi
 
 ## install MAJA
 This is explained in the documentation provided with MAJA software.
+Some users have had issues with some missing libraries, depending on how the linux system is configured. Running the following commands, with administration rights, might help.
+```
+sudo yum --disableplugin=fastestmirror -y update && yum clean all
+sudo yum --disableplugin=fastestmirror -y install gd libxslt libxml2
+```
 
 ## Test MAJA with a test data_set
 We provide a test data set, to verify your installation of MAJA. Please download the following pacakge and follow the provided documentation.
