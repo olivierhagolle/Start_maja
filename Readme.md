@@ -40,7 +40,7 @@ It is provided as a binary code and compiled for *Linux Red Hat and CentOS versi
 This is explained in the documentation provided with MAJA software.
 Some users have had issues with some missing libraries, depending on how the linux system is configured. Running the following commands, with administration rights, might help.
 ```
-sudo yum --disableplugin=fastestmirror -y update && yum clean all
+# sudo yum --disableplugin=fastestmirror -y update (if necessary)
 sudo yum --disableplugin=fastestmirror -y install gd libxslt libxml2
 ```
 
