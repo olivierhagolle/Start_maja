@@ -263,7 +263,7 @@ for i in range(nb_dates):
                     print "pas de L2 pour :", nom_courant
                     pass
             print "previous L2 : ", nomL2
-            os.symlink(prod_par_dateImg[PreviousDate],repWork+"/in/"+os.path.basename(prod_par_dateImg[PreviousDate]))
+            os.symlink(prod_par_dateImg[d],repWork+"/in/"+os.path.basename(prod_par_dateImg[d]))
             os.symlink(nomL2,repWork+"/in/"+os.path.basename(nomL2))
             os.symlink(nomL2.replace("DBL.DIR","HDR"),repWork+"/in/"+os.path.basename(nomL2).replace("DBL.DIR","HDR"))
             os.symlink(nomL2.replace("DIR",""),repWork+"/in/"+os.path.basename(nomL2).replace("DIR",""))
