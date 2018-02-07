@@ -211,11 +211,12 @@ for d in dates_diff:
     try :
         nomL2init=glob.glob("%s/%s"%(repL2,nomL2_par_dateImg[d]))[0]
         derniereDate=d
+        print "Most recent processed date :", derniereDate
     except :
         pass
 
 
-print "Most recent processed date :", derniereDate
+
 
 ############### For each product
 nb_dates=len(dates_diff)
@@ -242,12 +243,15 @@ for i in range(nb_dates):
                 os.symlink(prod_par_dateImg[date_backward],repWork+"/in/"+os.path.basename(prod_par_dateImg[date_backward]))
             add_parameter_files(repGipp,repWork+"/in/",tile)
             add_DEM(repDtm,repWork+"/in/",tile)
- 
-            commande= "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s"%(maja,repWork+"/in",repL2,repWork+"/userconf",tile)
+            Maja_logfile="%s/%s.log"%(repL2,os.path.basename(prod_par_dateImg[d]))
+  
+            commande= "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s &> %s"%(maja,repWork+"/in",repL2,repWork+"/userconf",tile,Maja_logfile)
             print "#################################"
             print "#################################"
             print commande
             print "#################################"
+            print "Initialisation mode with backward is longer"
+            print "MAJA logfile:",Maja_logfile
             print "#################################"
             os.system(commande)
         #else mode nominal
@@ -267,16 +271,18 @@ for i in range(nb_dates):
             os.symlink(nomL2,repWork+"/in/"+os.path.basename(nomL2))
             os.symlink(nomL2.replace("DBL.DIR","HDR"),repWork+"/in/"+os.path.basename(nomL2).replace("DBL.DIR","HDR"))
             os.symlink(nomL2.replace("DIR",""),repWork+"/in/"+os.path.basename(nomL2).replace("DIR",""))
-                        
+            Maja_logfile="%s/%s.log"%(repL2,os.path.basename(prod_par_dateImg[d]))
+                         
 
             add_parameter_files(repGipp,repWork+"/in/",tile)
             add_DEM(repDtm,repWork+"/in/",tile)
 
-            commande= "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s"%(maja,repWork+"/in",repL2,repWork+"/userconf",tile)
+            commande= "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s &> %s"%(maja,repWork+"/in",repL2,repWork+"/userconf",tile,Maja_logfile)
             print "#################################"
             print "#################################"
             print commande
             print "#################################"
+            print "MAJA logfile:",Maja_logfile
             print "#################################"
             os.system(commande)
 
