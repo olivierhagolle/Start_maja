@@ -255,6 +255,7 @@ for i in range(nb_dates):
             os.system(commande)
         # else mode nominal
         else:
+            nomL2 = ""
             # Search for previous L2 product
             for PreviousDate in dates_diff[0:i]:
                 nom_courant = "%s/%s" % (repL2, nomL2_par_dateImg[PreviousDate])
