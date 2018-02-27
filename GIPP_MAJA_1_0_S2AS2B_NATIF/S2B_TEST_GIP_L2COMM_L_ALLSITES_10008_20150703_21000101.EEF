@@ -68,6 +68,10 @@
 				<!--AOT Nodata value (in [0;255]) -->
 				<AOT_No_Data_Value>0</AOT_No_Data_Value>
 			</AOT_Configuration_Values>
+            <Cal_Adjust_Option>false</Cal_Adjust_Option>
+            <Cal_Adjust_Factor>1.0 0.5 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0</Cal_Adjust_Factor>
+            <!-- Constant model to use in case of absent/invalid CAMS -->
+        	<Constant_Model>CONTINEN</Constant_Model>
 		</Common_Parameters>
 		<Bands_Definition>
 			<Thematic_Definition>
@@ -80,7 +84,7 @@
 				<!-- Near Infra Red band code identifier -->
 				<NIR_Band_Code>B8A</NIR_Band_Code>
 				<!--  SWIR band code identifier -->
-				<SWIR1_Band_Code>B11</SWIR1_Band_Code>
+				<SWIR_Band_Code>B11</SWIR_Band_Code>
 				<!--Band code identifier that corresponds to the 2.2µm spectral band -->
 				<Band_2200_Code>B12</Band_2200_Code>
 				<!-- Band code identifier used for the red channel of the quick look -->
@@ -117,7 +121,30 @@
 			<!-- Euclidean distance beyong which a pixel is declared as hidden (in meter) -->
 			<Distance_Threshold>240.00</Distance_Threshold>
 		</DTM_Processing>
-		<Atmospheric_Absorption_Correction>
+        <Reduced_LUT_Computation>
+            <!--switch for the directional correction for plugin supporting it -->
+            <Directional_Correction_Option>false</Directional_Correction_Option>
+            <!-- Roughness coefficients, one by band (13 for SENTINEL2) -->
+            <Roughness_Coefficients>0 0.480620155 0.4441041348 0.3396449704 0.4 0.5 0.7 0.4962819269 0.4962819269 0 0 0.3364431487 0.2404063205</Roughness_Coefficients>
+            <!-- Volume coefficients, one by band (13 for SENTINEL2) -->
+            <Volume_Coefficients>0 0.1020671835 0.1362940276 0.1343195266 0.25 0.2 0.15 0.1066925315 0.1066925315 0 0 0.1320699708 0.1455981941</Volume_Coefficients>
+            <!-- Azimuth and Zenith reference angle for which the reflectances after directional correction are expressed -->
+            <Azimuth_Reference>0.00</Azimuth_Reference>
+            <Zenith_Reference>0.00</Zenith_Reference>
+        </Reduced_LUT_Computation>
+		<CAMS_Data_Preparation>
+        	<!-- Boolean to activa	te CAMS -->
+        	<Use_Cams_Data>false</Use_Cams_Data>
+        	<!-- List of model to use in cams -->
+        	<List_Of_Models>Dust Seasalt</List_Of_Models>        	
+        	<!-- RH sampling for LUT computation -->
+        	<RH_Sampling>30 50 70 80 85 90 95</RH_Sampling>
+        	<!-- Proportion of optical thickness -->
+        	<limAOT>0.95</limAOT>
+        	<!-- Number of hours defining the temporal window for CAMS Data validity -->
+        	<Time_Windows_CAMS>24</Time_Windows_CAMS>
+        </CAMS_Data_Preparation>
+        <Atmospheric_Absorption_Correction>
 			<!-- Option to use the default constant water vapour amount (if false use the GIP_L2WATV) -->
 			<Use_Default_Constant_Water_Amount>false</Use_Default_Constant_Water_Amount>
 			<!-- Water vapor band code identifier that corresponds to the 910nm or 940nm spectral band -->
@@ -394,7 +421,19 @@
 			<!-- Std value for gap filling smoothing -->
 			<Sigma_Smoothing_AOT>2</Sigma_Smoothing_AOT>
 		</AOT_Estimation>
-		<Composite>
+		
+       	<Cirrus_Correction>
+			<Cirrus_Correction_Option>false</Cirrus_Correction_Option>			
+			<Cirrus_Gamma_Band_Codes>B1 B2 B3</Cirrus_Gamma_Band_Codes>
+			<Cirrus_SWIR_Band_Codes>B11 B12</Cirrus_SWIR_Band_Codes>
+			<Cirrus_Min_Pix_In_List>100</Cirrus_Min_Pix_In_List>
+			<Cirrus_Max_Distance>1000</Cirrus_Max_Distance>
+			<Cirrus_Min_Gamma_Value>0.6</Cirrus_Min_Gamma_Value>
+			<Cirrus_Max_Gamma_Value>1</Cirrus_Max_Gamma_Value>
+			<Cirrus_SWIR_Gamma_Factor>2</Cirrus_SWIR_Gamma_Factor>
+			<Cirrus_Threshold_Factor>0.95</Cirrus_Threshold_Factor>
+		</Cirrus_Correction>
+        <Composite>
 			<!-- Threshold on AOT. In case of a high AOT, the composite image is not updated with the new surface reflectance -->
 			<Max_AOT>0.500</Max_AOT>
 			<!-- Std max under which the std of the AOT image is not taking into account in the calculation of the high AOT threshold -->
