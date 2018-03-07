@@ -14,6 +14,7 @@ import os
 import os.path
 import shutil
 import sys
+import logging
 
 
 ##########################################################################
@@ -69,7 +70,7 @@ def add_parameter_files(repGipp, repWorkIn, tile):
 
 
 def add_DEM(repDEM, repWorkIn, tile):
-    print repDEM + "/*%s*/*" % tile
+    logging.debug("%s/*%s*/*", repDEM, tile)
     for fic in glob.glob(repDEM + "/S2_*%s*/*" % tile):
         base = os.path.basename(fic)
         os.symlink(fic, repWorkIn + base)
@@ -113,6 +114,8 @@ else:
 
     (options, args) = parser.parse_args()
 
+logging.debug("options.stardate %s", options.startDate)
+
 tile = options.tile
 site = options.site
 orbit = options.orbit
@@ -133,7 +136,7 @@ if not (os.path.exists(repWork)):
     try:
         os.makedirs(repWork)
     except:
-        print "something wrong when creating %s" % repWork
+        logging.error("something wrong when creating %s", repWork)
         sys.exit(1)
 repL1 = "%s/%s/" % (repL1, site)
 repL2 = "%s/%s/%s/%s/" % (repL2, site, tile, context)
@@ -141,13 +144,13 @@ repL2 = "%s/%s/%s/%s/" % (repL2, site, tile, context)
 # check existence of folders
 for fic in repL1, repCode, repWork, maja:
     if not (os.path.exists(fic)):
-        print "ERROR : %s does not exist" % fic
+        logging.error("ERROR : %s does not exist", fic)
         sys.exit(-1)
 
 if not os.path.exists(repL2):
     os.makedirs(repL2)
 
-print repL1 + "/S2?_OPER_PRD_MSIL1C*_%s_*.SAFE/GRANULE/*%s*" % (orbit, tile)
+logging.debug("search path %s/S2?_OPER_PRD_MSIL1C*_%s_*.SAFE/GRANULE/*%s*", repL1, orbit, tile)
 if orbit != None:
     listeProd = glob.glob(repL1 + "/S2?_OPER_PRD_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile))
     listeProd = listeProd + glob.glob(repL1 + "/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile))
@@ -155,6 +158,7 @@ else:
     listeProd = glob.glob(repL1 + "/S2?_OPER_PRD_MSIL1C*.SAFE/GRANULE/*%s*" % (tile))
     listeProd = listeProd + glob.glob(repL1 + "/S2?_MSIL1C*.SAFE/GRANULE/*%s*" % (tile))
 
+logging.debug("Liste prod %s", listeProd)
 # list of images to process
 dateProd = []
 dateImg = []
@@ -162,15 +166,15 @@ listeProdFiltree = []
 for elem in listeProd:
     rac = elem.split("/")[-3]
     elem = '/'.join(elem.split("/")[0:-2])
-    print elem
+    logging.debug("elem: %s", elem)
     rac = os.path.basename(elem)
-    print rac
+    logging.debug( "rac: %s", rac)
 
     if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C"):
         date_asc = rac.split('_')[7][1:9]
     else:
         date_asc = rac.split('_')[6][0:8]
-    print date_asc
+    logging.debug("date_asc %s %s %s/%s", date_asc, date_asc >= options.startDate, date_asc, options.startDate)
     if date_asc >= options.startDate:
         dateImg.append(date_asc)
         if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C"):
@@ -180,6 +184,8 @@ for elem in listeProd:
         listeProdFiltree.append(elem)
 
 # removing multiple images with same date and tile
+logging.debug("date img %s", dateImg)
+logging.debug("set %s", set(dateImg))
 
 dates_diff = list(set(dateImg))
 dates_diff.sort()
@@ -200,36 +206,46 @@ for d in dates_diff:
 
     # keep only the products with the most recent date
     ind = dateProd.index(dpmax)
-    print dpmax, ind
+    logging.debug( "date prod max %s index in list %s", dpmax, ind)
     prod_par_dateImg[d] = listeProdFiltree[ind]
     nomL2_par_dateImg[d] = "S2?_OPER_SSC_L2VALD_%s____%s.DBL.DIR" % (tile, d)
 
-    print d, prod_par_dateImg[d]
+    logging.debug( "d %s, prod_par_dateImg[d] %s", d, prod_par_dateImg[d])
 
 print
 # find the first image to process
 
+logging.debug( "dates_diff %d", dates_diff)
+
 derniereDate = ""
 for d in dates_diff:
+    logging.debug("d %s", d)
+    logging.debug("%s/%s", repL2, nomL2_par_dateImg[d])
+    logging.debug("glob %s", glob.glob("%s/%s" % (repL2, nomL2_par_dateImg[d])))
     try:
         nomL2init = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg[d]))[0]
         derniereDate = d
+        logging.debug( "****** derniere date %s", derniereDate)
     except:
         pass
 
-print "Most recent processed date :", derniereDate
+logging.debug("Most recent processed date : %s", derniereDate)
 
 ############### For each product
 nb_dates = len(dates_diff)
 
+logging.debug( "nb dates %s", nb_dates)
+
 if not (os.path.exists(repWork)):
     os.makedirs(repWork)
 if not (os.path.exists(repWork + "userconf")):
-    print "create " + repWork + "userconf"
+    logging.debug("create %s userconf %s", repWork)
     add_config_files(repConf, repWork + "userconf")
 
+logging.debug("derniereDate %s", derniereDate)
 for i in range(nb_dates):
     d = dates_diff[i]
+    logging.debug( "d %s, %s", d, d > derniereDate)
     if d > derniereDate:
         if os.path.exists(repWork + "/in"):
             shutil.rmtree(repWork + "/in")
@@ -238,8 +254,8 @@ for i in range(nb_dates):
         if i == 0:
             nb_prod_backward = min(len(dates_diff), nb_backward)
             for date_backward in dates_diff[0:nb_prod_backward]:
-                print "#### dates Ã  traiter", date_backward
-                print prod_par_dateImg[date_backward]
+                logging.debug("dates à traiter %s", date_backward)
+                logging.debug(prod_par_dateImg[date_backward])
                 os.symlink(prod_par_dateImg[date_backward],
                            repWork + "/in/" + os.path.basename(prod_par_dateImg[date_backward]))
             add_parameter_files(repGipp, repWork + "/in/", tile)
@@ -247,11 +263,11 @@ for i in range(nb_dates):
 
             commande = "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s" % (
             maja, repWork + "/in", repL2, repWork + "/userconf", tile)
-            print "#################################"
-            print "#################################"
-            print commande
-            print "#################################"
-            print "#################################"
+            logging.debug("#################################")
+            logging.debug("#################################")
+            logging.debug(commande)
+            logging.debug("#################################")
+            logging.debug("#################################")
             os.system(commande)
         # else mode nominal
         else:
@@ -260,13 +276,13 @@ for i in range(nb_dates):
             for PreviousDate in dates_diff[0:i]:
                 nom_courant = "%s/%s" % (repL2, nomL2_par_dateImg[PreviousDate])
                 try:
-                    print nom_courant
+                    logging.debug(nom_courant)
                     nomL2 = glob.glob(nom_courant)[0]
-                    print "Previous L2 names, per increasing date :", nomL2
+                    logging.debug("Previous L2 names, per increasing date : %s", nomL2)
                 except:
-                    print "pas de L2 pour :", nom_courant
+                    logging.debug("pas de L2 pour : %s", nom_courant)
                     pass
-            print "previous L2 : ", nomL2
+                    logging.debug("previous L2 : %s", nomL2)
             os.symlink(prod_par_dateImg[PreviousDate],
                        repWork + "/in/" + os.path.basename(prod_par_dateImg[PreviousDate]))
             os.symlink(nomL2, repWork + "/in/" + os.path.basename(nomL2))
@@ -279,9 +295,9 @@ for i in range(nb_dates):
 
             commande = "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s" % (
             maja, repWork + "/in", repL2, repWork + "/userconf", tile)
-            print "#################################"
-            print "#################################"
-            print commande
-            print "#################################"
-            print "#################################"
+            logging.debug("#################################")
+            logging.debug("#################################")
+            logging.debug(commande)
+            logging.debug("#################################")
+            logging.debug("#################################")
             os.system(commande)
