@@ -42,8 +42,10 @@ def read_folders(fic_txt):
                 repL2 = (ligne.split('=')[1]).strip()
             if ligne.find('repMaja') == 0:
                 repMaja = (ligne.split('=')[1]).strip()
+            if ligne.find('repCAMS') == 0:
+                repCAMS = (ligne.split('=')[1]).strip()
 
-    return (repCode, repWork, repL1, repL2, repMaja)
+    return (repCode, repWork, repL1, repL2, repMaja, repCAMS)
 
 
 # =============== Module to copy and link files
@@ -82,7 +84,7 @@ def add_config_files(repConf, repWorkConf):
 
 def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     # =================directories
-    (repCode, repWork, repL1, repL2, maja) = read_folders(folder_file)
+    (repCode, repWork, repL1, repL2, maja, repCams) = read_folders(folder_file)
 
     repConf = repCode + "/userconf"
     repDtm = repCode + "/DTM"
