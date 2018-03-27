@@ -17,7 +17,7 @@ import sys
 import logging
 
 
-##########################################################################
+# #########################################################################
 class OptionParser(optparse.OptionParser):
 
     def check_required(self, opt):
@@ -28,8 +28,11 @@ class OptionParser(optparse.OptionParser):
             self.error("%s option not supplied" % option)
 
 
-##################################### Lecture de fichier de parametres "Mot_clé=Valeur"
+# #################################### Lecture de fichier de parametres "Mot_clé=Valeur"
 def read_folders(fic_txt):
+
+    repCode = repWork = repL1= repL2 = repMaja = repCAMS = None
+
     with file(fic_txt, 'r') as f:
         for ligne in f.readlines():
             if ligne.find('repCode') == 0:
@@ -92,7 +95,7 @@ def read_folders(fic_txt):
     if directory_missing:
         raise Exception("One or more directories are missing. See log file for more information.")
 
-    return (repCode, repWork, repL1, repL2, repMaja, repCAMS)
+    return repCode, repWork, repL1, repL2, repMaja, repCAMS
 
 
 # =============== Module to copy and link files
@@ -237,7 +240,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
 
     logging.debug("Most recent processed date : %s", derniereDate)
 
-    ############### For each product
+    # ############## For each product
     nb_dates = len(dates_diff)
 
     logging.debug("nb dates %s", nb_dates)
@@ -308,6 +311,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                 logging.debug("#################################")
                 os.system(commande)
 
+
 if __name__ == '__main__':
     # ========== command line
     if len(sys.argv) == 1:
@@ -323,22 +327,22 @@ if __name__ == '__main__':
         usage = "usage: %prog [options] "
         parser = OptionParser(usage=usage)
 
-        parser.add_option("-c", "--context", dest="context", action="store", \
+        parser.add_option("-c", "--context", dest="context", action="store",
                           help="name of the test directory", type="string", default='nominal')
 
-        parser.add_option("-t", "--tile", dest="tile", action="store", \
+        parser.add_option("-t", "--tile", dest="tile", action="store",
                           help="tile number", type="string", default='31TFJ')
 
-        parser.add_option("-s", "--site", dest="site", action="store", \
+        parser.add_option("-s", "--site", dest="site", action="store",
                           help="site name", type="string", default='Arles')
 
-        parser.add_option("-o", "--orbit", dest="orbit", action="store", \
+        parser.add_option("-o", "--orbit", dest="orbit", action="store",
                           help="orbit number", type="string", default=None)
 
-        parser.add_option("-f", "--folder", dest="folder_file", action="store", type="string", \
+        parser.add_option("-f", "--folder", dest="folder_file", action="store", type="string",
                           help="folder definition file", default=None)
 
-        parser.add_option("-d", "--startDate", dest="startDate", action="store", \
+        parser.add_option("-d", "--startDate", dest="startDate", action="store",
                           help="start date for processing (optional)", type="string", default="20150623")
 
         (options, args) = parser.parse_args()
@@ -354,4 +358,3 @@ if __name__ == '__main__':
     nb_backward = 8  # number of images to process in backward mode
 
     start_maja(folder_file, context, site, tile, orbit, nb_backward)
-    
