@@ -45,6 +45,53 @@ def read_folders(fic_txt):
             if ligne.find('repCAMS') == 0:
                 repCAMS = (ligne.split('=')[1]).strip()
 
+    missing = False
+
+    if repCode is None:
+        logging.error("repCode is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
+        missing = True
+    if repWork is None:
+        logging.error("repWork is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
+        missing = True
+    if repL1 is None:
+        logging.error("repL1 is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
+        missing = True
+    if repL2 is None:
+        logging.error("repL2 is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
+        missing = True
+    if repMaja is None:
+        logging.error("repCode is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
+        missing = True
+    if repCAMS is None:
+        logging.error("repCAMS is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
+        missing = True
+
+    directory_missing = False
+
+    if not os.path.isdir(repCode):
+        logging.error("%s is missing", repCode)
+        directory_missing = True
+    if not os.path.isdir(repWork):
+        logging.error("%s is missing", repWork)
+        directory_missing = True
+    if not os.path.isdir(repL1):
+        logging.error("%s is missing", repL1)
+        directory_missing = True
+    if not os.path.isdir(repL2):
+        logging.error("%s is missing", repL2)
+        directory_missing = True
+    if not os.path.isdir(repMaja):
+        logging.error("%s is missing", repMaja)
+        directory_missing = True
+    if not os.path.isdir(repCAMS):
+        logging.error("%s is missing", repCAMS)
+        directory_missing = True
+
+    if missing:
+        raise Exception("Configuration file is not complete. See log file for more information.")
+    if directory_missing:
+        raise Exception("One or more directories are missing. See log file for more information.")
+
     return (repCode, repWork, repL1, repL2, repMaja, repCAMS)
 
 
