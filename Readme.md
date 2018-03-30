@@ -58,11 +58,55 @@ http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/S2_NOMINAL-dataset-descriptio
 
 Run the tests as mentionned in the test documentation. If sucessful, go to the next step.
 
+### Folder structure
+To run MAJA, you need to store all the neceessary data in an input folder. Here is an example of its content in nominal mode.
+
+```
+S2A_MSIL1C_20180316T103021_N0206_R108_T32TMR_20180316T123927.SAFE
+S2A_TEST_GIP_CKEXTL_S_31TJF____10001_20150703_21000101.EEF
+S2A_TEST_GIP_CKQLTL_S_31TJF____10005_20150703_21000101.EEF
+S2A_TEST_GIP_L2ALBD_L_CONTINEN_10005_20150703_21000101.DBL.DIR
+S2A_TEST_GIP_L2ALBD_L_CONTINEN_10005_20150703_21000101.HDR
+S2A_TEST_GIP_L2COMM_L_ALLSITES_10008_20150703_21000101.EEF
+S2A_TEST_GIP_L2DIFT_L_CONTINEN_10005_20150703_21000101.DBL.DIR
+S2A_TEST_GIP_L2DIFT_L_CONTINEN_10005_20150703_21000101.HDR
+S2A_TEST_GIP_L2DIRT_L_CONTINEN_10005_20150703_21000101.DBL.DIR
+S2A_TEST_GIP_L2DIRT_L_CONTINEN_10005_20150703_21000101.HDR
+S2A_TEST_GIP_L2SMAC_L_ALLSITES_10005_20150703_21000101.EEF
+S2A_TEST_GIP_L2TOCR_L_CONTINEN_10005_20150703_21000101.DBL.DIR
+S2A_TEST_GIP_L2TOCR_L_CONTINEN_10005_20150703_21000101.HDR
+S2A_TEST_GIP_L2WATV_L_CONTINEN_10005_20150703_21000101.DBL.DIR
+S2A_TEST_GIP_L2WATV_L_CONTINEN_10005_20150703_21000101.HDR
+S2B_OPER_SSC_L2VALD_32TMR____20180308.DBL.DIR
+S2B_OPER_SSC_L2VALD_32TMR____20180308.HDR
+S2B_TEST_GIP_CKEXTL_S_31TJF____10001_20150703_21000101.EEF
+S2B_TEST_GIP_CKQLTL_S_31TJF____10005_20150703_21000101.EEF
+S2B_TEST_GIP_L2ALBD_L_CONTINEN_10003_20150703_21000101.DBL.DIR
+S2B_TEST_GIP_L2ALBD_L_CONTINEN_10003_20150703_21000101.HDR
+S2B_TEST_GIP_L2COMM_L_ALLSITES_10008_20150703_21000101.EEF
+S2B_TEST_GIP_L2DIFT_L_CONTINEN_10002_20150703_21000101.DBL.DIR
+S2B_TEST_GIP_L2DIFT_L_CONTINEN_10002_20150703_21000101.HDR
+S2B_TEST_GIP_L2DIRT_L_CONTINEN_10002_20150703_21000101.DBL.DIR
+S2B_TEST_GIP_L2DIRT_L_CONTINEN_10002_20150703_21000101.HDR
+S2B_TEST_GIP_L2SMAC_L_ALLSITES_10005_20150703_21000101.EEF
+S2B_TEST_GIP_L2TOCR_L_CONTINEN_10002_20150703_21000101.DBL.DIR
+S2B_TEST_GIP_L2TOCR_L_CONTINEN_10002_20150703_21000101.HDR
+S2B_TEST_GIP_L2WATV_L_CONTINEN_10005_20150703_21000101.DBL.DIR
+S2B_TEST_GIP_L2WATV_L_CONTINEN_10005_20150703_21000101.HDR
+S2__TEST_AUX_REFDE2_T32TMR_0001.DBL.DIR
+S2__TEST_AUX_REFDE2_T32TMR_0001.HDR
+S2__TEST_GIP_L2SITE_S_31TJF____10001_00000000_99999999.EEF
+```
+
+The .SAFE file is the input product. THE L2VALD files are the L2A product, which is the result from a previous execution  of MAJA. The files with GIP are parameter files for S2A and S2B, that you will find in this repository. The REFDE2 files are the DTM files. How to obtain them is explained below. 
+
+A "userconf" folder is also necessary, but it is also provided in this repository.
+
+
 # Basic Supervisor for MAJA processor
 
 The basic supervisor **start_maja** enables to process successively all files in a time series of Sentinel-2 images for a given tile, stored in a folder. The initialisation of the time series is performed with the "backward mode", and then all the dates are processed in "nominal" mode. The backward mode takes much more time than the nominal mode. On my computer, which is a fast one, the nominal mode takes 15 minutes, backward mode takes almost one hour. No control is done on the outputs, and it does not check if the time elapsed between two successive products used as input is not too long and would require restarting the initialisation in backward mode.
 
-To run MAJA, all the input data (L1C, previous L2A, parameters (GIPP), and DTM) must be stored in an input folder. MAJA handles that by making links from the input file to the input folder.
 
 To use this strat_maja.py, you will need to configure the directories within the folder.txt file.
 
