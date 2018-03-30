@@ -286,6 +286,20 @@ for i in range(nb_dates):
             print "#################################"
             os.system(commande)
 
+        #check for errors in MAJA executions
+        Error=False
+        with open(Maja_logfile, "r") as logfile:
+            for line in logfile:
+                if line.find("[E]")>0:
+                    print line
+                    Error=True
+        if Error:
+            print "#######################################"
+            print "Error detected, see: %s"%Maja_logfile
+            print "#######################################"
+            sys.exit(-1)
+            
+
         
     
 
