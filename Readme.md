@@ -60,9 +60,11 @@ Run the tests as mentionned in the test documentation. If sucessful, go to the n
 
 # Basic Supervisor for MAJA processor
 
-The basic supervisor **start_maja** enables to process successively all files in a time series of Sentinel-2 images for a given tile, stored in a folder. The initialisation of the time series is performed with the "backward mode", and then all the dates are processed in "nominal" mode. The backward mode takes much more time than the nominal mode. On my computer, which is a fast one, the nominal mode takes 15 minutes, backward mode takes almost one hour. No control is done on the outputs, and it does not check if the time elapsed between two successive products is not too long and would require restarting the initialisation in backward mode.
+The basic supervisor **start_maja** enables to process successively all files in a time series of Sentinel-2 images for a given tile, stored in a folder. The initialisation of the time series is performed with the "backward mode", and then all the dates are processed in "nominal" mode. The backward mode takes much more time than the nominal mode. On my computer, which is a fast one, the nominal mode takes 15 minutes, backward mode takes almost one hour. No control is done on the outputs, and it does not check if the time elapsed between two successive products used as input is not too long and would require restarting the initialisation in backward mode.
 
-To use this tool, you will need to configure the directories within the folder.txt file.
+To run MAJA, all the input data (L1C, previous L2A, parameters (GIPP), and DTM) must be stored in an input folder. MAJA handles that by making links from the input file to the input folder.
+
+To use this strat_maja.py, you will need to configure the directories within the folder.txt file.
 
 ## Download Sentinel-2 data :
 The use of peps_download.py to download Sentinel-2 l1c PRODUCTS is recommended :
