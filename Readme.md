@@ -3,11 +3,11 @@
 
 MAJA stands for Maccs-Atcor Joint Algorithm. This atmospheric correction and cloud screening software is based [on MACCS processor](http://www.cesbio.ups-tlse.fr/multitemp/?p=6203), developped for CNES by CS-SI company, from a method and a prototype developped at CESBIO, <sup>[1](#ref1)</sup> <sup>[2](#ref2)</sup> <sup>[3](#ref3)</sup>. Recently, thanks to an agreement between CNES and DLR and to some funding from ESA, we started adding methods from DLR 's atmospheric correction software ATCOR into MACCS. MACCS then became MAJA. The current distributed version is the first version resulting from this collaboration : MAJA V1-0. 
 
-MAJA has a very unique feature among all atmospheric correction processors : it uses multi-temporal criteria to improve cloud detection and aerosol retrieval. Because of this feature, it is important to use MAJA to process *time series* of images and not single images. Moreover, these images have to be processed chronogically. To initialise processing of a time series, a special mode is used, named "backward mode". To get a correct first product, we process in fact a small number of products in anti-chronological order (default value of number of images processed in backward mode is 8, but consider increasing it if your region is very cloudy). Then all the products are processed in "nominal" mode and chronological order. When a product is fully or nearly fully cloudy, it is not issued to save processing time and disk space.
+MAJA has a very unique feature among all atmospheric correction processors : it uses multi-temporal criteria to improve cloud detection and aerosol retrieval. Because of this feature, it is important to use MAJA to process *time series* of images and not single images. Moreover, these images have to be processed chronologically. To initialise processing of a time series, a special mode is used, named "backward mode". To get a correct first product, we process in fact a small number of products in anti-chronological order (default value of number of images processed in backward mode is 8, but consider increasing it if your region is very cloudy). Then all the products are processed in "nominal" mode and chronological order. When a product is fully or nearly fully cloudy, it is not issued to save processing time and disk space.
 
-For more information about MAJA methods, please read : http://www.cesbio.ups-tlse.fr/multitemp/?p=6203
+For more information about MAJA methods but without details, please read : http://www.cesbio.ups-tlse.fr/multitemp/?p=6203
+To get all details on the methods, MAJA's ATBD is available here : http://tully.ups-tlse.fr/olivier/maja_atbd/blob/master/atbd_maja.pdf
 
-## What's new in this version (v1.0 2017/10/20)
 Following discovery of errors in previous version, we went through all the files and found other updates to make. If most files have been updated, differences in the results are quite small (<0.001 in reflectance) compared to results obtained from version 0.9.
 
 We have also set-up [an internal repository](http://tully.ups-tlse.fr/olivier/gipp/tree/master) containing parameters for all sensors actually processed by MAJA, includng Venµs and LANDSAT 8. This repository will be updated more frequently. 
@@ -37,7 +37,12 @@ MAJA can be downloaded as a binary code from https://logiciels.cnes.fr/en/conten
 It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code. For a licence allowing commercial use, please contact CNES (Olivier Hagolle).
 
 ## install MAJA
-This is explained in the documentation pfocided with MAJA software.
+This is explained in the documentation provided with MAJA software.
+Some users have had issues with some missing libraries, depending on how the linux system is configured. Running the following commands, with administration rights, might help.
+```
+# sudo yum --disableplugin=fastestmirror -y update (if necessary)
+sudo yum --disableplugin=fastestmirror -y install gd libxslt libxml2
+```
 
 ## Test MAJA with a test data_set
 We provide a test data set, to verify your installation of MAJA. Please download the following pacakge and follow the provided documentation.
@@ -67,16 +72,16 @@ https://github.com/olivierhagolle/peps_download
 The tool needs a lot of configuration files which are provided in two directories "userconf" and "GIPP_S2AS2B". I tend to never change the "userconf", but the GIPP_S2AS2B contains the parameters and look-up tables, which you might want to change. Most of the parameters lie within the L2COMM file. When I want to test different sets of parameters, I create a new GIPP folder, which I name GIPP_context, where *context* is passed as a parameter of the command line with option -c 
 
 ## DTM
-A DTM file is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, it is available here : http://tully.ups-tlse.fr/olivier/prepare_mnt
+A DTM folder is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, it is available here : http://tully.ups-tlse.fr/olivier/prepare_mnt
 
-An example of MNT file is available here for tile 31TFJ in Provence, France, near Avignon. Both files should be placed in a folder named DTM/S2__TEST_AUX_REFDE2_T31TFJ_0001 in the start_maja directory.
+An example of DTM file is available here for tile 31TFJ in Provence, France, near Avignon. Both files should be placed in a folder named DTM/S2__TEST_AUX_REFDE2_T31TFJ_0001 in the start_maja directory.
 
 
 http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0001.DBL
 
 http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0001.HDR
 
-The DBL file is a tar file (I am innocent for this choice...) that can be opend with `tar xvf `. MAJA can use both the archive or un-archived version. My tool above does not provide the archived version.
+The DBL file is a tar file (I am innocent for this choice...) that can be opened with `tar xvf `. MAJA can use both the archive or un-archived version. My tool above does not provide the archived version.
 
 <a name="workflow"></a>
 # Example workflow
@@ -142,7 +147,7 @@ Some Sentinel-2 L1C products lack the angle information which is required by MAJ
 <a name="docker"></a>
 # Docker
 
-Dániel Kristóf provided us with a Dockerfile (Thank you Dániel), which, on any linux system retrieves the CentOS System, installs what is necessary and configures MAJA. I am really not a Docker expert, and when I tried, my system engeneer immedialtely told me that there are some securities issues with Docker...
+Dániel Kristóf provided us with a Dockerfile (Thank you Dániel), which, on any linux system retrieves the CentOS System, installs what is necessary and configures MAJA. I am really not a Docker expert, and when I tried, my system engineer immedialtely told me that there are some securities issues with Docker...
 
 But if we follow Daniel's guidelines :
 
