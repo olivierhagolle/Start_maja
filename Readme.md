@@ -193,7 +193,7 @@ Caution, *when a product has more than 90% of clouds, the L2A is not issued*. Ho
 
 ## Known Errors
 
-If you see this message : "ERROR 1:  Not a TIFF file, bad magic number 0 (0x0) ", donn't worry, it is just a message sent by gdal, that has no consequence. We will try to catch it in next versions...
+If you see this message : "ERROR 1:  Not a TIFF file, bad magic number 0 (0x0) ", don't worry, it is just a message sent by gdal, that has no consequence. We will try to catch it in next versions...
 
 Some Sentinel-2 L1C products lack the angle information which is required by MAJA. In this case, MAJA stops processing with an error message. This causes issues particularly in the backward mode. These products were acquired in February and March 2016 and have not been reprocessed by ESA (despited repeated asks from my side). You should remove them from the folder which contains the list of L1C products to process.
 
