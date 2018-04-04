@@ -77,7 +77,7 @@ https://github.com/olivierhagolle/peps_download
 The tool needs a lot of configuration files which are provided in two directories "userconf" and "GIPP_S2AS2B". I tend to never change the "userconf", but the GIPP_S2AS2B contains the parameters and look-up tables, which you might want to change. Most of the parameters lie within the L2COMM file. When I want to test different sets of parameters, I create a new GIPP folder, which I name GIPP_context, where *context* is passed as a parameter of the command line with option -c . 
 
 ## Folder structure
-To run MAJA, you need to store all the neceessary data in an input folder. Here is an example of its content in nominal mode.
+To run MAJA, you need to store all the necessary data in an input folder. Here is an example of its content in nominal mode.
 
 ```
 S2A_MSIL1C_20180316T103021_N0206_R108_T32TMR_20180316T123927.SAFE
