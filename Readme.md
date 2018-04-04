@@ -10,7 +10,7 @@ To get all details on the methods, MAJA's ATBD is available here : http://tully.
 
 Following discovery of errors in previous version, we went through all the files and found other updates to make. If most files have been updated, differences in the results are quite small (<0.001 in reflectance) compared to results obtained from version 0.9.
 
-We have also set-up [an internal repository](http://tully.ups-tlse.fr/olivier/gipp/tree/master) containing parameters for all sensors actually processed by MAJA, includng Venµs and LANDSAT 8. This repository will be updated more frequently. 
+We have also set-up [an internal repository](http://tully.ups-tlse.fr/olivier/gipp/tree/master) containing parameters for all sensors actually processed by MAJA, including Venµs and LANDSAT 8. This repository will be updated more frequently. 
 
 ## Recent changes
 ### v0.9 (2017/10/02)
