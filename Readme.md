@@ -6,7 +6,7 @@ MAJA stands for Maccs-Atcor Joint Algorithm. This atmospheric correction and clo
 MAJA has a very unique feature among all atmospheric correction processors : it uses multi-temporal criteria to improve cloud detection and aerosol retrieval. Because of this feature, it is important to use MAJA to process *time series* of images and not single images. Moreover, these images have to be processed chronologically. To initialise processing of a time series, a special mode is used, named "backward mode". To get a correct first product, we process in fact a small number of products in anti-chronological order (default value of number of images processed in backward mode is 8, but consider increasing it if your region is very cloudy). Then all the products are processed in "nominal" mode and chronological order. When a product is fully or nearly fully cloudy, it is not issued to save processing time and disk space.
 
 For more information about MAJA methods but without details, please read : http://www.cesbio.ups-tlse.fr/multitemp/?p=6203
-To get all details on the methods, MAJA's ATBD is available here : http://tully.ups-tlse.fr/olivier/maja_atbd/blob/master/atbd_maja.pdf
+To get all details on the methods, MAJA's ATBD is available here : http://tully.ups-tlse.fr/olivier/maja_atbd/blob/master/atbd_maja.pdf, or reference <sup>[1](#ref4)</sup>, below.
 
 Following discovery of errors in previous version, we went through all the files and found other updates to make. If most files have been updated, differences in the results are quite small (<0.001 in reflectance) compared to results obtained from version 0.9.
 
@@ -48,7 +48,7 @@ sudo yum --disableplugin=fastestmirror -y install gd libxslt libxml2
 ```
 
 ## Test MAJA with a test data_set
-We provide a test data set, to verify your installation of MAJA. Please download the following pacakge and follow the provided documentation.
+We provide a test data set, to verify your installation of MAJA. You might want to skip this phase, and try to use MAJA directly with start_maja.py, and only follow these steps if issues are found with MAJA. In that case, please download the following pacakge and follow the provided documentation.
 
 ### Test Data set
 http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/S2_NOMINAL.tgz
@@ -59,9 +59,24 @@ http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/S2_NOMINAL-dataset-descriptio
 
 ### Run the tests 
 
-Run the tests as mentionned in the test documentation. If sucessful, go to the next step.
+Run the tests as mentionned in the test documentation. If successful, go to the next step.
 
-### Folder structure
+
+# Basic Supervisor for MAJA processor
+
+The basic supervisor **start_maja** enables to process successively all files in a time series of Sentinel-2 images for a given tile, stored in a folder. The initialisation of the time series is performed with the "backward mode", and then all the dates are processed in "nominal" mode. The backward mode takes much more time than the nominal mode. On my computer, which is a fast one, the nominal mode takes 15 minutes, backward mode takes almost one hour. No control is done on the outputs, and it does not check if the time elapsed between two successive products used as input is not too long and would require restarting the initialisation in backward mode.
+
+
+To use this start_maja.py, you will need to configure the directories within the folder.txt file.
+
+## Download Sentinel-2 data :
+The use of peps_download.py to download Sentinel-2 l1c PRODUCTS is recommended :
+https://github.com/olivierhagolle/peps_download
+
+## Parameters
+The tool needs a lot of configuration files which are provided in two directories "userconf" and "GIPP_S2AS2B". I tend to never change the "userconf", but the GIPP_S2AS2B contains the parameters and look-up tables, which you might want to change. Most of the parameters lie within the L2COMM file. When I want to test different sets of parameters, I create a new GIPP folder, which I name GIPP_context, where *context* is passed as a parameter of the command line with option -c . 
+
+## Folder structure
 To run MAJA, you need to store all the neceessary data in an input folder. Here is an example of its content in nominal mode.
 
 ```
@@ -106,19 +121,6 @@ The .SAFE file is the input product. THE L2VALD files are the L2A product, which
 A "userconf" folder is also necessary, but it is also provided in this repository.
 
 
-# Basic Supervisor for MAJA processor
-
-The basic supervisor **start_maja** enables to process successively all files in a time series of Sentinel-2 images for a given tile, stored in a folder. The initialisation of the time series is performed with the "backward mode", and then all the dates are processed in "nominal" mode. The backward mode takes much more time than the nominal mode. On my computer, which is a fast one, the nominal mode takes 15 minutes, backward mode takes almost one hour. No control is done on the outputs, and it does not check if the time elapsed between two successive products used as input is not too long and would require restarting the initialisation in backward mode.
-
-
-To use this strat_maja.py, you will need to configure the directories within the folder.txt file.
-
-## Download Sentinel-2 data :
-The use of peps_download.py to download Sentinel-2 l1c PRODUCTS is recommended :
-https://github.com/olivierhagolle/peps_download
-
-## Parameters
-The tool needs a lot of configuration files which are provided in two directories "userconf" and "GIPP_S2AS2B". I tend to never change the "userconf", but the GIPP_S2AS2B contains the parameters and look-up tables, which you might want to change. Most of the parameters lie within the L2COMM file. When I want to test different sets of parameters, I create a new GIPP folder, which I name GIPP_context, where *context* is passed as a parameter of the command line with option -c . 
 
 ## DTM
 A DTM folder is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, it is available here : http://tully.ups-tlse.fr/olivier/prepare_mnt
@@ -141,10 +143,8 @@ Here is how to process a set of data above tile 31TFJ, near Avignon in Provence,
 
 - Install MAJA
 
-- Clone the current repository
+- Clone the current repository to get start_maja.py
 `git clone https://github.com/olivierhagolle/Start_maja`
-
-
 
 ## Retrieve Sentinel-2 L1C data.
 - For instance, with peps_download.py (you need to have registered at https://peps.cnes.fr and store the account and password in peps.txt file.
@@ -158,7 +158,7 @@ Here is how to process a set of data above tile 31TFJ, near Avignon in Provence,
 ## Create DTM
 Follow DTM generation instructions : http://tully.ups-tlse.fr/olivier/prepare_mnt
 
-## Execute MAJA
+## Execute start_maja.py
 
 - To use the start_maja script, you need to configure the directories, within the folder.txt file.
 Here is my own configuration, also provided in the folders.txt file in this repository.
@@ -175,9 +175,6 @@ repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
   - Les produits SAFE doivent donc être stockés à l'emplacement suivant : repL1  = repL1/site
 - repL2 is for the L2A data (without the site name which is added aferward)
 - repMAJA is where the Maja binary code is
-
-
-
 
 Here is an example of command line
 ```
