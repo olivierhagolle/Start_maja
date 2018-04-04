@@ -17,7 +17,9 @@ We have also set-up [an internal repository](http://tully.ups-tlse.fr/olivier/gi
 - this version of start_maja works with both S2A and S2B
 - we have found errors, especially regarding water vapour, in the parameters we provided in the "GIPP_nominal" folder. These parameters have been removed and we strongly advise you to do the same.
 - we have updated the parameters and provided them for both S2A and S2B in the folder GIPP_S2AS2B
+
 ### v.0.9.1 (2018/03/29)
+Added MAJA error catching. As a result, the processing of a whole time series stops if MAJA fails for a given time series.
 
 ## Data format 
 MAJA's native output data format is explained in the document "user, installation and operating manual ([MU] SETG-MU-MAJA-010-CS.pdf)", in the document folder downloaded with MAJA). A simplified explanation of the format is provided here: http://www.cesbio.ups-tlse.fr/multitemp/?page_id=10464
