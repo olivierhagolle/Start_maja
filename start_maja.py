@@ -116,7 +116,8 @@ def replace_tile_name(fic_in, fic_out, tile_in, tile_out):
                 f_out.write(l)
 
 
-def add_parameter_files(repGipp, repWorkIn, tile):
+def add_parameter_files(repGipp, repWorkIn, tile, repCams):
+
     for fic in glob.glob(repGipp + "/*"):
 
         base = os.path.basename(fic)
@@ -125,6 +126,12 @@ def add_parameter_files(repGipp, repWorkIn, tile):
         else:
             logger.debug("Linking %s to %s", fic, repWorkIn + '/' + base)
             os.symlink(fic, repWorkIn + '/' + base)
+
+    # links for CAMS files
+    for fic in glob.glob(os.path.join(repCams, "*")):
+        base = os.path.basename(fic)
+        logger.debug("Linking %s in %s", fic, repWorkIn)
+        os.symlink(fic, os.path.join(repWorkIn, base))
 
 
 def add_DEM(repDEM, repWorkIn, tile):
@@ -273,7 +280,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                     logger.debug(prod_par_dateImg[date_backward])
                     os.symlink(prod_par_dateImg[date_backward],
                                repWork + "/in/" + os.path.basename(prod_par_dateImg[date_backward]))
-                add_parameter_files(repGipp, repWork + "/in/", tile)
+                add_parameter_files(repGipp, repWork + "/in/", tile, repCams)
                 add_DEM(repDtm, repWork + "/in/", tile)
 
                 logger.debug(os.listdir(os.path.join(repWork, "in")))
@@ -306,7 +313,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                            repWork + "/in/" + os.path.basename(nomL2).replace("DBL.DIR", "HDR"))
                 os.symlink(nomL2.replace("DIR", ""), repWork + "/in/" + os.path.basename(nomL2).replace("DIR", ""))
 
-                add_parameter_files(repGipp, repWork + "/in/", tile)
+                add_parameter_files(repGipp, repWork + "/in/", tile, repCams)
                 add_DEM(repDtm, repWork + "/in/", tile)
 
                 logger.debug(os.listdir(os.path.join(repWork, "in")))
