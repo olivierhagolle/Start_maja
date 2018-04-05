@@ -15,7 +15,13 @@ import os.path
 import shutil
 import sys
 import logging
-
+logger = logging.getLogger('Start-Maja')
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 # #########################################################################
 class OptionParser(optparse.OptionParser):
@@ -51,43 +57,42 @@ def read_folders(fic_txt):
     missing = False
 
     if repCode is None:
-        logging.error("repCode is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
+        logger.error("repCode is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         missing = True
     if repWork is None:
-        logging.error("repWork is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
+        logger.error("repWork is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         missing = True
     if repL1 is None:
-        logging.error("repL1 is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
+        logger.error("repL1 is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         missing = True
     if repL2 is None:
-        logging.error("repL2 is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
+        logger.error("repL2 is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         missing = True
     if repMaja is None:
-        logging.error("repCode is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
+        logger.error("repCode is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         missing = True
     if repCAMS is None:
-        logging.error("repCAMS is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja, repCAMS")
-        missing = True
+        logger.debug("repCAMS is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
 
     directory_missing = False
 
     if not os.path.isdir(repCode):
-        logging.error("%s is missing", repCode)
+        logger.error("repCode %s is missing", repCode)
         directory_missing = True
     if not os.path.isdir(repWork):
-        logging.error("%s is missing", repWork)
+        logger.error("repWork %s is missing", repWork)
         directory_missing = True
     if not os.path.isdir(repL1):
-        logging.error("%s is missing", repL1)
+        logger.error("repL1 %s is missing", repL1)
         directory_missing = True
     if not os.path.isdir(repL2):
-        logging.error("%s is missing", repL2)
+        logger.error("repL2 %s is missing", repL2)
         directory_missing = True
-    if not os.path.isdir(repMaja):
-        logging.error("%s is missing", repMaja)
+    if not os.path.isfile(repMaja):
+        logger.error("repMaja %s is missing", repMaja)
         directory_missing = True
-    if not os.path.isdir(repCAMS):
-        logging.error("%s is missing", repCAMS)
+    if repCAMS is not None and not os.path.isdir(repCAMS):
+        logger.error("repCAMS %s is missing", repCAMS)
         directory_missing = True
 
     if missing:
@@ -118,11 +123,12 @@ def add_parameter_files(repGipp, repWorkIn, tile):
         if fic.find("36JTT") > 0:
             replace_tile_name(fic, repWorkIn + '/' + base.replace("36JTT", tile), "36JTT", tile)
         else:
+            logger.debug("Linking %s to %s", fic, repWorkIn + '/' + base)
             os.symlink(fic, repWorkIn + '/' + base)
 
 
 def add_DEM(repDEM, repWorkIn, tile):
-    logging.debug("%s/*%s*/*", repDEM, tile)
+    logger.debug("%s/*%s*/*", repDEM, tile)
     for fic in glob.glob(repDEM + "/S2_*%s*/*" % tile):
         base = os.path.basename(fic)
         os.symlink(fic, repWorkIn + base)
@@ -145,7 +151,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
         try:
             os.makedirs(repWork)
         except:
-            logging.error("something wrong when creating %s", repWork)
+            logger.error("something wrong when creating %s", repWork)
             sys.exit(1)
     repL1 = "%s/%s/" % (repL1, site)
     repL2 = "%s/%s/%s/%s/" % (repL2, site, tile, context)
@@ -153,13 +159,13 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     # check existence of folders
     for fic in repL1, repCode, repWork, maja:
         if not (os.path.exists(fic)):
-            logging.error("ERROR : %s does not exist", fic)
+            logger.error("ERROR : %s does not exist", fic)
             sys.exit(-1)
 
     if not os.path.exists(repL2):
         os.makedirs(repL2)
 
-    logging.debug("search path %s/S2?_OPER_PRD_MSIL1C*_%s_*.SAFE/GRANULE/*%s*", repL1, orbit, tile)
+    logger.debug("search path %s/S2?_OPER_PRD_MSIL1C*_%s_*.SAFE/GRANULE/*%s*", repL1, orbit, tile)
     if orbit != None:
         listeProd = glob.glob(repL1 + "/S2?_OPER_PRD_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile))
         listeProd = listeProd + glob.glob(repL1 + "/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile))
@@ -167,7 +173,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
         listeProd = glob.glob(repL1 + "/S2?_OPER_PRD_MSIL1C*.SAFE/GRANULE/*%s*" % (tile))
         listeProd = listeProd + glob.glob(repL1 + "/S2?_MSIL1C*.SAFE/GRANULE/*%s*" % (tile))
 
-    logging.debug("Liste prod %s", listeProd)
+    logger.debug("Liste prod %s", listeProd)
     # list of images to process
     dateProd = []
     dateImg = []
@@ -175,15 +181,15 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     for elem in listeProd:
         rac = elem.split("/")[-3]
         elem = '/'.join(elem.split("/")[0:-2])
-        logging.debug("elem: %s", elem)
+        logger.debug("elem: %s", elem)
         rac = os.path.basename(elem)
-        logging.debug("rac: %s", rac)
+        logger.debug("rac: %s", rac)
 
         if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C"):
             date_asc = rac.split('_')[7][1:9]
         else:
             date_asc = rac.split('_')[6][0:8]
-        logging.debug("date_asc %s %s %s/%s", date_asc, date_asc >= options.startDate, date_asc, options.startDate)
+        logger.debug("date_asc %s %s %s/%s", date_asc, date_asc >= options.startDate, date_asc, options.startDate)
         if date_asc >= options.startDate:
             dateImg.append(date_asc)
             if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C"):
@@ -193,8 +199,8 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
             listeProdFiltree.append(elem)
 
     # removing multiple images with same date and tile
-    logging.debug("date img %s", dateImg)
-    logging.debug("set %s", set(dateImg))
+    logger.debug("date img %s", dateImg)
+    logger.debug("set %s", set(dateImg))
 
     dates_diff = list(set(dateImg))
     dates_diff.sort()
@@ -215,46 +221,46 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
 
         # keep only the products with the most recent date
         ind = dateProd.index(dpmax)
-        logging.debug("date prod max %s index in list %s", dpmax, ind)
+        logger.debug("date prod max %s index in list %s", dpmax, ind)
         prod_par_dateImg[d] = listeProdFiltree[ind]
         nomL2_par_dateImg[d] = "S2?_OPER_SSC_L2VALD_%s____%s.DBL.DIR" % (tile, d)
 
-        logging.debug("d %s, prod_par_dateImg[d] %s", d, prod_par_dateImg[d])
+        logger.debug("d %s, prod_par_dateImg[d] %s", d, prod_par_dateImg[d])
 
     print
     # find the first image to process
 
-    logging.debug("dates_diff %d", dates_diff)
+    logger.debug("dates_diff %d", dates_diff)
 
     derniereDate = ""
     for d in dates_diff:
-        logging.debug("d %s", d)
-        logging.debug("%s/%s", repL2, nomL2_par_dateImg[d])
-        logging.debug("glob %s", glob.glob("%s/%s" % (repL2, nomL2_par_dateImg[d])))
+        logger.debug("d %s", d)
+        logger.debug("%s/%s", repL2, nomL2_par_dateImg[d])
+        logger.debug("glob %s", glob.glob("%s/%s" % (repL2, nomL2_par_dateImg[d])))
         try:
             nomL2init = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg[d]))[0]
             derniereDate = d
-            logging.debug("****** derniere date %s", derniereDate)
+            logger.debug("****** derniere date %s", derniereDate)
         except:
             pass
 
-    logging.debug("Most recent processed date : %s", derniereDate)
+    logger.debug("Most recent processed date : %s", derniereDate)
 
     # ############## For each product
     nb_dates = len(dates_diff)
 
-    logging.debug("nb dates %s", nb_dates)
+    logger.debug("nb dates %s", nb_dates)
 
     if not (os.path.exists(repWork)):
         os.makedirs(repWork)
     if not (os.path.exists(repWork + "userconf")):
-        logging.debug("create %s userconf %s", repWork)
+        logger.debug("create %s userconf %s", repWork)
         add_config_files(repConf, repWork + "userconf")
 
-    logging.debug("derniereDate %s", derniereDate)
+    logger.debug("derniereDate %s", derniereDate)
     for i in range(nb_dates):
         d = dates_diff[i]
-        logging.debug("d %s, %s", d, d > derniereDate)
+        logger.debug("d %s, %s", d, d > derniereDate)
         if d > derniereDate:
             if os.path.exists(repWork + "/in"):
                 shutil.rmtree(repWork + "/in")
@@ -263,20 +269,21 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
             if i == 0:
                 nb_prod_backward = min(len(dates_diff), nb_backward)
                 for date_backward in dates_diff[0:nb_prod_backward]:
-                    logging.debug("dates à traiter %s", date_backward)
-                    logging.debug(prod_par_dateImg[date_backward])
+                    logger.debug("dates à traiter %s", date_backward)
+                    logger.debug(prod_par_dateImg[date_backward])
                     os.symlink(prod_par_dateImg[date_backward],
                                repWork + "/in/" + os.path.basename(prod_par_dateImg[date_backward]))
                 add_parameter_files(repGipp, repWork + "/in/", tile)
                 add_DEM(repDtm, repWork + "/in/", tile)
 
+                logger.debug(os.listdir(os.path.join(repWork, "in")))
                 commande = "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s" % (
                     maja, repWork + "/in", repL2, repWork + "/userconf", tile)
-                logging.debug("#################################")
-                logging.debug("#################################")
-                logging.debug(commande)
-                logging.debug("#################################")
-                logging.debug("#################################")
+                logger.debug("#################################")
+                logger.debug("#################################")
+                logger.debug(commande)
+                logger.debug("#################################")
+                logger.debug("#################################")
                 os.system(commande)
             # else mode nominal
             else:
@@ -285,13 +292,13 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                 for PreviousDate in dates_diff[0:i]:
                     nom_courant = "%s/%s" % (repL2, nomL2_par_dateImg[PreviousDate])
                     try:
-                        logging.debug(nom_courant)
+                        logger.debug(nom_courant)
                         nomL2 = glob.glob(nom_courant)[0]
-                        logging.debug("Previous L2 names, per increasing date : %s", nomL2)
+                        logger.debug("Previous L2 names, per increasing date : %s", nomL2)
                     except:
-                        logging.debug("pas de L2 pour : %s", nom_courant)
+                        logger.debug("pas de L2 pour : %s", nom_courant)
                         pass
-                        logging.debug("previous L2 : %s", nomL2)
+                        logger.debug("previous L2 : %s", nomL2)
                 os.symlink(prod_par_dateImg[PreviousDate],
                            repWork + "/in/" + os.path.basename(prod_par_dateImg[PreviousDate]))
                 os.symlink(nomL2, repWork + "/in/" + os.path.basename(nomL2))
@@ -302,13 +309,15 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                 add_parameter_files(repGipp, repWork + "/in/", tile)
                 add_DEM(repDtm, repWork + "/in/", tile)
 
+                logger.debug(os.listdir(os.path.join(repWork, "in")))
+
                 commande = "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s" % (
                     maja, repWork + "/in", repL2, repWork + "/userconf", tile)
-                logging.debug("#################################")
-                logging.debug("#################################")
-                logging.debug(commande)
-                logging.debug("#################################")
-                logging.debug("#################################")
+                logger.debug("#################################")
+                logger.debug("#################################")
+                logger.debug(commande)
+                logger.debug("#################################")
+                logger.debug("#################################")
                 os.system(commande)
 
 
@@ -347,7 +356,7 @@ if __name__ == '__main__':
 
         (options, args) = parser.parse_args()
 
-    logging.debug("options.stardate %s", options.startDate)
+    logger.debug("options.stardate %s", options.startDate)
 
     tile = options.tile
     site = options.site
