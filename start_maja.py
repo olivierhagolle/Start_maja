@@ -9,11 +9,15 @@ This tool, developped by O.Hagolle (CNES:CESBIO) is a very basic one to show how
 """
 
 import glob
+import tempfile
 import optparse
 import os
 import os.path
 import shutil
 import sys
+
+from convert_to_exo import exocam_creation
+
 import logging
 logger = logging.getLogger('Start-Maja')
 logger.setLevel(logging.DEBUG)
@@ -53,6 +57,8 @@ def read_folders(fic_txt):
                 repMaja = (ligne.split('=')[1]).strip()
             if ligne.find('repCAMS') == 0:
                 repCAMS = (ligne.split('=')[1]).strip()
+            if ligne.find('repCAMS_raw') == 0:
+                repCAMS_raw = (ligne.split('=')[1]).strip()
 
     missing = False
 
@@ -73,6 +79,11 @@ def read_folders(fic_txt):
         missing = True
     if repCAMS is None:
         logger.debug("repCAMS is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
+    if repCAMS_raw is None:
+        logger.debug("repCAMS_raw is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
+
+    if missing:
+        raise Exception("Configuration file is not complete. See log file for more information.")
 
     directory_missing = False
 
@@ -94,13 +105,14 @@ def read_folders(fic_txt):
     if repCAMS is not None and not os.path.isdir(repCAMS):
         logger.error("repCAMS %s is missing", repCAMS)
         directory_missing = True
+    if repCAMS_raw is not None and not os.path.isdir(repCAMS_raw):
+        logger.error("repCAMS %s is missing", repCAMS_raw)
+        directory_missing = True
 
-    if missing:
-        raise Exception("Configuration file is not complete. See log file for more information.")
     if directory_missing:
         raise Exception("One or more directories are missing. See log file for more information.")
 
-    return repCode, repWork, repL1, repL2, repMaja, repCAMS
+    return repCode, repWork, repL1, repL2, repMaja, repCAMS, repCAMS_raw
 
 
 # =============== Module to copy and link files
@@ -144,10 +156,23 @@ def add_DEM(repDEM, repWorkIn, tile):
 def add_config_files(repConf, repWorkConf):
     os.symlink(repConf, repWorkConf)
 
+def manage_rep_cams(repCams, repCamsRaw, working_dir):
+    if repCamsRaw is not None:
+        #convert nc to exocams
+        if repCams is not None:
+            logger.warning("Exo cams dir and exo cams dir all ")
+        working_directory = tempfile.mkdtemp(suffix="ConvertToExo_temp", dir=working_dir)
+        repCams_out = tempfile.mkdtemp(suffix="ConvertToExo_out", dir=working_dir)
+        exocam_creation(repCamsRaw, out_dir=repCams_out, working_dir=working_directory)
+        return repCams_out
+    return None
+
 
 def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     # =================directories
-    (repCode, repWork, repL1, repL2, maja, repCams) = read_folders(folder_file)
+    (repCode, repWork, repL1, repL2, maja, repCams, repCamsRaw) = read_folders(folder_file)
+
+    repCams = manage_rep_cams(repCams, repCamsRaw, repWork)
 
     repConf = repCode + "/userconf"
     repDtm = repCode + "/DTM"
