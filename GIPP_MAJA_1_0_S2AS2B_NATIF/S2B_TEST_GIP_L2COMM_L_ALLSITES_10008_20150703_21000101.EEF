@@ -2,7 +2,7 @@
 <Earth_Explorer_File xsi:type="L2COMM_File_Type" schema_version="1.00" xmlns="http://eop-cfi.esa.int/CFI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://eop-cfi.esa.int/CFI ./GIP_L2COMM_L2Commons.xsd">
     <Earth_Explorer_Header>
         <Fixed_Header>
-            <File_Name>S2A_TEST_GIP_L2COMM_L_ALLSITES_50001_00000000_99999999</File_Name>
+            <File_Name>S2B_TEST_GIP_L2COMM_L_ALLSITES_50001_00000000_99999999</File_Name>
             <File_Description>L2CommonParameters</File_Description>
             <Notes/>
             <Mission>SENTINEL-2B</Mission>
