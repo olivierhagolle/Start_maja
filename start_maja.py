@@ -154,7 +154,13 @@ dateProd=[]
 dateImg=[]
 listeProdFiltree=[]
 if len(ListeProd)==0:
-    print "No L1C product found"
+    if orbit!=None :
+        print "No L1C product found in %s or %s"%(repL1+"/S2?_OPER_PRD_MSIL1C*%s_*.SAFE/GRANULE/*%s*"%(orbit,tile),
+                                                  repL1+"/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*"%(orbit,tile))
+    else :
+        print "No L1C product found in %s or %s"%(repL1+"/S2?_OPER_PRD_MSIL1C*.SAFE/GRANULE/*%s*"%(tile),
+                                                  repL1+"/S2?_MSIL1C*.SAFE/GRANULE/*%s*"%(tile))
+            
     sys.exit(-3)
     
 for elem in listeProd:
