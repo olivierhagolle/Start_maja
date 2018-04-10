@@ -142,8 +142,6 @@ for fic in repL1,repCode,repWork,maja:
 if not os.path.exists(repL2):
     os.makedirs(repL2)
     
-    
-print repL1+"/S2?_OPER_PRD_MSIL1C*_%s_*.SAFE/GRANULE/*%s*"%(orbit,tile)
 if orbit!=None :
     listeProd=glob.glob(repL1+"/S2?_OPER_PRD_MSIL1C*%s_*.SAFE/GRANULE/*%s*"%(orbit,tile))
     listeProd=listeProd+glob.glob(repL1+"/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*"%(orbit,tile))
@@ -155,6 +153,10 @@ else :
 dateProd=[]
 dateImg=[]
 listeProdFiltree=[]
+if len(ListeProd)==0:
+    print "No L1C product found"
+    sys.exit(-3)
+    
 for elem in listeProd:
     rac=elem.split("/")[-3]
     elem='/'.join(elem.split("/")[0:-2])
