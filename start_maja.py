@@ -104,10 +104,8 @@ def read_folders(fic_txt):
         directory_missing = True
     if repCAMS is not None and not os.path.isdir(repCAMS):
         logger.error("repCAMS %s is missing", repCAMS)
-        directory_missing = True
     if repCAMS_raw is not None and not os.path.isdir(repCAMS_raw):
         logger.error("repCAMS %s is missing", repCAMS_raw)
-        directory_missing = True
 
     if directory_missing:
         raise Exception("One or more directories are missing. See log file for more information.")
@@ -165,7 +163,8 @@ def manage_rep_cams(repCams, repCamsRaw, working_dir):
         repCams_out = tempfile.mkdtemp(suffix="ConvertToExo_out", dir=working_dir)
         exocam_creation(repCamsRaw, out_dir=repCams_out, working_dir=working_directory)
         return repCams_out
-    return None
+
+    return repCams
 
 
 def start_maja(folder_file, context, site, tile, orbit, nb_backward):
