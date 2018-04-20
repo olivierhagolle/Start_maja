@@ -118,6 +118,8 @@ repWork=/mnt/data/SENTINEL2/MAJA
 repL1  =/mnt/data/SENTINEL2/L1C_PDGS
 repL2  =/mnt/data/SENTINEL2/L2A_MAJA
 repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
+repCAMS  =/mnt/data/SENTINEL2/CAMS
+repCAMS_raw  =/mnt/data/SENTINEL2/CAMS_RAW
 ```
 - repCode is where Start_maja.py is stored, together with the DTM, userconf and GIPP directories
 - repWork is a directory to store the temporary files
@@ -125,7 +127,8 @@ repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
   - Les produits SAFE doivent donc être stockés à l'emplacement suivant : repL1  = repL1/site
 - repL2 is for the L2A data (without the site name which is added aferward)
 - repMAJA is where the Maja binary code is
-
+- repCAMS is where EXO CAMS are stored
+- repCAMS_raw is where nc files are stored. If repCAMS_raw is set, EXO CAMS will be regenerated and repCAMS will be ignored
 
 
 
