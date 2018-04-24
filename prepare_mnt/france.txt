@@ -1,0 +1,11 @@
+proj = L93
+EPSG_out = 2154
+chaine_proj = EPSG:2154
+tx_min = 1
+tx_max = 10
+ty_min = 1
+ty_max = 10
+pas = 100020
+marge=9990
+orig_x = 0
+orig_y = 100020*61+20000
