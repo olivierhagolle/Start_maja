@@ -302,7 +302,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
             if i == 0:
                 nb_prod_backward = min(len(dates_diff), nb_backward)
                 for date_backward in dates_diff[0:nb_prod_backward]:
-                    logger.debug("dates à traiter %s", date_backward)
+                    logger.debug("dates to process %s", date_backward)
                     logger.debug(prod_par_dateImg[date_backward])
                     os.symlink(prod_par_dateImg[date_backward],
                                repWork + "/in/" + os.path.basename(prod_par_dateImg[date_backward]))
