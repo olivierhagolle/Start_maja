@@ -43,7 +43,7 @@ class OptionParser(optparse.OptionParser):
 # #################################### Lecture de fichier de parametres "Mot_clé=Valeur"
 def read_folders(fic_txt):
 
-    repCode = repWork = repL1= repL2 = repMaja = repCAMS = None
+    repCode = repWork = repL1= repL2 = repMaja = repCAMS = repCAMS_raw = None
 
     with file(fic_txt, 'r') as f:
         for ligne in f.readlines():
