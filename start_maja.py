@@ -27,6 +27,8 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+START_MAJA_VERSION = 3.1
+
 # #########################################################################
 class OptionParser(optparse.OptionParser):
 
@@ -365,7 +367,7 @@ if __name__ == '__main__':
         sys.exit(-1)
     else:
         usage = "usage: %prog [options] "
-        parser = OptionParser(usage=usage)
+        parser = OptionParser(usage=usage, version='%prog {}'.format(START_MAJA_VERSION))
 
         parser.add_option("-c", "--context", dest="context", action="store",
                           help="name of the test directory", type="string", default='nominal')
