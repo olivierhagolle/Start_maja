@@ -40,7 +40,7 @@ class OptionParser(optparse.OptionParser):
             self.error("%s option not supplied" % option)
 
 
-# #################################### Lecture de fichier de parametres "Mot_clé=Valeur"
+# #################################### Lecture de fichier de parametres "Key=Value"
 def read_folders(fic_txt):
 
     repCode = repWork = repL1= repL2 = repMaja = repCAMS = repCAMS_raw = None
