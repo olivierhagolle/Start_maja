@@ -58,7 +58,7 @@ def read_folders(fic_txt):
             if ligne.find('repMaja') == 0:
                 repMaja = (ligne.split('=')[1]).strip()
             if ligne.find('repCAMS') == 0:
-                repCAMS = (ligne.split('=')[1]).strip()
+                repCAS = (ligne.split('=')[1]).strip()
             if ligne.find('repCAMS_raw') == 0:
                 repCAMS_raw = (ligne.split('=')[1]).strip()
 
@@ -198,7 +198,6 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     if not os.path.exists(repL2):
         os.makedirs(repL2)
 
-    logger.debug("search path %s/S2?_OPER_PRD_MSIL1C*_%s_*.SAFE/GRANULE/*%s*", repL1, orbit, tile)
     if orbit != None:
         listeProd = glob.glob(repL1 + "/S2?_OPER_PRD_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile))
         listeProd = listeProd + glob.glob(repL1 + "/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile))
@@ -211,6 +210,19 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     dateProd = []
     dateImg = []
     listeProdFiltree = []
+
+    if len(listeProd) == 0:
+        if orbit != None:
+            logger.error("No L1C product found in %s or %s",
+                         repL1 + "/S2?_OPER_PRD_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile),
+                         repL1 + "/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile))
+        else:
+            logger.error("No L1C product found in %s or %s",
+                         repL1 + "/S2?_OPER_PRD_MSIL1C*.SAFE/GRANULE/*%s*" % (tile),
+                         repL1 + "/S2?_MSIL1C*.SAFE/GRANULE/*%s*" % (tile))
+        sys.exit(-3)
+
+
     for elem in listeProd:
         rac = elem.split("/")[-3]
         elem = '/'.join(elem.split("/")[0:-2])
@@ -263,7 +275,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     print
     # find the first image to process
 
-    logger.debug("dates_diff %d", dates_diff)
+    logger.debug("dates_diff %s", dates_diff)
 
     derniereDate = ""
     for d in dates_diff:
@@ -273,11 +285,9 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
         try:
             nomL2init = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg[d]))[0]
             derniereDate = d
-            logger.debug("****** derniere date %s", derniereDate)
+            logger.debug("Most recent processed date : %s", derniereDate)
         except:
             pass
-
-    logger.debug("Most recent processed date : %s", derniereDate)
 
     # ############## For each product
     nb_dates = len(dates_diff)
@@ -309,13 +319,16 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                 add_parameter_files(repGipp, repWork + "/in/", tile, repCams)
                 add_DEM(repDtm, repWork + "/in/", tile)
 
+                Maja_logfile="%s/%s.log"%(repL2,os.path.basename(prod_par_dateImg[d]))
                 logger.debug(os.listdir(os.path.join(repWork, "in")))
-                commande = "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s" % (
-                    maja, repWork + "/in", repL2, repWork + "/userconf", tile)
+                commande = "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s &> %s" % (
+                    maja, repWork + "/in", repL2, repWork + "/userconf", tile, Maja_logfile)
                 logger.debug("#################################")
                 logger.debug("#################################")
                 logger.debug(commande)
                 logger.debug("#################################")
+                logger.debug("Initialisation mode with backward is longer")
+                logger.debug("MAJA logfile: %s", Maja_logfile)
                 logger.debug("#################################")
                 os.system(commande)
             # else mode nominal
@@ -333,25 +346,42 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                         pass
                         logger.debug("previous L2 : %s", nomL2)
                 os.symlink(prod_par_dateImg[PreviousDate],
-                           repWork + "/in/" + os.path.basename(prod_par_dateImg[PreviousDate]))
+                           repWork + "/in/" + os.path.basename(prod_par_dateImg[d]))
+
                 os.symlink(nomL2, repWork + "/in/" + os.path.basename(nomL2))
                 os.symlink(nomL2.replace("DBL.DIR", "HDR"),
                            repWork + "/in/" + os.path.basename(nomL2).replace("DBL.DIR", "HDR"))
                 os.symlink(nomL2.replace("DIR", ""), repWork + "/in/" + os.path.basename(nomL2).replace("DIR", ""))
+
+                Maja_logfile="%s/%s.log"%(repL2,os.path.basename(prod_par_dateImg[d]))
 
                 add_parameter_files(repGipp, repWork + "/in/", tile, repCams)
                 add_DEM(repDtm, repWork + "/in/", tile)
 
                 logger.debug(os.listdir(os.path.join(repWork, "in")))
 
-                commande = "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s" % (
-                    maja, repWork + "/in", repL2, repWork + "/userconf", tile)
+                commande = "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s &> %s" % (
+                    maja, repWork + "/in", repL2, repWork + "/userconf", tile, Maja_logfile)
                 logger.debug("#################################")
                 logger.debug("#################################")
                 logger.debug(commande)
                 logger.debug("#################################")
+                logger.debug("MAJA logfile: %s", Maja_logfile)
                 logger.debug("#################################")
                 os.system(commande)
+
+            # check for errors in MAJA executions
+            Error = False
+            with open(Maja_logfile, "r") as logfile:
+                for line in logfile:
+                    if line.find("[E]")>0:
+                        print line
+                        Error=True
+            if Error:
+                logger.error("#######################################")
+                logger.error("Error detected, see: %s", Maja_logfile)
+                logger.error("#######################################")
+                sys.exit(-1)
 
 
 if __name__ == '__main__':
