@@ -27,6 +27,7 @@ Within a few days, we will release start_maja V1, to go along with MAJA 3.1. The
 MAJA 3.1 ships several improvements, the main of which is the used of Copernicus atmopshere Monitoring Service aerosol products, which are used to constrain the aerosol type in the estimates. This brings a major improvement in places where the aerosols can differ from a continental model which was used so far. 
 
 It also includes a correction for thin cirrus clouds and a directional effect correction used to improve the estimate of AOT.
+Among the various modifications, MAJA will be now provided for RedHat or Ubuntu Linux families. More information is available here: http://www.cesbio.ups-tlse.fr/multitemp/?p=13291
 
 
 ## Data format 
