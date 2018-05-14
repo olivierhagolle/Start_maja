@@ -58,7 +58,7 @@ def read_folders(fic_txt):
             if ligne.find('repMaja') == 0:
                 repMaja = (ligne.split('=')[1]).strip()
             if ligne.find('repCAMS') == 0:
-                repCAMS = (ligne.split('=')[1]).strip()
+                repCAS = (ligne.split('=')[1]).strip()
             if ligne.find('repCAMS_raw') == 0:
                 repCAMS_raw = (ligne.split('=')[1]).strip()
 
@@ -140,10 +140,11 @@ def add_parameter_files(repGipp, repWorkIn, tile, repCams):
             os.symlink(fic, repWorkIn + '/' + base)
 
     # links for CAMS files
-    for fic in glob.glob(os.path.join(repCams, "*")):
-        base = os.path.basename(fic)
-        logger.debug("Linking %s in %s", fic, repWorkIn)
-        os.symlink(fic, os.path.join(repWorkIn, base))
+    if repCams is not None:
+        for fic in glob.glob(os.path.join(repCams, "*")):
+            base = os.path.basename(fic)
+            logger.debug("Linking %s in %s", fic, repWorkIn)
+            os.symlink(fic, os.path.join(repWorkIn, base))
 
 
 def add_DEM(repDEM, repWorkIn, tile):
@@ -275,7 +276,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     print
     # find the first image to process
 
-    logger.debug("dates_diff %d", dates_diff)
+    logger.debug("dates_diff %s", dates_diff)
 
     derniereDate = ""
     for d in dates_diff:
