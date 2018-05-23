@@ -322,8 +322,8 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
 
                 Maja_logfile="%s/%s.log"%(repL2,os.path.basename(prod_par_dateImg[d]))
                 logger.debug(os.listdir(os.path.join(repWork, "in")))
-                commande = "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s &> %s" % (
-                    maja, repWork + "/in", repL2, repWork + "/userconf", tile, Maja_logfile)
+                commande = "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s" % (
+                    maja, repWork + "/in", repL2, repWork + "/userconf", tile)
                 logger.debug("#################################")
                 logger.debug("#################################")
                 logger.debug(commande)
@@ -361,8 +361,8 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
 
                 logger.debug(os.listdir(os.path.join(repWork, "in")))
 
-                commande = "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s &> %s" % (
-                    maja, repWork + "/in", repL2, repWork + "/userconf", tile, Maja_logfile)
+                commande = "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s" % (
+                    maja, repWork + "/in", repL2, repWork + "/userconf", tile)
                 logger.debug("#################################")
                 logger.debug("#################################")
                 logger.debug(commande)
@@ -371,18 +371,6 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                 logger.debug("#################################")
                 os.system(commande)
 
-            # check for errors in MAJA executions
-            Error = False
-            with open(Maja_logfile, "r") as logfile:
-                for line in logfile:
-                    if line.find("[E]")>0:
-                        print line
-                        Error=True
-            if Error:
-                logger.error("#######################################")
-                logger.error("Error detected, see: %s", Maja_logfile)
-                logger.error("#######################################")
-                sys.exit(-1)
 
 
 if __name__ == '__main__':
