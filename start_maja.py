@@ -20,13 +20,19 @@ from convert_to_exo import exocam_creation
 
 import logging
 logger = logging.getLogger('Start-Maja')
+#logger.setLevel(logging.DEBUG)
+#ch = logging.StreamHandler()
+#ch.setLevel(logging.DEBUG)
+#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#ch.setFormatter(formatter)
+#logger.addHandler(ch)
 logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
-
+if not logger.handlers:
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 START_MAJA_VERSION = 3.1
 
 # #########################################################################
@@ -58,7 +64,7 @@ def read_folders(fic_txt):
             if ligne.find('repMaja') == 0:
                 repMaja = (ligne.split('=')[1]).strip()
             if ligne.find('repCAMS') == 0:
-                repCAS = (ligne.split('=')[1]).strip()
+                repCAMS = (ligne.split('=')[1]).strip()
             if ligne.find('repCAMS_raw') == 0:
                 repCAMS_raw = (ligne.split('=')[1]).strip()
 
@@ -252,7 +258,8 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     dates_diff.sort()
 
     prod_par_dateImg = {}
-    nomL2_par_dateImg = {}
+    nomL2_par_dateImg_Natif = {}
+    nomL2_par_dateImg_MUSCATE = {}
     for d in dates_diff:
         nb = dateImg.count(d)
 
@@ -269,8 +276,8 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
         ind = dateProd.index(dpmax)
         logger.debug("date prod max %s index in list %s", dpmax, ind)
         prod_par_dateImg[d] = listeProdFiltree[ind]
-        nomL2_par_dateImg[d] = "S2?_OPER_SSC_L2VALD_%s____%s.DBL.DIR" % (tile, d)
-
+        nomL2_par_dateImg_Natif[d] = "S2?_OPER_SSC_L2VALD_%s____%s.DBL.DIR" % (tile, d)
+        nomL2_par_dateImg_MUSCATE[d] = "SENTINEL2?_%s-*_T%s_C_V*" % (d,tile)
         logger.debug("d %s, prod_par_dateImg[d] %s", d, prod_par_dateImg[d])
 
     print
@@ -281,14 +288,26 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     derniereDate = ""
     for d in dates_diff:
         logger.debug("d %s", d)
-        logger.debug("%s/%s", repL2, nomL2_par_dateImg[d])
-        logger.debug("glob %s", glob.glob("%s/%s" % (repL2, nomL2_par_dateImg[d])))
-        try:
-            nomL2init = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg[d]))[0]
+        logger.debug("%s/%s", repL2, nomL2_par_dateImg_Natif[d])
+        logger.debug("%s/%s", repL2, nomL2_par_dateImg_MUSCATE[d])
+        logger.debug("glob %s", glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d])))
+        logger.debug("glob %s", glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d])))
+        
+        
+        #test existence of a L2 with MAJA name convention
+        nomL2init = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d]))
+        if len(nomL2init)>0:
             derniereDate = d
+            L2type="Natif"
             logger.debug("Most recent processed date : %s", derniereDate)
-        except:
-            pass
+        else:
+            nomL2init = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d]))
+            if len(nomL2init)>0:
+                L2type="MUSCATE"
+                derniereDate = d
+                logger.debug("Most recent processed date : %s", derniereDate)
+
+    
 
     # ############## For each product
     nb_dates = len(dates_diff)
@@ -337,7 +356,10 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                 nomL2 = ""
                 # Search for previous L2 product
                 for PreviousDate in dates_diff[0:i]:
-                    nom_courant = "%s/%s" % (repL2, nomL2_par_dateImg[PreviousDate])
+                    if L2type=="Natif":
+                        nom_courant = "%s/%s" % (repL2, nomL2_par_dateImg_Natif[PreviousDate])
+                    elif L2type=="MUSCATE":
+                         nom_courant = "%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[PreviousDate])
                     try:
                         logger.debug(nom_courant)
                         nomL2 = glob.glob(nom_courant)[0]
@@ -349,11 +371,14 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                 os.symlink(prod_par_dateImg[PreviousDate],
                            repWork + "/in/" + os.path.basename(prod_par_dateImg[d]))
 
-                os.symlink(nomL2, repWork + "/in/" + os.path.basename(nomL2))
-                os.symlink(nomL2.replace("DBL.DIR", "HDR"),
+                if L2type=="Natif":
+                    os.symlink(nomL2, repWork + "/in/" + os.path.basename(nomL2))
+                    os.symlink(nomL2.replace("DBL.DIR", "HDR"),
                            repWork + "/in/" + os.path.basename(nomL2).replace("DBL.DIR", "HDR"))
-                os.symlink(nomL2.replace("DIR", ""), repWork + "/in/" + os.path.basename(nomL2).replace("DIR", ""))
-
+                    os.symlink(nomL2.replace("DIR", ""), repWork + "/in/" + os.path.basename(nomL2).replace("DIR", ""))
+                elif L2type=="MUSCATE":
+                    os.symlink(nomL2, repWork + "/in/" + os.path.basename(nomL2))
+                    
                 Maja_logfile="%s/%s.log"%(repL2,os.path.basename(prod_par_dateImg[d]))
 
                 add_parameter_files(repGipp, repWork + "/in/", tile, repCams)
