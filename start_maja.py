@@ -324,11 +324,12 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     for i in range(nb_dates):
         d = dates_diff[i]
         logger.debug("d %s, %s", d, d > derniereDate)
+        #only products after the last L2A date available in output directory
         if d > derniereDate:
             if os.path.exists(repWork + "/in"):
                 shutil.rmtree(repWork + "/in")
             os.makedirs(repWork + "/in")
-            # Mode Backward
+            # Mode Backward, if it is the first date in the list
             if i == 0:
                 nb_prod_backward = min(len(dates_diff), nb_backward)
                 for date_backward in dates_diff[0:nb_prod_backward]:
