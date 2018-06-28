@@ -26,7 +26,7 @@ logger = logging.getLogger('Start-Maja')
 #formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 #ch.setFormatter(formatter)
 #logger.addHandler(ch)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 if not logger.handlers:
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
@@ -290,22 +290,26 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
         logger.debug("d %s", d)
         logger.debug("%s/%s", repL2, nomL2_par_dateImg_Natif[d])
         logger.debug("%s/%s", repL2, nomL2_par_dateImg_MUSCATE[d])
-        logger.debug("glob %s", glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d])))
-        logger.debug("glob %s", glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d])))
+        logger.debug(glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d])))
+        logger.debug(glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d])))
         
         
         #test existence of a L2 with MAJA name convention
-        nomL2init = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d]))
-        if len(nomL2init)>0:
+        nomL2init_Natif = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d]))
+        nomL2init_MUSCATE = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d]))
+        if len(nomL2init_Natif)>0:
             derniereDate = d
             L2type="Natif"
-            logger.debug("Most recent processed date : %s", derniereDate)
-        else:
-            nomL2init = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d]))
-            if len(nomL2init)>0:
-                L2type="MUSCATE"
-                derniereDate = d
-                logger.debug("Most recent processed date : %s", derniereDate)
+
+        elif len(nomL2init_MUSCATE)>0:
+            L2type="MUSCATE"
+            derniereDate = d
+
+    if derniereDate=="":
+        logger.info("No existing L2 product, we start with backward mode")
+    else:
+        logger.info("Most recent processed date : %s", derniereDate)
+
 
     
 
@@ -317,15 +321,15 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     if not (os.path.exists(repWork)):
         os.makedirs(repWork)
     if not (os.path.exists(repWork + "userconf")):
-        logger.debug("create %s userconf %s", repWork)
+        #logger.debug("create %s userconf %s", repWork)
         add_config_files(repConf, repWork + "userconf")
 
     logger.debug("derniereDate %s", derniereDate)
     for i in range(nb_dates):
         d = dates_diff[i]
-        logger.debug("d %s, %s", d, d > derniereDate)
         #only products after the last L2A date available in output directory
         if d > derniereDate:
+            logger.info("=> processing date %s"% d)
             if os.path.exists(repWork + "/in"):
                 shutil.rmtree(repWork + "/in")
             os.makedirs(repWork + "/in")
@@ -344,18 +348,26 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                 logger.debug(os.listdir(os.path.join(repWork, "in")))
                 commande = "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s &> %s"% (
                     maja, repWork + "/in", repL2, repWork + "/userconf", tile,Maja_logfile)
-                logger.debug("#################################")
-                logger.debug("#################################")
-                logger.debug(commande)
-                logger.debug("#################################")
-                logger.debug("Initialisation mode with backward is longer")
-                logger.debug("MAJA logfile: %s", Maja_logfile)
-                logger.debug("#################################")
+                logger.info("#################################")
+                logger.info("#################################")
+                logger.info("processing %s in backward mode"%prod_par_dateImg[d])
+                logger.info("Initialisation mode with backward is longer")
+                logger.info("MAJA logfile: %s", Maja_logfile)
+                logger.info("#################################")
                 os.system(commande)
+
+                #check type of output product (Native or Muscate)n which depends on MAJA version and plugins)
+                nomL2init_Natif = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d]))
+                nomL2init_MUSCATE = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d]))
+                if len(nomL2init_Natif)>0:
+                     L2type="Natif"
+                elif len(nomL2init_MUSCATE)>0:
+                     L2type="MUSCATE"
             # else mode nominal
             else:
                 nomL2 = ""
                 # Search for previous L2 product
+                logger.info("Using %s L2 type"%L2type)     
                 for PreviousDate in dates_diff[0:i]:
                     if L2type=="Natif":
                         nom_courant = "%s/%s" % (repL2, nomL2_par_dateImg_Natif[PreviousDate])
@@ -389,25 +401,25 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
 
                 commande = "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s &> %s" % (
                     maja, repWork + "/in", repL2, repWork + "/userconf", tile, Maja_logfile)
-                logger.debug("#################################")
-                logger.debug("#################################")
-                logger.debug(commande)
-                logger.debug("#################################")
-                logger.debug("MAJA logfile: %s", Maja_logfile)
-                logger.debug("#################################")
+                logger.info("#################################")
+                logger.info("#################################")
+                logger.info("processing %s in nominal mode"%prod_par_dateImg[d])
+                logger.info("MAJA logfile: %s", Maja_logfile)
+                logger.info("#################################")
                 os.system(commande)
-        #check for errors in MAJA executions
-        Error=False
-        with open(Maja_logfile, "r") as logfile:
-            for line in logfile:
-                if line.find("[E]")>0:
-                    print line
-                    Error=True
-        if Error:
-            print "#######################################"
-            print "Error detected, see: %s"%Maja_logfile
-            print "#######################################"
-            sys.exit(-1)
+            #check for errors in MAJA executions
+            Error=False
+            with open(Maja_logfile, "r") as logfile:
+                for line in logfile:
+                    if line.find("[E]")>0:
+                        print line
+                        Error=True
+            if Error:
+                logger.info("#######################################")
+                logger.info( "Error detected, see: %s"%Maja_logfile)
+                logger.info( "#######################################")
+                sys.exit(-1)
+
 
 
 
@@ -454,6 +466,6 @@ if __name__ == '__main__':
     context = options.context
     folder_file = options.folder_file
 
-    nb_backward = 8  # number of images to process in backward mode
+    nb_backward = 3  # number of images to process in backward mode
 
     start_maja(folder_file, context, site, tile, orbit, nb_backward)
