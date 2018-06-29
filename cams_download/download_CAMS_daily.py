@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# (C) Copyright 2012-2013 ECMWF.
+# DOwnloads necessary CMAS data for MAJA and converts them into MAJA input format 
+# Written by B.Rouquie, O.Hagolle, CESBIO
 #
-# This software is licensed under the terms of the Apache Licence Version 2.0
-# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
-# In applying this licence, ECMWF does not waive the privileges and immunities 
-# granted to it by virtue of its status as an intergovernmental organisation nor
-# does it submit to any jurisdiction.
+#
 #
 import os
 from ecmwfapi import ECMWFDataServer
+from convert_to_exo import process_one_file
 import datetime
 import timeit
 import optparse
@@ -39,8 +37,8 @@ def download_files(dt,file_type,time,step,path_out):
             #     Surface
             # Recupere AOT a 550nm pour BC, SS, SU, DU, OM
             #=================
-            nom_out = path_out + "/CAMS_AOT_" + date_courante + 'UTC' + str(int(time)+int(step)).zfill(2) + '0000.nc'
-            print 'Nom fichier de sortie AOT :',nom_out
+            nom_AOT = path_out + "/CAMS_AOT_" + date_courante + 'UTC' + str(int(time)+int(step)).zfill(2) + '0000.nc'
+            print 'Nom fichier de sortie AOT :',nom_AOT
 
             server.retrieve({
                 'stream'  : "oper",
@@ -56,7 +54,7 @@ def download_files(dt,file_type,time,step,path_out):
                 'area'    : "G",
                 'grid'    : "1.25/1.25",
                 'format'  : "netcdf",
-                'target'  : nom_out
+                'target'  : nom_AOT
                 })
             #208.210/209.210/210.210/211.210/212.210 : AOT at 550nm for BC, SS, OM, SU, DU
 
@@ -66,8 +64,8 @@ def download_files(dt,file_type,time,step,path_out):
             #
             # Recupere Relative Humidity RH
             #=========================
-            nom_out = path_out + "/CAMS_RH_" + date_courante + 'UTC' + str(int(time)+int(step)).zfill(2) + '0000.nc'
-            print 'Nom fichier de sortie RH :',nom_out
+            nom_RH = path_out + "/CAMS_RH_" + date_courante + 'UTC' + str(int(time)+int(step)).zfill(2) + '0000.nc'
+            print 'Nom fichier de sortie RH :',nom_RH
 
             server.retrieve({
                   'stream'  : "oper",
@@ -84,7 +82,7 @@ def download_files(dt,file_type,time,step,path_out):
                   'area'    : "G",
                   'grid'    : "1.25/1.25",
                   'format'  : "netcdf",
-                  'target'  : nom_out
+                  'target'  : nom_RH
                   })
 
         if file_type['model'] == True:
@@ -93,8 +91,8 @@ def download_files(dt,file_type,time,step,path_out):
             #
             # Recupere les mixing ratios : 3 bins DUST, 3 bins SEASALT, ORGANICMATTER hydrophile et hydrophobe, BLACKCARBON hydrophile et hydrophobe, et SULFATE.
             #=========================
-            nom_out = path_out + "/CAMS_MR_" + date_courante + 'UTC' + str(int(time)+int(step)).zfill(2) + '0000.nc'
-            print 'Nom fichier de sortie mixRatios :',nom_out
+            nom_MR = path_out + "/CAMS_MR_" + date_courante + 'UTC' + str(int(time)+int(step)).zfill(2) + '0000.nc'
+            print 'Nom fichier de sortie mixRatios :',nom_MR
 
             server.retrieve({
                 'stream'  : "oper",
@@ -111,9 +109,9 @@ def download_files(dt,file_type,time,step,path_out):
                 'area'    : "G",
                 'grid'    : "1.25/1.25",
                 'format'  : "netcdf",
-                'target'  : nom_out
+                'target'  : nom_MR
                 })
-        return
+        return nom_AOT, nom_RH, nom_MR
 
 
 #==============
@@ -159,14 +157,21 @@ else :
     parser.add_option("-f","--end_date", dest="end_date", action="store", type="string", \
         help="end date, fmt('20171201')",default=None)
     parser.add_option("-w","--write_dir", dest="write_dir", action="store",type="string",  \
-        help="Path where the products should be downloaded",\
-        default='/mnt/data/home/rouquieb/DONNEES/CAMS/')
+        help="Path where the products should be downloaded")
+    parser.add_option("-a","--archive_dir", dest="archive_dir", action="store",type="string",  \
+        help="Path where the archive DBL files are stored")
+    parser.add_option("-k","--keep", dest="keep", action="store_true",  \
+                      help="keep netcdf files",default=False)
+    
     #parser.add_option("-t", "--time",dest="time", action="store", type="choice", \
     #    choices=['00','12'],help="Time of forecast (Currently '00'or'12)",default='00')
 
     (options, args) = parser.parse_args()
     parser.check_required("-d")
     parser.check_required("-f")
+    parser.check_required("-a")
+    parser.check_required("-w")
+    
 
 
 #====================
@@ -209,6 +214,12 @@ file_type={'surface':True,'pressure':True,'model':True}
 for i in range(nb_days):
         dt = dt1 + datetime.timedelta(days=i)
         for t in range(len(time)):
-            download_files(dt,file_type,time[t],step,path_out)
+            (nom_AOT,nom_RH,nom_MR)=download_files(dt,file_type,time[t],step,path_out)
+            #conversion to MAJA DBL/HDR format
+            process_one_file(nom_AOT, nom_MR, nom_RH, path_out, options.archive_dir)
+            if not(options.keep):
+                os.remove(nom_AOT)
+                os.remove(nom_MR)
+                os.remove(nom_RH)
             
 

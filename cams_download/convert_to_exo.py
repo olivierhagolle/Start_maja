@@ -192,17 +192,17 @@ def date_time_for_naming(datetime_object):
                                                           datetime_object.second)
 
 
-def create_archive(aot_file, mr_file, rh_file, output_file_basename, working_dir, out_dir):
+def create_archive(aot_file, mr_file, rh_file, output_file_basename, ncdf_dir, archive_dir):
     destination_filename = "{}.DBL".format(output_file_basename)
-    destination_filepath = os.path.join(out_dir, destination_filename)
+    destination_filepath = os.path.join(archive_dir, destination_filename)
 
-    temp_dir = os.path.join(working_dir, output_file_basename + ".DBL.DIR")
+    temp_dir = os.path.join(archive_dir, output_file_basename + ".DBL.DIR")
     os.makedirs(temp_dir)
     shutil.copy(aot_file, os.path.join(temp_dir, os.path.basename(aot_file)))
     shutil.copy(mr_file, os.path.join(temp_dir, os.path.basename(mr_file)))
     shutil.copy(rh_file, os.path.join(temp_dir, os.path.basename(rh_file)))
 
-    compress_directory_bzip2(destination_filepath, temp_dir)
+    compress_directory_bzip2(destination_filepath, archive_dir)
     cams_file_to_return = [os.path.join(destination_filename + ".DIR", os.path.basename(aot_file)),
                            os.path.join(destination_filename + ".DIR", os.path.basename(mr_file)),
                            os.path.join(destination_filename + ".DIR", os.path.basename(rh_file))]
@@ -238,9 +238,9 @@ def back_to_filename_date(datetime_file):
     return datetime_file.strftime("%Y%m%dUTC%H%M%S")
 
 
-def process_one_file(aot_file, mr_file, rh_file, out_dir, working_dir):
+def process_one_file(aot_file, mr_file, rh_file, ncdf_dir, archive_dir):
 
-    working_dir = tempfile.mkdtemp(dir=working_dir)
+    #working_dir = tempfile.mkdtemp(dir=working_dir)
 
     mission = "SENTINEL-2_"
     date_file = check_and_return_date(aot_file, mr_file, rh_file)
@@ -250,12 +250,12 @@ def process_one_file(aot_file, mr_file, rh_file, out_dir, working_dir):
                                                             date_time_for_naming(date_now))
 
     #create archive
-    dbl_filename, cams = create_archive(aot_file, mr_file, rh_file, output_file_basename, working_dir, out_dir)
+    dbl_filename, cams = create_archive(aot_file, mr_file, rh_file, output_file_basename, ncdf_dir, archive_dir)
 
     print("Step 1/2", end='\r')
 
     #create hdr
-    output_filename = os.path.join(out_dir, output_file_basename + ".HDR")
+    output_filename = os.path.join(archive_dir, output_file_basename + ".HDR")
     LOGGER.debug(output_filename)
     basename_out = os.path.basename(os.path.splitext(output_filename)[0])
     LOGGER.debug(basename_out)
@@ -272,34 +272,3 @@ def process_one_file(aot_file, mr_file, rh_file, out_dir, working_dir):
     f.close()
 
 
-def hdr_creation(input_dir, key, out_dir):
-    process_one_file(input_dir, out_dir)
-
-
-def exocam_creation(input_dir, out_dir=None, working_dir="/tmp"):
-
-    processed_dates = []
-
-    nb_files = len(myGlob(input_dir, "*.nc"))
-    compteur = 1
-
-    for file_cams in myGlob(input_dir, "*.nc"):
-        date_file = get_date(file_cams)
-        if date_file in processed_dates:
-            continue
-        print("Processing {}/{} : {} ".format(compteur, nb_files/3,date_file), end='\r')
-        date_written_in_file = back_to_filename_date(date_file)
-        aot_file = searchOneFile(input_dir, "*AOT_{}*".format(date_written_in_file))
-        mr_file = searchOneFile(input_dir, "*MR_{}*".format(date_written_in_file))
-        rh_file = searchOneFile(input_dir, "*RH_{}*".format(date_written_in_file))
-        process_one_file(aot_file, mr_file, rh_file, out_dir, working_dir)
-
-        processed_dates.append(date_file)
-        compteur += 1
-
-
-if __name__ == '__main__':
-    input_dir = sys.argv[1]
-    output_dir = sys.argv[2]
-    working_dir = sys.argv[3]
-    exocam_creation(input_dir, out_dir=output_dir, working_dir=working_dir)
