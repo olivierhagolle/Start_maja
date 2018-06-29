@@ -336,9 +336,9 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
             # Mode Backward, if it is the first date in the list
             if i == 0:
                 nb_prod_backward = min(len(dates_diff), nb_backward)
+                logger.info("dates to process in backward mode :")
                 for date_backward in dates_diff[0:nb_prod_backward]:
-                    logger.debug("dates to process %s", date_backward)
-                    logger.debug(prod_par_dateImg[date_backward])
+                    logger.info("-- %s : %s"% (date_backward,prod_par_dateImg[date_backward]))
                     os.symlink(prod_par_dateImg[date_backward],
                                repWork + "/in/" + os.path.basename(prod_par_dateImg[date_backward]))
                 add_parameter_files(repGipp, repWork + "/in/", tile, repCams)
@@ -380,7 +380,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                     except:
                         logger.debug("pas de L2 pour : %s", nom_courant)
                         pass
-                        logger.debug("previous L2 : %s", nomL2)
+                logger.info("previous L2 : %s", nomL2)
                 os.symlink(prod_par_dateImg[PreviousDate],
                            repWork + "/in/" + os.path.basename(prod_par_dateImg[d]))
 
@@ -466,6 +466,6 @@ if __name__ == '__main__':
     context = options.context
     folder_file = options.folder_file
 
-    nb_backward = 3  # number of images to process in backward mode
+    nb_backward = 8  # number of images to process in backward mode
 
     start_maja(folder_file, context, site, tile, orbit, nb_backward)
