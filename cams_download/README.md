@@ -8,11 +8,11 @@ The tool downloads several types of fields :
 - the Relative Humidity as a function of altitude expressed in pressure levels, stored in the RH file.
 
 These files are available currently twice a day, and some of the aprameters are only availble as a 3 hour forecast, and not an analysis. The files are downloaded in netCDF format and look like this:
-''' 
+```
 CAMS_AOT_yyyymmdd_hhmm_UTC.nc
 CAMS_MR_yyyymmdd_hhmm_UTC.nc
 CAMS_RH_yyyymmdd_hhmm_UTC.nc
-'''
+```
 
 The files are then converted in one archive using the Earth Explorer format, which was selected as the standard format for MAJA external data. We have a HDR xml file, and a bzipped DBL archive, which contains the three files above for a given time and date. (I regret this choice which complexifies the use of data within MAJA, compared to using the plain netCDF files, but it the current situation)
 
