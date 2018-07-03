@@ -19,20 +19,7 @@ import sys
 from convert_to_exo import exocam_creation
 
 import logging
-logger = logging.getLogger('Start-Maja')
-#logger.setLevel(logging.DEBUG)
-#ch = logging.StreamHandler()
-#ch.setLevel(logging.DEBUG)
-#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#ch.setFormatter(formatter)
-#logger.addHandler(ch)
-logger.setLevel(logging.INFO)
-if not logger.handlers:
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+
 START_MAJA_VERSION = 3.1
 
 # #########################################################################
@@ -65,8 +52,7 @@ def read_folders(fic_txt):
                 repMaja = (ligne.split('=')[1]).strip()
             if ligne.find('repCAMS') == 0:
                 repCAMS = (ligne.split('=')[1]).strip()
-            if ligne.find('repCAMS_raw') == 0:
-                repCAMS_raw = (ligne.split('=')[1]).strip()
+
 
     missing = False
 
@@ -86,9 +72,8 @@ def read_folders(fic_txt):
         logger.error("repCode is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         missing = True
     if repCAMS is None:
-        logger.debug("repCAMS is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
-    if repCAMS_raw is None:
-        logger.debug("repCAMS_raw is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
+        logger.info("repCAMS is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
+        logger.info("Processing without CAMS")
 
     if missing:
         raise Exception("Configuration file is not complete. See log file for more information.")
@@ -174,6 +159,34 @@ def manage_rep_cams(repCams, repCamsRaw, working_dir):
         return repCams_out
 
     return repCams
+
+def test_valid_L2A(L2A_DIR):
+    #test validity of a Level2A product of MUSCATE type
+    JPIfile=glob.glob("%s/DATA/*_JPI_ALL.xml"%L2A_DIR)
+    valid=True
+    try:
+        with open(JPIfile) as f:
+            for ligne in f:
+                if ligne.find("<Value>L2NOTV</Value>")>=0:
+                    valid=False
+                    prod_name=os.path.basename(L2A_DIR)
+                    dir_name=os.path.dirname(L2A_DIR)
+                    os.rename(L2A_DIR,dirname+"/L2NOTV_"+prod_name)
+                    print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                    print "L2A product %s is not valid (probably due to too many clouds or No_data values)"%dirname
+                    print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+
+    except IOError:
+        valid=False
+        print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        print "L2A product %s not found "%L2A_DIR
+        print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+
+       
+       
+    return(valid) 
+                
+        
 
 
 def start_maja(folder_file, context, site, tile, orbit, nb_backward):
@@ -290,8 +303,8 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
         logger.debug("d %s", d)
         logger.debug("%s/%s", repL2, nomL2_par_dateImg_Natif[d])
         logger.debug("%s/%s", repL2, nomL2_par_dateImg_MUSCATE[d])
-        logger.debug(glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d])))
-        logger.debug(glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d])))
+        #logger.debug(glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d])))
+        #logger.debug(glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d])))
         
         
         #test existence of a L2 with MAJA name convention
@@ -356,13 +369,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                 logger.info("#################################")
                 os.system(commande)
 
-                #check type of output product (Native or Muscate)n which depends on MAJA version and plugins)
-                nomL2init_Natif = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d]))
-                nomL2init_MUSCATE = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d]))
-                if len(nomL2init_Natif)>0:
-                     L2type="Natif"
-                elif len(nomL2init_MUSCATE)>0:
-                     L2type="MUSCATE"
+
             # else mode nominal
             else:
                 nomL2 = ""
@@ -381,7 +388,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                         logger.debug("pas de L2 pour : %s", nom_courant)
                         pass
                 logger.info("previous L2 : %s", nomL2)
-                os.symlink(prod_par_dateImg[PreviousDate],
+                os.symlink(prod_par_dateImg[d],
                            repWork + "/in/" + os.path.basename(prod_par_dateImg[d]))
 
                 if L2type=="Natif":
@@ -407,7 +414,20 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
                 logger.info("MAJA logfile: %s", Maja_logfile)
                 logger.info("#################################")
                 os.system(commande)
+
+                
             #check for errors in MAJA executions
+            nomL2init_Natif = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d]))
+            nomL2init_MUSCATE = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d]))
+            if len(nomL2init_Natif)>0:
+                     L2type="Natif"
+            elif len(nomL2init_MUSCATE)>0:
+                     L2type="MUSCATE"
+                     #test if L2A products is valid
+                     valid=test_valid_L2A(nomL2init_MUSCATE[0])
+
+            #check for errors in MAJA executions
+
             Error=False
             with open(Maja_logfile, "r") as logfile:
                 for line in logfile:
@@ -456,8 +476,25 @@ if __name__ == '__main__':
         parser.add_option("-d", "--startDate", dest="startDate", action="store",
                           help="start date for processing (optional)", type="string", default="20150623")
 
+        parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
+                          help="Will provide verbose logs", default=False)
+
         (options, args) = parser.parse_args()
 
+    #Logfile configuration
+
+    
+    logger = logging.getLogger('Start-Maja')
+    if options.verbose:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+    if not logger.handlers:
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
     logger.debug("options.stardate %s", options.startDate)
 
     tile = options.tile
