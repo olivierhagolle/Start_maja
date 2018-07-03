@@ -2,6 +2,21 @@
 
 This tool is designed to download daily CAMS near-real-time forecast products from ECMWF. Otherwise, the graphical interface provided by ECMWF is available here: http://apps.ecmwf.int/datasets/data/macc-nrealtime/levtype=sfc/
 
+The tool downloads several types of fields :
+- the Aerosol Optical Thickness AOT, for 5 types of aerosols, which are stored in the AOT file
+- the mixing ratios of each aerosol types as a function of altitude (expressed as model levels), stored in MR file 
+- the Relative Humidity as a function of altitude expressed in pressure levels, stored in the RH file.
+
+These files are available currently twice a day, and some of the aprameters are only availble as a 3 hour forecast, and not an analysis. The files are downloaded in netCDF format and look like this:
+```
+CAMS_AOT_yyyymmdd_UTC_hhmm.nc
+CAMS_MR_yyyymmdd_UTC_hhmm.nc
+CAMS_RH_yyyymmdd_UTC_hhmm.nc
+```
+
+The files are then converted in one archive using the Earth Explorer format, which was selected as the standard format for MAJA external data. We have a HDR xml file, and a bzipped DBL archive, which contains the three files above for a given time and date. (I regret this choice which complexifies the use of data within MAJA, compared to using the plain netCDF files, but it the current situation)
+
+
 
 # Configuration
 
@@ -22,7 +37,7 @@ This tool is designed to download daily CAMS near-real-time forecast products fr
 
 # Example
 
-`python download_CAMS_daily.py -d 20180101 -f 20180102 -t 12 -w /path/to/my/CAMSfolder`
+`python download_CAMS_daily.py -d 20180101 -f 20180102  -w /path/to/my/CAMSfolderNetCDF -a  /path/to/my/CAMSfolderNetDBL`
 
 
 # Parameters
@@ -33,8 +48,9 @@ The user can choose the following parameters with the command line:
 
  - d,f: min/max range of dates to download
 
- - t: analysis time, i.e. when MODIS (and PMAP?) data were last assimilated
-
+ - w: path to folder where netcdf data are stored (can be considered as a temporary file)
+ - a: path to folder where DBL/HDR files are stored
+ - k: to keep the netcdf files
 
 Other parameters could be accessed within the code :
 
