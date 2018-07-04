@@ -162,7 +162,7 @@ def manage_rep_cams(repCams, repCamsRaw, working_dir):
 
 def test_valid_L2A(L2A_DIR):
     #test validity of a Level2A product of MUSCATE type
-    JPIfile=glob.glob("%s/DATA/*_JPI_ALL.xml"%L2A_DIR)
+    JPIfile=glob.glob("%s/DATA/*_JPI_ALL.xml"%L2A_DIR)[0]
     valid=True
     try:
         with open(JPIfile) as f:
