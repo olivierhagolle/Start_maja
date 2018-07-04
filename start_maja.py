@@ -171,7 +171,11 @@ def test_valid_L2A(L2A_DIR):
                     valid=False
                     prod_name=os.path.basename(L2A_DIR)
                     dir_name=os.path.dirname(L2A_DIR)
-                    os.rename(L2A_DIR,dirname+"/L2NOTV_"+prod_name)
+                    if not(os.path.exists(dir_name+"/L2NOTV_"+prod_name)):
+                        os.rename(L2A_DIR,dir_name+"/L2NOTV_"+prod_name)
+                    else:
+                        shutil.rmtree(dir_name+"/L2NOTV_"+prod_name)
+                        os.rename(L2A_DIR,dir_name+"/L2NOTV_"+prod_name)
                     print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
                     print "L2A product %s is not valid (probably due to too many clouds or No_data values)"%dirname
                     print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
