@@ -177,7 +177,7 @@ def test_valid_L2A(L2A_DIR):
                         shutil.rmtree(dir_name+"/L2NOTV_"+prod_name)
                         os.rename(L2A_DIR,dir_name+"/L2NOTV_"+prod_name)
                     print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-                    print "L2A product %s is not valid (probably due to too many clouds or No_data values)"%dirname
+                    print "L2A product %s is not valid (probably due to too many clouds or No_data values)"%dir_name
                     print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 
     except IOError:
