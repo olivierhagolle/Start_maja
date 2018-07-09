@@ -1,28 +1,28 @@
 <img  title="logo CNES" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_cnes.jpg" alt="" width="130"  /> <img  title="logo CESBIO" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_cesbio.png" alt="" width="110"  /> <img  title="logo DLR" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_DLR.jpg" alt="" width="90"  /> <img  title="logo MAJA" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_maja.png" alt="" width="80"  /> 
 # Introduction
 
-MAJA stands for Maccs-Atcor Joint Algorithm. This atmospheric correction and cloud screening software is based [on MACCS processor](http://www.cesbio.ups-tlse.fr/multitemp/?p=6203), developped for CNES by CS-SI company, from a method and a prototype developped at CESBIO, <sup>[1](#ref1)</sup> <sup>[2](#ref2)</sup> <sup>[3](#ref3)</sup>. Recently, thanks to an agreement between CNES and DLR and to some funding from ESA, we started adding methods from DLR 's atmospheric correction software ATCOR into MACCS. MACCS then became MAJA. The current distributed version is the first version resulting from this collaboration : MAJA V1-0. 
+The following script will help you to run the MAJA L2A processor.
 
-MAJA has a very unique feature among all atmospheric correction processors : it uses multi-temporal criteria to improve cloud detection and aerosol retrieval. Because of this feature, it is important to use MAJA to process *time series* of images and not single images. Moreover, these images have to be processed chronologically. To initialise processing of a time series, a special mode is used, named "backward mode". To get a correct first product, we process in fact a small number of products in anti-chronological order (default value of number of images processed in backward mode is 8, but consider increasing it if your region is very cloudy). Then all the products are processed in "nominal" mode and chronological order. When a product is fully or nearly fully cloudy, it is not issued to save processing time and disk space.
+MAJA stands for Maccs-Atcor Joint Algorithm. This atmospheric correction and cloud screening software is based [on MACCS processor](http://www.cesbio.ups-tlse.fr/multitemp/?p=6203), developped for CNES by CS-SI company, from a method and a prototype developped at CESBIO, <sup>[1](#ref1)</sup> <sup>[2](#ref2)</sup> <sup>[3](#ref3)</sup>. In 2017, thanks to an agreement between CNES and DLR and to some funding from ESA, we started adding methods from DLR 's atmospheric correction software ATCOR into MACCS. MACCS then became MAJA. 
+
+- The first version resulting from this collaboration was MAJA V1-0. If you are using this version, you will also need [the version v1_0 of start_maja](https://github.com/olivierhagolle/Start_maja/releases/tag/v1.0).
+
+- A second version of MAJA, v2-1 was used in Theia, but was not distributed to users, because the version 3 was available shortly afterwards. 
+
+- Version v3.1 will be distributed very shortly, and this version of start_maja.py is made to run MAJA 3.1. 
+
+MAJA has a very unique feature among all atmospheric correction processors: it uses multi-temporal criteria to improve cloud detection and aerosol retrieval. Because of this feature, it is important to use MAJA to process *time series* of images and not single images. Moreover, these images have to be processed chronologically. To initialise processing of a time series, a special mode is used, named "backward mode". To get a correct first product, we process in fact a small number of products in anti-chronological order (default value of number of images processed in backward mode is 8, but consider increasing it if your region is very cloudy). Then all the products are processed in "nominal" mode and chronological order. When a product is fully or nearly fully cloudy, it is not issued to save processing time and disk space.
 
 For more information about MAJA methods but without details, please read : http://www.cesbio.ups-tlse.fr/multitemp/?p=6203
 To get all details on the methods, MAJA's ATBD is available here : http://tully.ups-tlse.fr/olivier/maja_atbd/blob/master/atbd_maja.pdf, or reference <sup>[1](#ref4)</sup>, below.
 
-Following discovery of errors in previous version, we went through all the files and found other updates to make. If most files have been updated, differences in the results are quite small (<0.001 in reflectance) compared to results obtained from version 0.9.
 
-We have also set-up [an internal repository](http://tully.ups-tlse.fr/olivier/gipp/tree/master) containing parameters for all sensors actually processed by MAJA, including Venµs and LANDSAT 8. This repository will be updated more frequently. 
+MAJA needs parameters, that ESA names GIPP. We have also set-up [an internal repository](http://tully.ups-tlse.fr/olivier/gipp/tree/master) containing parameters for all sensors actually processed by MAJA, including Sentinel-2, Venµs and LANDSAT 8. This repository is ket up to date with the opereational processors. 
 
 ## Recent changes
-### v0.9 (2017/10/02)
-- this version of start_maja works with both S2A and S2B
-- we have found errors, especially regarding water vapour, in the parameters we provided in the "GIPP_nominal" folder. These parameters have been removed and we strongly advise you to do the same.
-- we have updated the parameters and provided them for both S2A and S2B in the folder GIPP_S2AS2B
 
-### v.0.9.1 (2018/03/29)
-Added MAJA error catching. As a result, the processing of a whole time series stops if MAJA fails for a given date.
-
-### V1 (2018/07/02)
-The input and output format will be slightly different, as we had so far two formats, one for the products generated at Theia, and one for the products generated by MAJA used with standard ESA l1C products. We have omogeneised these two formats and adopted that of Theia. It will cause some difficulties to users of the previous versions of MAJA, as they will need to adapt to the new output format and will also need to start an initialisation procedure again. Users not wanting to make the adaptation can keep on using MAJA V1.0.
+### V3.1 (2018/07/09)
+We had so far two formats, one for the products generated at Theia, and one for the products generated by MAJA used with standard ESA l1C products. We have homogeneised these two formats and adopted that of Theia. HoweverIt will cause some difficulties to users of the previous versions of MAJA, as they will need to adapt to the new output format and will also need to start an initialisation procedure again. Users not wanting to make the adaptation can keep on using MAJA V1.0.
 
 MAJA 3.1 ships several improvements, the main of which is the used of Copernicus atmopshere Monitoring Service aerosol products, which are used to constrain the aerosol type in the estimates. This brings a major improvement in places where the aerosols can differ from a continental model which was used so far. 
 
@@ -30,6 +30,17 @@ The input and output format will be slightly different, as we had so far two for
 
 It also includes a correction for thin cirrus clouds and a directional effect correction used to improve the estimate of AOT.
 Among the various modifications, MAJA will be now provided for RedHat or Ubuntu Linux families. More information is available here: http://www.cesbio.ups-tlse.fr/multitemp/?p=13291
+
+### V1.0 (2018/07/09)
+We just added a tag, v1.0 to get a similar version number as the one used for MAJA. The corresponding release [can be accessed here](https://github.com/olivierhagolle/Start_maja/releases/tag/v1.0)
+
+### v.0.9.1 (2018/03/29)
+Added MAJA error catching. As a result, the processing of a whole time series stops if MAJA fails for a given date.
+
+### v0.9 (2017/10/02)
+- this version of start_maja works with both S2A and S2B
+- we have found errors, especially regarding water vapour, in the parameters we provided in the "GIPP_nominal" folder. These parameters have been removed and we strongly advise you to do the same.
+- we have updated the parameters and provided them for both S2A and S2B in the folder GIPP_S2AS2B
 
 
 ## Data format 
@@ -134,7 +145,7 @@ A "userconf" folder is also necessary, but it is also provided in this repositor
 
 
 ## DTM
-A DTM folder is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, it is available here : http://tully.ups-tlse.fr/olivier/prepare_mnt
+A DTM folder is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, it is available here in the "prepare_mnt" folder.
 
 An example of DTM file is available here for tile 31TFJ in Provence, France, near Avignon. Both files should be placed in a folder named DTM/S2__TEST_AUX_REFDE2_T31TFJ_0001 in the start_maja directory.
 
