@@ -31,7 +31,7 @@ For more information about MAJA methods but without details, please read : http:
 To get all details on the methods, MAJA's ATBD is available here : http://tully.ups-tlse.fr/olivier/maja_atbd/blob/master/atbd_maja.pdf, or reference <sup>[1](#ref4)</sup>, below.
 
 
-MAJA needs parameters, that ESA names GIPP. We have also set-up [an internal repository](http://tully.ups-tlse.fr/olivier/gipp/tree/master) containing parameters for all sensors actually processed by MAJA, including Sentinel-2, Venµs and LANDSAT 8. This repository is ket up to date with the opereational processors. 
+MAJA needs parameters, that ESA names GIPP. We have also set-up [an internal repository](http://tully.ups-tlse.fr/olivier/gipp/tree/master) containing parameters for all sensors actually processed by MAJA, including Sentinel-2, Venµs and LANDSAT 8. This repository is kept up to date with the operational processors. See also [the parameters section](#parameters) below.
 
 <a name="versions"></a>
 # Recent changes
@@ -96,6 +96,7 @@ To use this start_maja.py, you will need to configure the directories within the
 The use of peps_download.py to download Sentinel-2 l1c PRODUCTS is recommended :
 https://github.com/olivierhagolle/peps_download
 
+<a name="parameters"></a>
 ## Parameters
 The tool needs a lot of configuration files which are provided in two directories "userconf" and "GIPP_S2AS2B". I tend to never change the "userconf", but the GIPP_S2AS2B contains the parameters and look-up tables, which you might want to change. Most of the parameters lie within the L2COMM file. When I want to test different sets of parameters, I create a new GIPP folder, which I name GIPP_context, where *context* is passed as a parameter of the command line with option -c . 
 
