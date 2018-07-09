@@ -149,21 +149,26 @@ A "userconf" folder is also necessary, but it is also provided in this repositor
 
 
 ## DTM
-A DTM folder is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, it is available here in the "prepare_mnt" folder.
+A DTM folder is needed to process data with MAJA. Of course, it depends on the tile you want to process. This DTM must be stored in the DTM folder, which is defined within the code. A tool exists to create this DTM, [it is available in the "prepare_mnt" folder](https://github.com/olivierhagolle/Start_maja/tree/master/prepare_mnt).
 
 An example of DTM file is available here for tile 31TFJ in Provence, France, near Avignon. Both files should be placed in a folder named DTM/S2__TEST_AUX_REFDE2_T31TFJ_0001 in the start_maja directory.
-
 
 http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0001.DBL
 
 http://osr-cesbio.ups-tlse.fr/echangeswww/majadata//S2__TEST_AUX_REFDE2_T31TFJ_0001.HDR
 
-The DBL file is a tar file (I am innocent for this choice...) that can be opened with `tar xvf `. MAJA can use both the archive or un-archived version. My tool above does not provide the archived version.
+The DBL file is a tar file (I am innocent for this choice...) that can be opened with `tar xvf `. MAJA can use both the archive or un-archived version. The tool above provides the un-archived version (DBL.DIR).
 
 ## CAMS
-if you intend to use the data from Copernicus Atmosphere Monitoring Service (CAMS), that we use to get an information on the aerosol type, you will need to download the CAMS data. A download tool is provided in the cams_download directory of this repository (xxx)
+if you intend to use the data from Copernicus Atmosphere Monitoring Service (CAMS), that we use to get an information on the aerosol type, you will need to download the CAMS data. A download tool is provided [in the cams_download directory of this repository](xxx)
 
 <a name="workflow"></a>
+
+## PARAMETERS
+We provide two sets of parameters, one to work without CAMS data, and one to work with CAMS data. The latter needs a lot of space (~1.5 GB), as the LUT are provided not only for one aerosol type, but for for 5 aerosol types, and 6 water vapour contents. As Github limits the repository size to 1 GB, we are using gitlab to distribute the parameters (GIPP):  
+- Parameters without CAMS : http://tully.ups-tlse.fr/olivier/gipp/tree/master/GIPP_MAJA_3_1_S2AS2B_MUSCATE_TM
+- Parameters with CAMS: http://tully.ups-tlse.fr/olivier/gipp/tree/master/GIPP_MAJA_3_1_S2AS2B_CAMS
+
 # Example workflow
 
 Here is how to process a set of data above tile 31TFJ, near Avignon in Provence, France. To process any other tile, you will need to prepare the DTM and store the data in the DTM folder.
@@ -190,8 +195,8 @@ Here is how to process a set of data above tile 31TFJ, near Avignon in Provence,
 ## Create DTM
 Follow DTM generation instructions : http://tully.ups-tlse.fr/olivier/prepare_mnt
 
-## Download CMAS data
-Follow cams_data download tool instructions
+## Download CAMS data
+Follow cams_download tool instructions : https://github.com/olivierhagolle/Start_maja/tree/master/cams_download
 
 ## Execute start_maja.py
 
@@ -202,9 +207,8 @@ repCode=/mnt/data/home/hagolleo/PROG/S2/lance_maja
 repWork=/mnt/data/SENTINEL2/MAJA
 repL1  =/mnt/data/SENTINEL2/L1C_PDGS
 repL2  =/mnt/data/SENTINEL2/L2A_MAJA
-repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
+repMaja=/mnt/data/home/hagolleo/Install-MAJA/maja/core/1.0/bin/maja
 repCAMS  =/mnt/data/SENTINEL2/CAMS
-repCAMS_raw  =/mnt/data/SENTINEL2/CAMS_RAW
 ```
 - repCode is where Start_maja.py is stored, together with the DTM, userconf and GIPP directories
 - repWork is a directory to store the temporary files
@@ -212,15 +216,14 @@ repCAMS_raw  =/mnt/data/SENTINEL2/CAMS_RAW
   - Les produits SAFE doivent donc être stockés à l'emplacement suivant : repL1  = repL1/site
 - repL2 is for the L2A data (without the site name which is added aferward)
 - repMAJA is where the Maja binary code is
-- repCAMS is where EXO CAMS are stored
-- repCAMS_raw is where nc files are stored. If repCAMS_raw is set, EXO CAMS will be regenerated and repCAMS will be ignored
+- repCAMS is where CAMS data are stored
 
 
 
 Here is an example of command line
 ```
 Usage   : python ./start_maja.py -f <folder_file>-c <context> -t <tile name> -s <Site Name> -d <start date>
-Example : python ./start_maja.py -f folders.txt -c MAJA_1_0_S2AS2B_NATIF -t 31TFJ -s Avignon -d 20170101
+Example : python ./start_maja.py -f folders.txt -c MAJA_1_0_S2AS2B_CAMS -t 31TFJ -s Avignon -d 20170101
 ```
 Description of command line options :
 -f provides the folders filename
@@ -234,7 +237,6 @@ Caution, *when a product has more than 90% of clouds, the L2A is not issued*. Ho
 
 ## Known Errors
 
-If you see this message : "ERROR 1:  Not a TIFF file, bad magic number 0 (0x0) ", don't worry, it is just a message sent by gdal, that has no consequence. We will try to catch it in next versions...
 
 Some Sentinel-2 L1C products lack the angle information which is required by MAJA. In this case, MAJA stops processing with an error message. This causes issues particularly in the backward mode. These products were acquired in February and March 2016 and have not been reprocessed by ESA (despited repeated asks from my side). You should remove them from the folder which contains the list of L1C products to process.
 
