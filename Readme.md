@@ -5,7 +5,7 @@
 1. [Introduction](#intro)
 2. [MAJA versions](#versions)
 3. [MAJA output format](#format)
-4. [Test MAJA with the test data set (optional)](#test)
+4. [Get and Install MAJA](#maja)
 5. [Use start_maja](#Basic)
 6. [Example workflow](#workflow)
 7. [Docker](#docker)
@@ -15,7 +15,7 @@
 <a name="intro"></a>
 # Introduction
 
-The following script will help you run the MAJA L2A processor, on Sentinel-2 only so far.
+The following script will help you run the MAJA L2A processor, on Sentinel-2 only so far. 
 
 MAJA stands for Maccs-Atcor Joint Algorithm. This atmospheric correction and cloud screening software is based [on MACCS processor](http://www.cesbio.ups-tlse.fr/multitemp/?p=6203), developped for CNES by CS-SI company, from a method and a prototype developped at CESBIO, <sup>[1](#ref1)</sup> <sup>[2](#ref2)</sup> <sup>[3](#ref3)</sup>. In 2017, thanks to an agreement between CNES and DLR and to some funding from ESA, we started adding methods from DLR 's atmospheric correction software ATCOR into MACCS. MACCS then became MAJA. 
 
@@ -69,8 +69,8 @@ Added MAJA error catching. As a result, the processing of a whole time series st
 
 
 
-<a name="test"></a>
-# Test maja with the test data set
+<a name="maja"></a>
+# Get MAJA
 ## Get MAJA Sofware
 MAJA can be downloaded as a binary code from https://logiciels.cnes.fr/en/content/maja
 It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code. For a licence allowing commercial use, please contact CNES (Olivier Hagolle).
@@ -83,21 +83,8 @@ Some users have had issues with some missing libraries, depending on how the lin
 sudo yum --disableplugin=fastestmirror -y install gd libxslt libxml2
 ```
 
-## Test MAJA with a test data_set
-We provide a test data set, to verify your installation of MAJA. You might want to skip this phase, and try to use MAJA directly with start_maja.py, and only follow these steps if issues are found with MAJA. In that case, please download the following pacakge and follow the provided documentation.
 
-### Test Data set
-http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/S2_NOMINAL.tgz
-
-### Test Documentation
-http://osr-cesbio.ups-tlse.fr/echangeswww/majadata/S2_NOMINAL-dataset-description.docx
 <a name="Basic"></a>
-
-### Run the tests 
-
-Run the tests as mentionned in the test documentation. If successful, go to the next step.
-
-
 # Basic Supervisor for MAJA processor
 
 The basic supervisor **start_maja** enables to process successively all files in a time series of Sentinel-2 images for a given tile, stored in a folder. The initialisation of the time series is performed with the "backward mode", and then all the dates are processed in "nominal" mode. The backward mode takes much more time than the nominal mode. On my computer, which is a fast one, the nominal mode takes 15 minutes, and the backward mode takes almost one hour. No control is done on the outputs, and it does not check if the time elapsed between two successive products used as input is not too long and would require restarting the initialisation in backward mode.
