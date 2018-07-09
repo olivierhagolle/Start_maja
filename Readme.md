@@ -5,8 +5,8 @@
 1. [Introduction](#intro)
 2. [MAJA versions](#versions)
 3. [MAJA output format](#format)
-4. [Test maja with the test data set](#test)
-5. [Use a basic supervisor for MAJA processor](#Basic)
+4. [Test MAJA with the test data set (optional)](#test)
+5. [Use start_maja](#Basic)
 6. [Example workflow](#workflow)
 7. [Docker](#docker)
 
@@ -112,6 +112,11 @@ https://github.com/olivierhagolle/peps_download
 ## Parameters
 The tool needs a lot of configuration files which are provided in two directories "userconf" and "GIPP_S2AS2B". I tend to never change the "userconf", but the GIPP_S2AS2B contains the parameters and look-up tables, which you might want to change. Most of the parameters lie within the L2COMM file. When I want to test different sets of parameters, I create a new GIPP folder, which I name GIPP_context, where *context* is passed as a parameter of the command line with option -c . 
 
+We provide two sets of parameters, one to work without CAMS data, and one to work with CAMS data. The latter needs a lot of disk space (~1.5 GB), as the LUT are provided not only for one aerosol type, but for for 5 aerosol types, and 6 water vapour contents. As Github limits the repository size to 1 GB, we are using a gitlab repository to distribute the parameters (GIPP):  
+- Parameters without CAMS : http://tully.ups-tlse.fr/olivier/gipp/tree/master/GIPP_MAJA_3_1_S2AS2B_MUSCATE_TM
+- Parameters with CAMS: http://tully.ups-tlse.fr/olivier/gipp/tree/master/GIPP_MAJA_3_1_S2AS2B_CAMS
+
+
 ## Folder structure
 To run MAJA, you need to store all the necessary data in an input folder. Here is an example of its content in nominal mode.
 
@@ -175,9 +180,6 @@ if you intend to use the data from Copernicus Atmosphere Monitoring Service (CAM
 <a name="workflow"></a>
 
 ## PARAMETERS
-We provide two sets of parameters, one to work without CAMS data, and one to work with CAMS data. The latter needs a lot of space (~1.5 GB), as the LUT are provided not only for one aerosol type, but for for 5 aerosol types, and 6 water vapour contents. As Github limits the repository size to 1 GB, we are using gitlab to distribute the parameters (GIPP):  
-- Parameters without CAMS : http://tully.ups-tlse.fr/olivier/gipp/tree/master/GIPP_MAJA_3_1_S2AS2B_MUSCATE_TM
-- Parameters with CAMS: http://tully.ups-tlse.fr/olivier/gipp/tree/master/GIPP_MAJA_3_1_S2AS2B_CAMS
 
 # Example workflow
 
@@ -233,7 +235,7 @@ repCAMS  =/mnt/data/SENTINEL2/CAMS
 Here is an example of command line
 ```
 Usage   : python ./start_maja.py -f <folder_file>-c <context> -t <tile name> -s <Site Name> -d <start date>
-Example : python ./start_maja.py -f folders.txt -c MAJA_1_0_S2AS2B_CAMS -t 31TFJ -s Avignon -d 20170101
+Example : python ./start_maja.py -f folders.txt -c MAJA_3_0_S2AS2B_CAMS -t 31TFJ -s Avignon -d 20170101
 ```
 Description of command line options :
 -f provides the folders filename
@@ -248,13 +250,13 @@ Caution, *when a product has more than 90% of clouds, the L2A is not issued*. Ho
 ## Known Errors
 
 
-Some Sentinel-2 L1C products lack the angle information which is required by MAJA. In this case, MAJA stops processing with an error message. This causes issues particularly in the backward mode. These products were acquired in February and March 2016 and have not been reprocessed by ESA (despited repeated asks from my side). You should remove them from the folder which contains the list of L1C products to process.
+Some Sentinel-2 L1C products lack the angle information which is required by MAJA. In this case, MAJA stops processing with an error message. This causes issues particularly in the backward mode. These products were acquired in February and March 2016 and have not been reprocessed by ESA (despited repeated asks from my side). You should remove them from the folder which contains the list of L1C products to process. 
 
 
 <a name="docker"></a>
 # Docker
 
-Dániel Kristóf provided us with a Dockerfile (Thank you Dániel), which, on any linux system retrieves the CentOS System, installs what is necessary and configures MAJA. I am really not a Docker expert, and when I tried, my system engineer immedialtely told me that there are some securities issues with Docker...
+Dániel Kristóf provided us with a Dockerfile (Thank you Dániel), which, on any linux system retrieves the CentOS System, installs what is necessary and configures MAJA. I am really not a Docker expert, and when I tried, our lab system engineer immediately told me that there are some securities issues with Docker, and I should not install it like that...So, I never tested it.
 
 But if we follow Daniel's guidelines :
 
@@ -269,7 +271,6 @@ sudo docker build -t maja --build-arg http_proxy=$http_proxy --build-arg https_p
 ```
 And then, you may run MAJA with the test data sets with
 ```
-sudo docker run -v ~/maja/S2_NOMINAL:/data maja /opt/maja/core/1.0/bin/maja -i /data/input_maja1.0 -o /data/output_maja1.0 -m L2NOMINAL -ucs /data/userconf --TileId 36JTT
 
 ```
 
