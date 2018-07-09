@@ -166,7 +166,6 @@ if you intend to use the data from Copernicus Atmosphere Monitoring Service (CAM
 
 <a name="workflow"></a>
 
-## PARAMETERS
 
 # Example workflow
 
