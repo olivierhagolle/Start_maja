@@ -134,7 +134,7 @@ def add_parameter_files(repGipp, repWorkIn, tile, repCams):
     if repCams is not None:
         for fic in glob.glob(os.path.join(repCams, "*")):
             base = os.path.basename(fic)
-            logger.debug("Linking %s in %s", fic, repWorkIn)
+            #logger.debug("Linking %s in %s", fic, repWorkIn)
             os.symlink(fic, os.path.join(repWorkIn, base))
 
 
@@ -200,8 +200,17 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
     repCams = manage_rep_cams(repCams, repCamsRaw, repWork)
 
     repConf = repCode + "/userconf"
+    if not(os.path.exists(repConf)):
+        logger.error("Config dir %s does not exist", repConf)
+        sys.exit(-1)
     repDtm = repCode + "/DTM"
+    if not(os.path.exists(repDtm)):
+        logger.error("DTM dir %s does not exist", repDtm)
+        sys.exit(-1)
     repGipp = repCode + "/GIPP_%s" % context
+    if not(os.path.exists(repGipp)):
+        logger.error("GIPP dir %s does not exist", repGipp)
+        sys.exit(-1)
 
     repWork = "%s/%s/%s/%s/" % (repWork, site, tile, context)
     if not (os.path.exists(repWork)):
@@ -209,7 +218,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
             os.makedirs(repWork)
         except:
             logger.error("something wrong when creating %s", repWork)
-            sys.exit(1)
+            sys.exit(-1)
     repL1 = "%s/%s/" % (repL1, site)
     repL2 = "%s/%s/%s/%s/" % (repL2, site, tile, context)
 
