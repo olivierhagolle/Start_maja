@@ -147,7 +147,7 @@ if len(sys.argv) == 1:
     print '      '+sys.argv[0]+' [options]'
     print "     Aide : ", prog, " --help"
     print "        ou : ", prog, " -h"
-    print "example : python %s -d 20171101 -f 20171201 -t 00"%sys.argv[0]
+    print "example : python %s -d 20171101 -f 20171201 -a /mnt/data/DONNEES_AUX/CAMS_DBL/ -w /mnt/data/DONNEES_AUX/CAMS_TMP/ "%prog
     sys.exit(-1)
 else :
     usage = "usage: %prog [options] "
@@ -213,6 +213,9 @@ file_type={'surface':True,'pressure':True,'model':True}
 #Boucle sur les jours a telecharger
 for i in range(nb_days):
         dt = dt1 + datetime.timedelta(days=i)
+        print "=================================="
+        print "Downloading files for date %s"%dt
+        print "=================================="
         for t in range(len(time)):
             (nom_AOT,nom_RH,nom_MR)=download_files(dt,file_type,time[t],step,path_out)
             #conversion to MAJA DBL/HDR format
