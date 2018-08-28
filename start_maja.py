@@ -173,7 +173,7 @@ for elem in listeProd:
     if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C") :
         date_asc=rac.split('_')[7][1:9]
     else:
-        date_asc=rac.split('_')[6][0:8]
+        date_asc=rac.split('_')[2][0:8]
     print date_asc
     if date_asc>= options.startDate:
         dateImg.append(date_asc)
