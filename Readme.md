@@ -15,7 +15,7 @@
 <a name="intro"></a>
 # Introduction
 
-**NB Start maja has been updated to work with MAJA 3.1 , but MAJA 3.1 is not available yet. Meanwhile, please use MAJA 1_0, and [read the corresponding readme file](https://github.com/olivierhagolle/Start_maja/tree/v1.0).**
+**NB Start maja has been updated to work with MAJA 3.1 , but MAJA 3.1 is not available yet. Meanwhile, please use MAJA 1_0, and [read the corresponding readme file](https://github.com/olivierhagolle/Start_maja/tree/v1.0).** To do that, please use `git checkout Start_maja_V1`.
 
 The following script will help you run the MAJA L2A processor, on Sentinel-2 only so far. 
 
