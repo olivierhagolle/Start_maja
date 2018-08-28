@@ -266,14 +266,14 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, debug_mode)
         if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C"):
             date_asc = rac.split('_')[7][1:9]
         else:
-            date_asc = rac.split('_')[6][0:8]
+            date_asc = rac.split('_')[2][0:8]
         logger.debug("date_asc %s %s %s/%s", date_asc, date_asc >= options.startDate, date_asc, options.startDate)
         if date_asc >= options.startDate:
             dateImg.append(date_asc)
             if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C"):
                 dateProd.append(rac.split('_')[5])
             else:
-                dateProd.append(rac.split('_')[2])
+                dateProd.append(rac.split('_')[6])
             listeProdFiltree.append(elem)
 
     # removing multiple images with same date and tile
