@@ -193,7 +193,7 @@ def test_valid_L2A(L2A_DIR):
         
 
 
-def start_maja(folder_file, context, site, tile, orbit, nb_backward):
+def start_maja(folder_file, context, site, tile, orbit, nb_backward, debug_mode):
     # =================directories
     (repCode, repWork, repL1, repL2, maja, repCams, repCamsRaw) = read_folders(folder_file)
 
@@ -337,7 +337,11 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
         logger.info("Most recent processed date : %s", derniereDate)
 
 
-    
+    #decide if debug_mode used for maja
+    if debug_mode:
+        debug_option="--loglevel DEBUG"
+    else :
+        debug_option=""
 
     # ############## For each product
     nb_dates = len(dates_diff)
@@ -372,8 +376,8 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
 
                 Maja_logfile="%s/%s.log"%(repL2,os.path.basename(prod_par_dateImg[d]))
                 logger.debug(os.listdir(os.path.join(repWork, "in")))
-                commande = "%s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s &> %s"% (
-                    maja, repWork + "/in", repL2, repWork + "/userconf", tile,Maja_logfile)
+                commande = "%s %s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s &> %s"% (
+                    maja, debug_option, repWork + "/in", repL2, repWork + "/userconf", tile,Maja_logfile)
                 logger.info("#################################")
                 logger.info("#################################")
                 logger.info("processing %s in backward mode"%prod_par_dateImg[d])
@@ -419,8 +423,8 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward):
 
                 logger.debug(os.listdir(os.path.join(repWork, "in")))
 
-                commande = "%s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s &> %s" % (
-                    maja, repWork + "/in", repL2, repWork + "/userconf", tile, Maja_logfile)
+                commande = "%s %s -i %s -o %s -m L2NOMINAL -ucs %s --TileId %s &> %s" % (
+                    maja, debug_option, repWork + "/in", repL2, repWork + "/userconf", tile, Maja_logfile)
                 logger.info("#################################")
                 logger.info("#################################")
                 logger.info("processing %s in nominal mode"%prod_par_dateImg[d])
@@ -490,7 +494,11 @@ if __name__ == '__main__':
                           help="start date for processing (optional)", type="string", default="20150623")
 
         parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
-                          help="Will provide verbose logs", default=False)
+                          help="Will provide verbose start_maja logs", default=False)
+
+        parser.add_option("--debug", dest="debug", action="store_true",
+                          help="Use MAJA Debug mode to get verbose logs", default=False)
+
 
         (options, args) = parser.parse_args()
 
@@ -515,7 +523,8 @@ if __name__ == '__main__':
     orbit = options.orbit
     context = options.context
     folder_file = options.folder_file
+    debug_mode = options.debug
 
     nb_backward = 8  # number of images to process in backward mode
 
-    start_maja(folder_file, context, site, tile, orbit, nb_backward)
+    start_maja(folder_file, context, site, tile, orbit, nb_backward, debug_mode)
