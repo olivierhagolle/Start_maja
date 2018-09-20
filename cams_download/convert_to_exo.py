@@ -76,8 +76,8 @@ def get_parameters():
 def getRoot():
     xmlns = "http://eop-cfi.esa.int/CFI"
     xsi = "http://www.w3.org/2001/XMLSchema-instance"
-    schemaLocation = "http://eop-cfi.esa.int/CFI ./AUX_REFDE2_ReferenceDemDataLevel2.xsd"
-    typeXsi = "REFDE2_Header_Type"
+    schemaLocation = "http://eop-cfi.esa.int/CFI ./EXO_CAMS_CamsData.xsd"
+    typeXsi = "CAMS_Header_Type"
     root = ET.Element("Earth_Explorer_Header", attrib={"schema_version":"1.00",
                                                        "{" + xsi + "}schemaLocation": schemaLocation,
                                                        "{" + xsi + "}type": typeXsi},
