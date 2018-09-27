@@ -1,0 +1,4 @@
+INDIR_MNT=/path/to/SRTM/Archive
+OUTDIR_MNT=/your/preferred/output/folder
+INDIR_EAU=/path/to/extracted/Water/Archive
+OUTDIR_EAU =/your/preferred/output/folder
