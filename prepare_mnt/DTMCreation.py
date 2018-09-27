@@ -11,9 +11,13 @@ Created on:     Tue Sep 11 15:31:00 2018
 """
 
 import sys
-sys.path.append('..') #Import relative modules
-
+assert sys.version_info >= (2,7)
+sys.path.append(sys.path[0] + "/..")
 from Common import FileSystem
+from prepare_mnt import tuilage_mnt_eau_S2 as tiling
+from prepare_mnt import conversion_format_maja as conversion
+from prepare_mnt.tuilage_mnt_eau_S2 import TuilageParamsConverter
+from prepare_mnt import lib_mnt
 
 class DTMCreator():
     """
@@ -170,8 +174,6 @@ class DTMCreator():
         :param dtype: Type of metadata - Natif or Muscate for now
         """
         from lxml import etree
-        from tuilage_mnt_eau_S2 import TuilageParamsConverter
-
         if(dtype == self.typeNatif):
             xpathTileName = "/n1:Level-1C_Tile_ID/n1:General_Info/TILE_ID"
             xpathCSName = "/n1:Level-1C_Tile_ID/n1:Geometric_Info/Tile_Geocoding/HORIZONTAL_CS_NAME"
@@ -261,7 +263,6 @@ class DTMCreator():
         if(self.mode == self.modeMTD):
             self.site = self.getSiteInfo(self.mtd, self.dtype)
         elif(self.mode == self.modeGranule):
-            import lib_mnt
             self.site = lib_mnt.lire_fichier_site_kml(self.kml, self.granule)
         if(tempout == None):
             tempout = os.path.join("/tmp", self.site.nom)
@@ -278,12 +279,10 @@ class DTMCreator():
                 zip_ref.extractall(tempout)
                 zip_ref.close()
                 self.dirInWater = tempout
-        from prepare_mnt import tuilage_mnt_eau_S2 as tiling
         mntcreator = tiling.TuilageSentinel()
         mntcreator.run(self.dirInSRTM, self.dirInWater,tempout, tempout, self.coarseRes, site=self.site, mnt=self.mntType, waterOnly=self.waterOnly, workingDir=tempout)
         
         if(self.waterOnly == False):
-            from prepare_mnt import conversion_format_maja as conversion
             converter = conversion.MAJAConverter()
             converter.run(self.site.nom, tempout, self.coarseRes, outdir)
         

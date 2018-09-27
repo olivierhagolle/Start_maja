@@ -99,7 +99,7 @@ def lire_fichier_site_kml(kml, nom):
                         
                     elif m[0] == "UTM_WKT":
                         coords = re.sub(r'^.*MULTIPOLYGON\(\(\((.*)\)\)\)',"\g<1>",m[1])
-                        coords = zip(*[[int(y) for y in x.split()] for x in coords.split(",")])
+                        coords = list(zip(*[[int(y) for y in x.split()] for x in coords.split(",")]))
                         # find min and max coordiantes
                         orig_x = min(coords[0])
                         pas_x = max(coords[0]) - orig_x
@@ -163,32 +163,32 @@ def lire_fichier_site(fic_site):
 def lire_entete_mnt(fic_hdr):
     """lecture du fichier hdr, en entree, chemin complet du fichier
     """
-    f = file(fic_hdr, 'r')
-    for ligne in f.readlines():
-        if ligne.find('samples') >= 0:
-            nb_col = int(ligne.split('=')[1])
-        if ligne.find('lines') >= 0:
-            nb_lig = int(ligne.split('=')[1])
-        if ligne.find('byte order') >= 0:
-            num_endian = int(ligne.split('=')[1])
-            if (num_endian == 0):
-                endian = 'PC'
-            else:
-                endian = 'SUN'
-        if ligne.find('data type') >= 0:
-            type_envi = int(ligne.split('=')[1])
-            if (type_envi == 1):
-                type_donnee = 'uint8'
-            elif (type_envi == 2):
-                type_donnee = 'int16'
-            elif (type_envi == 4):
-                type_donnee = 'float32'
-            elif (type_envi == 5):
-                type_donnee = 'double'
-            elif (type_envi == 12):
-                type_donnee = 'uint16'
-            else:
-                print('type %d non pris en compte' % type_envi)
+    with open(fic_hdr, 'r') as f:
+        for ligne in f.readlines():
+            if ligne.find('samples') >= 0:
+                nb_col = int(ligne.split('=')[1])
+            if ligne.find('lines') >= 0:
+                nb_lig = int(ligne.split('=')[1])
+            if ligne.find('byte order') >= 0:
+                num_endian = int(ligne.split('=')[1])
+                if (num_endian == 0):
+                    endian = 'PC'
+                else:
+                    endian = 'SUN'
+            if ligne.find('data type') >= 0:
+                type_envi = int(ligne.split('=')[1])
+                if (type_envi == 1):
+                    type_donnee = 'uint8'
+                elif (type_envi == 2):
+                    type_donnee = 'int16'
+                elif (type_envi == 4):
+                    type_donnee = 'float32'
+                elif (type_envi == 5):
+                    type_donnee = 'double'
+                elif (type_envi == 12):
+                    type_donnee = 'uint16'
+                else:
+                    print('type %d non pris en compte' % type_envi)
 
     return (nb_lig, nb_col, type_donnee, endian)
 

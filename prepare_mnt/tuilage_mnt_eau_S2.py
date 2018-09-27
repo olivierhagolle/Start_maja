@@ -3,7 +3,10 @@
 
 import os
 import sys
-import lib_mnt
+assert sys.version_info >= (2,7)
+
+sys.path.append(sys.path[0] + "/..")
+from prepare_mnt import lib_mnt
 
 class TuilageParamsConverter(object):
     """
@@ -72,9 +75,10 @@ class TuilageSentinel(object):
                 print("#################################################")
                 sys.exit(-3)
         
-            ul_latlon_srtm = [int(ul_latlon[0] + 180) / 5 + 1, int(60 - ul_latlon[1]) / 5 + 1]
-            lr_latlon_srtm = [int(lr_latlon[0] + 180) / 5 + 1, int(60 - lr_latlon[1]) / 5 + 1]
-        
+            ul_latlon_srtm = [int(ul_latlon[0] + 180) // 5 + 1, int(60 - ul_latlon[1]) // 5 + 1]
+            lr_latlon_srtm = [int(lr_latlon[0] + 180) // 5 + 1, int(60 - lr_latlon[1]) // 5 + 1]
+            print(ul_latlon_srtm)
+            print(lr_latlon_srtm)
             for x in range(ul_latlon_srtm[0], lr_latlon_srtm[0] + 1):
                 for y in range(ul_latlon_srtm[1], lr_latlon_srtm[1] + 1):
                     liste_fic_mnt.append("srtm_%02d_%02d.tif" % (x, y))
