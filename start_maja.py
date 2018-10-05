@@ -5,7 +5,7 @@ Processes a Sentinel-2 time series for a tile using MAJA processor for atmospher
 
 MAJA was developped by CS-SI, under a CNES contract, using a multi-temporal method developped at CESBIO, for the MACCS processor and including methods developped by DLR for ATCOR.
 
-This tool, developped by O.Hagolle (CNES:CESBIO) is a very basic one to show how to use MAJA to process a time series. If anything does not go as anticipated, the tool will probably crash 
+This tool, developped by O.Hagolle (CNES:CESBIO) is a very basic one to show how to use MAJA to process a time series.
 """
 
 import glob
@@ -268,7 +268,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, debug_mode)
         else:
             date_asc = rac.split('_')[2][0:8]
         logger.debug("date_asc %s %s %s/%s", date_asc, date_asc >= options.startDate, date_asc, options.startDate)
-        if date_asc >= options.startDate:
+        if date_asc >= options.startDate and date_asc >= options.endDate:
             dateImg.append(date_asc)
             if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C"):
                 dateProd.append(rac.split('_')[5])
@@ -492,6 +492,11 @@ if __name__ == '__main__':
 
         parser.add_option("-d", "--startDate", dest="startDate", action="store",
                           help="start date for processing (optional)", type="string", default="20150623")
+
+        parser.add_option("-e", "--endDate", dest="endDate", action="store",
+                          help="end date for processing (optional)", type="string", default="30000101")
+
+
 
         parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                           help="Will provide verbose start_maja logs", default=False)
