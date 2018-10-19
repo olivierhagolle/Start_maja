@@ -16,7 +16,6 @@ import os.path
 import shutil
 import sys
 
-from convert_to_exo import exocam_creation
 import logging
 logger = logging.getLogger('Start-Maja')
 
@@ -79,6 +78,26 @@ def manage_rep_cams(repCams, repCamsRaw, working_dir):
     exocam_creation(repCamsRaw, out_dir=repCams, working_dir=repCams)
     return repCams
 
+def exocam_creation(input_dir, out_dir=None, working_dir="/tmp"):
+
+    processed_dates = []
+
+    nb_files = len(myGlob(input_dir, "*.nc"))
+    compteur = 1
+
+    for file_cams in myGlob(input_dir, "*.nc"):
+        date_file = get_date(file_cams)
+        if date_file in processed_dates:
+            continue
+        #print("Processing {}/{} : {} ".format(compteur, nb_files/3,date_file), end='\r')
+        date_written_in_file = back_to_filename_date(date_file)
+        aot_file = searchOneFile(input_dir, "*AOT_{}*".format(date_written_in_file))
+        mr_file = searchOneFile(input_dir, "*MR_{}*".format(date_written_in_file))
+        rh_file = searchOneFile(input_dir, "*RH_{}*".format(date_written_in_file))
+        process_one_file(aot_file, mr_file, rh_file, out_dir, working_dir)
+
+        processed_dates.append(date_file)
+        compteur += 1
 
 if __name__ == '__main__':
     # ========== command line
