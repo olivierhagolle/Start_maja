@@ -15,8 +15,9 @@ import os
 import os.path
 import shutil
 import sys
+print sys.path
 
-from convert_to_exo import exocam_creation
+from convert_CAMS_DBL import exocam_creation
 
 import logging
 
@@ -193,7 +194,7 @@ def test_valid_L2A(L2A_DIR):
         
 
 
-def start_maja(folder_file, context, site, tile, orbit, nb_backward, debug_mode):
+def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, debug_mode):
     # =================directories
     (repCode, repWork, repL1, repL2, maja, repCams, repCamsRaw) = read_folders(folder_file)
 
@@ -268,7 +269,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, debug_mode)
         else:
             date_asc = rac.split('_')[2][0:8]
         logger.debug("date_asc %s %s %s/%s", date_asc, date_asc >= options.startDate, date_asc, options.startDate)
-        if date_asc >= options.startDate and date_asc >= options.endDate:
+        if date_asc >= options.startDate and date_asc <= options.endDate:
             dateImg.append(date_asc)
             if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C"):
                 dateProd.append(rac.split('_')[5])
@@ -532,4 +533,4 @@ if __name__ == '__main__':
 
     nb_backward = 8  # number of images to process in backward mode
 
-    start_maja(folder_file, context, site, tile, orbit, nb_backward, debug_mode)
+    start_maja(folder_file, context, site, tile, orbit, nb_backward, options, debug_mode)
