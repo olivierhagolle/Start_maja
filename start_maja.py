@@ -16,14 +16,15 @@ import os.path
 import shutil
 import sys
 print sys.path
-
+import zipfile
 from convert_CAMS_DBL import exocam_creation
-
 import logging
 
 START_MAJA_VERSION = 3.1
 
 # #########################################################################
+
+
 class OptionParser(optparse.OptionParser):
 
     def check_required(self, opt):
@@ -37,7 +38,7 @@ class OptionParser(optparse.OptionParser):
 # #################################### Lecture de fichier de parametres "Key=Value"
 def read_folders(fic_txt):
 
-    repCode = repWork = repL1= repL2 = repMaja = repCAMS = repCAMS_raw = None
+    repCode = repWork = repL1 = repL2 = repMaja = repCAMS = repCAMS_raw = None
 
     with file(fic_txt, 'r') as f:
         for ligne in f.readlines():
@@ -54,26 +55,31 @@ def read_folders(fic_txt):
             if ligne.find('repCAMS') == 0:
                 repCAMS = (ligne.split('=')[1]).strip()
 
-
     missing = False
 
     if repCode is None:
-        logger.error("repCode is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
+        logger.error(
+            "repCode is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         missing = True
     if repWork is None:
-        logger.error("repWork is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
+        logger.error(
+            "repWork is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         missing = True
     if repL1 is None:
-        logger.error("repL1 is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
+        logger.error(
+            "repL1 is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         missing = True
     if repL2 is None:
-        logger.error("repL2 is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
+        logger.error(
+            "repL2 is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         missing = True
     if repMaja is None:
-        logger.error("repCode is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
+        logger.error(
+            "repCode is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         missing = True
     if repCAMS is None:
-        logger.info("repCAMS is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
+        logger.info(
+            "repCAMS is missing from configuration file. Needed : repCode, repWork, repL1, repL2, repMaja")
         logger.info("Processing without CAMS")
 
     if missing:
@@ -149,9 +155,10 @@ def add_DEM(repDEM, repWorkIn, tile):
 def add_config_files(repConf, repWorkConf):
     os.symlink(repConf, repWorkConf)
 
+
 def manage_rep_cams(repCams, repCamsRaw, working_dir):
     if repCamsRaw is not None:
-        #convert nc to exocams
+        # convert nc to exocams
         if repCams is not None:
             logger.warning("Exo cams dir and exo cams dir all ")
         working_directory = tempfile.mkdtemp(suffix="ConvertToExo_temp", dir=working_dir)
@@ -161,37 +168,41 @@ def manage_rep_cams(repCams, repCamsRaw, working_dir):
 
     return repCams
 
+
+def unzipAndMoveL1C(L1Czipped, workdir, tile):
+    # unzip L1C file
+    with zipfile.ZipFile(L1Czipped, 'r') as zip_ref:
+        zip_ref.extractall(workdir)
+    # move granule
+
+
 def test_valid_L2A(L2A_DIR):
-    #test validity of a Level2A product of MUSCATE type
-    JPIfile=glob.glob("%s/DATA/*_JPI_ALL.xml"%L2A_DIR)[0]
-    valid=True
+    # test validity of a Level2A product of MUSCATE type
+    JPIfile = glob.glob("%s/DATA/*_JPI_ALL.xml" % L2A_DIR)[0]
+    valid = True
     try:
         with open(JPIfile) as f:
             for ligne in f:
-                if ligne.find("<Value>L2NOTV</Value>")>=0:
-                    valid=False
-                    prod_name=os.path.basename(L2A_DIR)
-                    dir_name=os.path.dirname(L2A_DIR)
+                if ligne.find("<Value>L2NOTV</Value>") >= 0:
+                    valid = False
+                    prod_name = os.path.basename(L2A_DIR)
+                    dir_name = os.path.dirname(L2A_DIR)
                     if not(os.path.exists(dir_name+"/L2NOTV_"+prod_name)):
-                        os.rename(L2A_DIR,dir_name+"/L2NOTV_"+prod_name)
+                        os.rename(L2A_DIR, dir_name+"/L2NOTV_"+prod_name)
                     else:
                         shutil.rmtree(dir_name+"/L2NOTV_"+prod_name)
-                        os.rename(L2A_DIR,dir_name+"/L2NOTV_"+prod_name)
+                        os.rename(L2A_DIR, dir_name+"/L2NOTV_"+prod_name)
                     print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-                    print "L2A product %s is not valid (probably due to too many clouds or No_data values)"%dir_name
+                    print "L2A product %s is not valid (probably due to too many clouds or No_data values)" % dir_name
                     print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 
     except IOError:
-        valid=False
+        valid = False
         print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        print "L2A product %s not found "%L2A_DIR
+        print "L2A product %s not found " % L2A_DIR
         print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 
-       
-       
-    return(valid) 
-                
-        
+    return(valid)
 
 
 def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, debug_mode):
@@ -232,9 +243,15 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, de
     if not os.path.exists(repL2):
         os.makedirs(repL2)
 
-    if orbit != None:
+    if options.zip:
+        if orbit is not None:
+            listeProd = glob.glob(repL1 + "/S2?_MSIL1C*%s_T%s*.zip" % (orbit, tile))
+        else:
+            listeProd = glob.glob(repL1 + "/S2?_MSIL1C*_T%s*.zip" % (tile))
+    elif orbit is not None:
         listeProd = glob.glob(repL1 + "/S2?_OPER_PRD_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile))
-        listeProd = listeProd + glob.glob(repL1 + "/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile))
+        listeProd = listeProd + \
+            glob.glob(repL1 + "/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile))
     else:
         listeProd = glob.glob(repL1 + "/S2?_OPER_PRD_MSIL1C*.SAFE/GRANULE/*%s*" % (tile))
         listeProd = listeProd + glob.glob(repL1 + "/S2?_MSIL1C*.SAFE/GRANULE/*%s*" % (tile))
@@ -246,7 +263,11 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, de
     listeProdFiltree = []
 
     if len(listeProd) == 0:
-        if orbit != None:
+        if options.zip:
+            logger.error("No L1C product found in %s" %
+                         (repL1 + "/S2?_MSIL1C*%s_T%s*.zip" % (orbit, tile)))
+
+        elif orbit is not None:
             logger.error("No L1C product found in %s or %s",
                          repL1 + "/S2?_OPER_PRD_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile),
                          repL1 + "/S2?_MSIL1C*%s_*.SAFE/GRANULE/*%s*" % (orbit, tile))
@@ -256,10 +277,12 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, de
                          repL1 + "/S2?_MSIL1C*.SAFE/GRANULE/*%s*" % (tile))
         sys.exit(-3)
 
-
     for elem in listeProd:
-        rac = elem.split("/")[-3]
-        elem = '/'.join(elem.split("/")[0:-2])
+        if options.zip:
+            rac = elem.split("/")[-1]
+        else:
+            rac = elem.split("/")[-3]
+            elem = '/'.join(elem.split("/")[0:-2])
         logger.debug("elem: %s", elem)
         rac = os.path.basename(elem)
         logger.debug("rac: %s", rac)
@@ -268,7 +291,8 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, de
             date_asc = rac.split('_')[7][1:9]
         else:
             date_asc = rac.split('_')[2][0:8]
-        logger.debug("date_asc %s %s %s/%s", date_asc, date_asc >= options.startDate, date_asc, options.startDate)
+        logger.debug("date_asc %s %s %s/%s", date_asc, date_asc >=
+                     options.startDate, date_asc, options.startDate)
         if date_asc >= options.startDate and date_asc <= options.endDate:
             dateImg.append(date_asc)
             if rac.startswith("S2A_OPER_PRD_MSIL1C") or rac.startswith("S2B_OPER_PRD_MSIL1C"):
@@ -304,7 +328,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, de
         logger.debug("date prod max %s index in list %s", dpmax, ind)
         prod_par_dateImg[d] = listeProdFiltree[ind]
         nomL2_par_dateImg_Natif[d] = "S2?_OPER_SSC_L2VALD_%s____%s.DBL.DIR" % (tile, d)
-        nomL2_par_dateImg_MUSCATE[d] = "SENTINEL2?_%s-*_T%s_C_V*" % (d,tile)
+        nomL2_par_dateImg_MUSCATE[d] = "SENTINEL2?_%s-*_T%s_C_V*" % (d, tile)
         logger.debug("d %s, prod_par_dateImg[d] %s", d, prod_par_dateImg[d])
 
     print
@@ -319,30 +343,28 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, de
         logger.debug("%s/%s", repL2, nomL2_par_dateImg_MUSCATE[d])
         #logger.debug(glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d])))
         #logger.debug(glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d])))
-        
-        
-        #test existence of a L2 with MAJA name convention
+
+        # test existence of a L2 with MAJA name convention
         nomL2init_Natif = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d]))
         nomL2init_MUSCATE = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d]))
-        if len(nomL2init_Natif)>0:
+        if len(nomL2init_Natif) > 0:
             derniereDate = d
-            L2type="Natif"
+            L2type = "Natif"
 
-        elif len(nomL2init_MUSCATE)>0:
-            L2type="MUSCATE"
+        elif len(nomL2init_MUSCATE) > 0:
+            L2type = "MUSCATE"
             derniereDate = d
 
-    if derniereDate=="":
+    if derniereDate == "":
         logger.info("No existing L2 product, we start with backward mode")
     else:
         logger.info("Most recent processed date : %s", derniereDate)
 
-
-    #decide if debug_mode used for maja
+    # decide if debug_mode used for maja
     if debug_mode:
-        debug_option="--loglevel DEBUG"
-    else :
-        debug_option=""
+        debug_option = "--loglevel DEBUG"
+    else:
+        debug_option = ""
 
     # ############## For each product
     nb_dates = len(dates_diff)
@@ -358,9 +380,9 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, de
     logger.debug("derniereDate %s", derniereDate)
     for i in range(nb_dates):
         d = dates_diff[i]
-        #only products after the last L2A date available in output directory
+        # only products after the last L2A date available in output directory
         if d > derniereDate:
-            logger.info("=> processing date %s"% d)
+            logger.info("=> processing date %s" % d)
             if os.path.exists(repWork + "/in"):
                 shutil.rmtree(repWork + "/in")
             os.makedirs(repWork + "/in")
@@ -369,35 +391,37 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, de
                 nb_prod_backward = min(len(dates_diff), nb_backward)
                 logger.info("dates to process in backward mode :")
                 for date_backward in dates_diff[0:nb_prod_backward]:
-                    logger.info("-- %s : %s"% (date_backward,prod_par_dateImg[date_backward]))
-                    os.symlink(prod_par_dateImg[date_backward],
-                               repWork + "/in/" + os.path.basename(prod_par_dateImg[date_backward]))
+                    logger.info("-- %s : %s" % (date_backward, prod_par_dateImg[date_backward]))
+                    if options.zip:
+                        unzipAndMoveL1C(prod_par_dateImg[date_backward], repWork + "/in/", tile)
+                    else:
+                        os.symlink(prod_par_dateImg[date_backward],
+                                   repWork + "/in/" + os.path.basename(prod_par_dateImg[date_backward]))
                 add_parameter_files(repGipp, repWork + "/in/", tile, repCams)
                 add_DEM(repDtm, repWork + "/in/", tile)
 
-                Maja_logfile="%s/%s.log"%(repL2,os.path.basename(prod_par_dateImg[d]))
+                Maja_logfile = "%s/%s.log" % (repL2, os.path.basename(prod_par_dateImg[d]))
                 logger.debug(os.listdir(os.path.join(repWork, "in")))
-                commande = "%s %s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s &> %s"% (
-                    maja, debug_option, repWork + "/in", repL2, repWork + "/userconf", tile,Maja_logfile)
+                commande = "%s %s -i %s -o %s -m L2BACKWARD -ucs %s --TileId %s &> %s" % (
+                    maja, debug_option, repWork + "/in", repL2, repWork + "/userconf", tile, Maja_logfile)
                 logger.info("#################################")
                 logger.info("#################################")
-                logger.info("processing %s in backward mode"%prod_par_dateImg[d])
+                logger.info("processing %s in backward mode" % prod_par_dateImg[d])
                 logger.info("Initialisation mode with backward is longer")
                 logger.info("MAJA logfile: %s", Maja_logfile)
                 logger.info("#################################")
                 os.system(commande)
 
-
             # else mode nominal
             else:
                 nomL2 = ""
                 # Search for previous L2 product
-                logger.info("Using %s L2 type"%L2type)     
+                logger.info("Using %s L2 type" % L2type)
                 for PreviousDate in dates_diff[0:i]:
-                    if L2type=="Natif":
+                    if L2type == "Natif":
                         nom_courant = "%s/%s" % (repL2, nomL2_par_dateImg_Natif[PreviousDate])
-                    elif L2type=="MUSCATE":
-                         nom_courant = "%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[PreviousDate])
+                    elif L2type == "MUSCATE":
+                        nom_courant = "%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[PreviousDate])
                     try:
                         logger.debug(nom_courant)
                         nomL2 = glob.glob(nom_courant)[0]
@@ -406,18 +430,23 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, de
                         logger.debug("pas de L2 pour : %s", nom_courant)
                         pass
                 logger.info("previous L2 : %s", nomL2)
-                os.symlink(prod_par_dateImg[d],
-                           repWork + "/in/" + os.path.basename(prod_par_dateImg[d]))
-
-                if L2type=="Natif":
+                # copy (or symlink) L1C
+                if options.zip:
+                    unzipAndMoveL1C(prod_par_dateImg[date_backward], repWork + "/in/", tile)
+                else:
+                    os.symlink(prod_par_dateImg[d],
+                               repWork + "/in/" + os.path.basename(prod_par_dateImg[d]))
+                # find type of L2A
+                if L2type == "Natif":
                     os.symlink(nomL2, repWork + "/in/" + os.path.basename(nomL2))
                     os.symlink(nomL2.replace("DBL.DIR", "HDR"),
-                           repWork + "/in/" + os.path.basename(nomL2).replace("DBL.DIR", "HDR"))
-                    os.symlink(nomL2.replace("DIR", ""), repWork + "/in/" + os.path.basename(nomL2).replace("DIR", ""))
-                elif L2type=="MUSCATE":
+                               repWork + "/in/" + os.path.basename(nomL2).replace("DBL.DIR", "HDR"))
+                    os.symlink(nomL2.replace("DIR", ""), repWork + "/in/" +
+                               os.path.basename(nomL2).replace("DIR", ""))
+                elif L2type == "MUSCATE":
                     os.symlink(nomL2, repWork + "/in/" + os.path.basename(nomL2))
-                    
-                Maja_logfile="%s/%s.log"%(repL2,os.path.basename(prod_par_dateImg[d]))
+
+                Maja_logfile = "%s/%s.log" % (repL2, os.path.basename(prod_par_dateImg[d]))
 
                 add_parameter_files(repGipp, repWork + "/in/", tile, repCams)
                 add_DEM(repDtm, repWork + "/in/", tile)
@@ -428,37 +457,34 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, de
                     maja, debug_option, repWork + "/in", repL2, repWork + "/userconf", tile, Maja_logfile)
                 logger.info("#################################")
                 logger.info("#################################")
-                logger.info("processing %s in nominal mode"%prod_par_dateImg[d])
+                logger.info("processing %s in nominal mode" % prod_par_dateImg[d])
                 logger.info("MAJA logfile: %s", Maja_logfile)
                 logger.info("#################################")
                 os.system(commande)
 
-                
-            #check for errors in MAJA executions
+            # check for errors in MAJA executions
             nomL2init_Natif = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_Natif[d]))
             nomL2init_MUSCATE = glob.glob("%s/%s" % (repL2, nomL2_par_dateImg_MUSCATE[d]))
-            if len(nomL2init_Natif)>0:
-                     L2type="Natif"
-            elif len(nomL2init_MUSCATE)>0:
-                     L2type="MUSCATE"
-                     #test if L2A products is valid
-                     valid=test_valid_L2A(nomL2init_MUSCATE[0])
+            if len(nomL2init_Natif) > 0:
+                L2type = "Natif"
+            elif len(nomL2init_MUSCATE) > 0:
+                L2type = "MUSCATE"
+                # test if L2A products is valid
+                valid = test_valid_L2A(nomL2init_MUSCATE[0])
 
-            #check for errors in MAJA executions
+            # check for errors in MAJA executions
 
-            Error=False
+            Error = False
             with open(Maja_logfile, "r") as logfile:
                 for line in logfile:
-                    if line.find("[E]")>0:
+                    if line.find("[E]") > 0:
                         print line
-                        Error=True
+                        Error = True
             if Error:
                 logger.info("#######################################")
-                logger.info( "Error detected, see: %s"%Maja_logfile)
-                logger.info( "#######################################")
+                logger.info("Error detected, see: %s" % Maja_logfile)
+                logger.info("#######################################")
                 sys.exit(-1)
-
-
 
 
 if __name__ == '__main__':
@@ -497,7 +523,8 @@ if __name__ == '__main__':
         parser.add_option("-e", "--endDate", dest="endDate", action="store",
                           help="end date for processing (optional)", type="string", default="30000101")
 
-
+        parser.add_option("-z", "--zip", dest="zip", action="store_true",
+                          help="input L1C are zip files", default=False)
 
         parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                           help="Will provide verbose start_maja logs", default=False)
@@ -505,12 +532,10 @@ if __name__ == '__main__':
         parser.add_option("--debug", dest="debug", action="store_true",
                           help="Use MAJA Debug mode to get verbose logs", default=False)
 
-
         (options, args) = parser.parse_args()
 
-    #Logfile configuration
+    # Logfile configuration
 
-    
     logger = logging.getLogger('Start-Maja')
     if options.verbose:
         logger.setLevel(logging.DEBUG)
