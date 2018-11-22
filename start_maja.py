@@ -456,7 +456,7 @@ def start_maja(folder_file, context, site, tile, orbit, nb_backward, options, de
                 logger.info("previous L2 : %s", nomL2)
                 # copy (or symlink) L1C
                 if options.zip:
-                    unzipAndMoveL1C(prod_par_dateImg[date_backward], repWork + "/in/", tile)
+                    unzipAndMoveL1C(prod_par_dateImg[d], repWork + "/in/", tile)
                 else:
                     os.symlink(prod_par_dateImg[d],
                                repWork + "/in/" + os.path.basename(prod_par_dateImg[d]))
