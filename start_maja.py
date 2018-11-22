@@ -189,9 +189,15 @@ def manage_rep_cams(repCams, repCamsRaw, working_dir):
 
 def unzipAndMoveL1C(L1Czipped, workdir, tile):
     # unzip L1C file
-    with zipfile.ZipFile(L1Czipped, 'r') as zip_ref:
-        zip_ref.extractall(workdir)
-    # move granule
+    try:
+        with zipfile.ZipFile(L1Czipped, 'r') as zip_ref:
+            safeDir=zip_ref.namelist()[0]
+            zip_ref.extractall(workdir)
+    except IOError:
+        print("L1C zip file %s is not readable"% L1Czipped)
+        sys.exit(-1)
+
+    return
 
 
 def test_valid_L2A(L2A_DIR):
