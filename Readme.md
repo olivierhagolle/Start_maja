@@ -15,7 +15,7 @@
 <a name="intro"></a>
 # Introduction
 
-**NB Start maja has been updated to work with MAJA 3.1 , but MAJA 3.1 is not available yet. Meanwhile, please use MAJA 1_0, and [read the corresponding readme file](https://github.com/olivierhagolle/Start_maja/tree/v1.0).** To do that, please use `git checkout Start_maja_V1`.
+**Start maja has been updated to work with MAJA 3.1. It is not compatible with MAJA 1.0. If you wish to use MAJA 1.0, please use the corresponding version of Start_Maja, and [read the corresponding readme file](https://github.com/olivierhagolle/Start_maja/tree/v1.0).** To do that, please use `git checkout Start_maja_V1`.
 
 The following script will help you run the MAJA L2A processor on your computer, for Sentinel-2 data only so far. You can also run MAJA on [CNES PEPS collaborative ground segment](https://theia.cnes.fr) using the [maja-peps script also available on github](https://github.com/olivierhagolle/maja_peps). Using PEPS will be much easier, but is not meant for mass processing.
 
@@ -46,7 +46,7 @@ Until MAJA V3.1 there were two output formats, one for the products generated at
 
 MAJA 3.1 ships several improvements :
 
-- the main improvement is the use of Copernicus Atmosphere Monitoring Service (CAMS) aerosol products, which are used to constrain the aerosol type in the estimates. This brings a major improvement in places where the aerosols can differ a lot from a continental model which was used so far,it might slightly degraded the reults where the aerosol model was the correct one.
+- the main improvement is the use of Copernicus Atmosphere Monitoring Service (CAMS) aerosol products, which are used to constrain the aerosol type in the estimates. This brings a major improvement in places where the aerosols can differ a lot from a continental model which was used so far,it might slightly degraded the reults where the aerosol model was the correct one. However, a bug on the time and mlocation interpolation of CAMS data was found, and we recommend to activate the CAMS option only when it is ficex with MAJA 3.1.2. 
 
 - since version V2-1, MAJA also includes a correction for thin cirrus clouds and a directional effect correction used to improve the estimate of AOT when using Sentinel-2 time series coming from adjacent orbits. More information is available here: http://www.cesbio.ups-tlse.fr/multitemp/?p=13291
 
@@ -74,8 +74,18 @@ Added MAJA error catching. As a result, the processing of a whole time series st
 <a name="maja"></a>
 # Get MAJA
 ## Get MAJA Sofware
-MAJA can be downloaded as a binary code from https://logiciels.cnes.fr/en/content/maja
-It is provided as a binary code and compiled for *Linux Red Hat and CentOS versions 6 and 7 only*. Its licence prevents commercial use of the code. For a licence allowing commercial use, please contact CNES (Olivier Hagolle).
+
+MAJA is provided as a binary code and should at least work on RedHat (6 ad 7), Cesnt 0S, or Ubuntu recent versions. Its licence prevents commercial use of the code. For a licence allowing commercial use, please contact CNES (Olivier Hagolle). MAJA's distribution site is https://logiciels.cnes.fr/en/content/maja. However, this venerable site is limited in size (500 MB) per software, and MAJA excutable, shipped with parameters and libraries is about 1.5 GB. As a result, we provide provisionnaly download links here. 
+
+** MAJA is distributed with a licence that [you have to accept here](https://logiciels.cnes.fr/en/content/maja). Downloading MAJA from the links below without accepting the licence, and providing the necessary information, is therefore illegal.**
+
+MAJA is provided under two versions depending on the format you would like to use. 
+
+[You may download MAJA 3.1 from here if you wish to use MUSCATE format](https://mycore.core-cloud.net/index.php/s/XQKQFxAJjGUtLkK). The format is documented [here](http://www.cesbio.ups-tlse.fr/multitemp/?page_id=8352).
+
+[You may download MAJA 3.1 from here if you wish to use the native format, as for MAJA 1_0](https://mycore.core-cloud.net/index.php/s/XQKQFxAJjGUtLkK). ANyway, be aware that we will probably not maintain that version in the coming years. The Native format is documented [here](http://www.cesbio.ups-tlse.fr/multitemp/?page_id=10464)
+
+
 
 ## install MAJA
 This is explained in the documentation provided with MAJA software.
@@ -104,8 +114,8 @@ The tool needs a lot of configuration files which are provided in two directorie
 
 We provide two sets of parameters, one to work without CAMS data, and one to work with CAMS data. The latter needs a lot of disk space (~1.5 GB), as the LUT are provided not only for one aerosol type, but for for 5 aerosol types, and 6 water vapour contents. As Github limits the repository size to 1 GB, we are using a gitlab repository to distribute the parameters (GIPP):  
 - Parameters without CAMS : http://tully.ups-tlse.fr/olivier/gipp/tree/master/GIPP_MAJA_3_1_S2AS2B_MUSCATE_TM
-- Parameters with CAMS: http://tully.ups-tlse.fr/olivier/gipp/tree/master/GIPP_MAJA_3_1_S2AS2B_CAMS
-
+- Parameters with CAMS: http://tully.ups-tlse.fr/olivier/gipp/tree/master/GIPP_MAJA_3_1_S2AS2B_CAMS (but we don't recommend to use it)
+The look-up tables are too big to be but on our gitlab server, you will have to download them following the link in the GIPP readme file. (I know, it's a bit complicated)
 
 ## Folder structure
 To run MAJA, you need to store all the necessary data in an input folder. Here is an example of its content in nominal mode.
