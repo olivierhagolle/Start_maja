@@ -83,9 +83,9 @@ MAJA is provided as a binary code and should at least work on RedHat (6 ad 7), C
 
 MAJA is provided under two versions depending on the format you would like to use. 
 
-[You may download MAJA 3.1 from here if you wish to use MUSCATE format](https://mycore.core-cloud.net/index.php/s/XQKQFxAJjGUtLkK). The format is documented [here](http://www.cesbio.ups-tlse.fr/multitemp/?page_id=8352).
+[You may download MAJA 3.1 from here if you wish to use MUSCATE format](https://mycore.core-cloud.net/index.php/s/K0wk1OA0SezjreO). The format is documented [here](http://www.cesbio.ups-tlse.fr/multitemp/?page_id=8352).
 
-[You may download MAJA 3.1 from here if you wish to use the native format, as for MAJA 1_0](https://mycore.core-cloud.net/index.php/s/XQKQFxAJjGUtLkK). ANyway, be aware that we will probably not maintain that version in the coming years. The Native format is documented [here](http://www.cesbio.ups-tlse.fr/multitemp/?page_id=10464)
+[You may download MAJA 3.1 from here if you wish to use the native format, as for MAJA 1_0](https://mycore.core-cloud.net/index.php/s/XQKQFxAJjGUtLkK). Anyway, be aware that we will probably not maintain that version in the coming years. The Native format is documented [here](http://www.cesbio.ups-tlse.fr/multitemp/?page_id=10464)
 
 
 
