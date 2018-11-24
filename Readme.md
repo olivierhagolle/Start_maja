@@ -236,15 +236,17 @@ repCAMS  =/mnt/data/SENTINEL2/CAMS
 Here is an example of command line
 ```
 Usage   : python ./start_maja.py -f <folder_file>-c <context> -t <tile name> -s <Site Name> -d <start date>
-Example : python ./start_maja.py -f folders.txt -c MAJA_3_0_S2AS2B_CAMS -t 31TFJ -s Avignon -d 20170101
+Example : python ./start_maja.py -f folders.txt -c MAJA_3_0_S2AS2B_CAMS -t 31TFJ -s Avignon -d 20170101 -e 20180101
 ```
 Description of command line options :
--f provides the folders filename
--c is the context, MAJA uses the GIPP files contained in GIPP_context directory. The L2A products will be created in 
+* -f provides the folders filename
+* -c is the context, MAJA uses the GIPP files contained in GIPP_context directory. The L2A products will be created in 
 rep_L2/Site/Tile/Context (Several users told me it is weird to use the GIPP folder name after removing GIPP_, I should change that)
--t is the tile number
--s is the site name
--d (aaaammdd) is the first date to process within the time series
+* -t is the tile number
+* -s is the site name
+* -d (aaaammdd) is the first date to process within the time series
+* -e (aaaammdd) is the last date to process within the time serie-s
+* -z directly uses zipped L1C files
 
 Caution, *when a product has more than 90% of clouds, the L2A is not issued*. However, a folder with _NOTVALD_ is created.
 
