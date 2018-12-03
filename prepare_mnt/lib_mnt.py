@@ -47,7 +47,7 @@ def TestLand(lon, lat):
 
 ##################################### Lecture de fichier de parametres "Mot_clé=Valeur"
 def lire_param_txt(fic_txt):
-    with file(fic_txt, 'r') as f:
+    with open(fic_txt, 'r') as f:
         for ligne in f.readlines():
             if ligne.find('INDIR_MNT') == 0:
                 INDIR_MNT = (ligne.split('=')[1]).strip()
@@ -127,7 +127,7 @@ def lire_fichier_site_kml(kml, nom):
 ############################ Lecture du fichier site
 def lire_fichier_site(fic_site):
     nom = os.path.basename(fic_site).split('.')[0]
-    with file(fic_site, 'r') as f:
+    with open(fic_site, 'r') as f:
         for ligne in f.readlines():
             if ligne.find('proj') == 0:
                 proj = ligne.split('=')[1].strip()
@@ -560,7 +560,6 @@ def creer_fichier_eau(fic_eau, nom_eau):
 
     print(fic_eau)
     # print patron
-    f = file(fic_eau, "w")
-    f.write(patron)
-    f.close()
+    with open(fic_eau, "w") as f:
+        f.write(patron)
     return

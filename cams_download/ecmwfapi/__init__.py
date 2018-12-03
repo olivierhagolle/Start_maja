@@ -9,7 +9,7 @@
 # does it submit to any jurisdiction.
 #
 
-from ecmwfapi import api
+from cams_download.ecmwfapi import api
 
 
 __all__ = [

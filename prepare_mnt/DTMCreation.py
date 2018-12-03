@@ -174,6 +174,7 @@ class DTMCreator():
         :param dtype: Type of metadata - Natif or Muscate for now
         """
         from lxml import etree
+        from prepare_mnt.tuilage_mnt_eau_S2 import TuilageParamsConverter
         if(dtype == self.typeNatif):
             xpathTileName = "/n1:Level-1C_Tile_ID/n1:General_Info/TILE_ID"
             xpathCSName = "/n1:Level-1C_Tile_ID/n1:Geometric_Info/Tile_Geocoding/HORIZONTAL_CS_NAME"
@@ -263,6 +264,7 @@ class DTMCreator():
         if(self.mode == self.modeMTD):
             self.site = self.getSiteInfo(self.mtd, self.dtype)
         elif(self.mode == self.modeGranule):
+            from prepare_mnt import lib_mnt
             self.site = lib_mnt.lire_fichier_site_kml(self.kml, self.granule)
         if(tempout == None):
             tempout = os.path.join("/tmp", self.site.nom)
