@@ -10,9 +10,8 @@ Project:        StartMaja, CNES
 Created on:     Tue Sep 11 15:31:00 2018
 """
 
-import sys
-assert sys.version_info >= (2,7)
-sys.path.append(sys.path[0] + "/..")
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')) #Import relative modules
 from Common import FileSystem
 from prepare_mnt import tuilage_mnt_eau_S2 as tiling
 from prepare_mnt import conversion_format_maja as conversion
@@ -270,19 +269,10 @@ class DTMCreator():
             tempout = os.path.join("/tmp", self.site.nom)
         print("Working directory: {0}".format(tempout))
         FileSystem.createDirectory(tempout) #Try to create tempout dir
-        #Unzip Water-SRTM files if needed:
-        if(self.WaterZipped):
-            import zipfile
-            import re
-            files = [os.path.join(self.dirInWater, f) for f in os.listdir(self.dirInWater) if re.search(self.filenameWater, f)]
-            for fn in files:
-                print("Unzipping {0}".format(fn))
-                zip_ref = zipfile.ZipFile(fn, 'r')
-                zip_ref.extractall(tempout)
-                zip_ref.close()
-                self.dirInWater = tempout
+        from prepare_mnt import tuilage_mnt_eau_S2 as tiling
         mntcreator = tiling.TuilageSentinel()
-        mntcreator.run(self.dirInSRTM, self.dirInWater,tempout, tempout, self.coarseRes, site=self.site, mnt=self.mntType, waterOnly=self.waterOnly, workingDir=tempout)
+        mntcreator.run(self.dirInSRTM, self.dirInWater,tempout, tempout, self.coarseRes, site=self.site, mnt=self.mntType, waterOnly=self.waterOnly, wdir=tempout,
+                       water_zipped = self.WaterZipped)
         
         if(self.waterOnly == False):
             converter = conversion.MAJAConverter()

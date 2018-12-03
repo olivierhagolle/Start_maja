@@ -415,20 +415,20 @@ class classe_mnt:
 #################################################################################
 ########################### Fusion DEM and water masks   ########################
 #################################################################################
-def fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt, rep_swbd, nom_site, calcul_eau_mnt, working_dir=None):
-    if working_dir is None:
+def fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt, rep_swbd, nom_site, calcul_eau_mnt, wdir=None):
+    if wdir is None:
         working_dir = tempfile.mkdtemp(prefix="{}_".format(nom_site))
     else:
-        working_dir = tempfile.mkdtemp(prefix="{}_".format(nom_site), dir=working_dir)
+        working_dir = tempfile.mkdtemp(prefix="{}_".format(nom_site), dir=wdir)
     print("liste_fic_mnt", liste_fic_mnt)
     for fic in liste_fic_mnt:
         print("FIC: {0}".format(fic))
         print(type(rep_mnt), type(fic))
         print(rep_mnt + '/' + fic)
-        if not (os.path.exists(rep_mnt + '/' + fic)):
-            ficzip = fic.replace('tif', 'zip')
-            commande = "unzip -o %s/%s -d %s" % (rep_mnt, ficzip, working_dir)
-            os.system(commande)
+        #if not (os.path.exists(rep_mnt + '/' + fic)):
+        ficzip = fic.replace('tif', 'zip')
+        commande = "unzip -o %s/%s -d %s" % (rep_mnt, ficzip, working_dir)
+        os.system(commande)
     if len(liste_fic_mnt) > 1:
         nom_mnt = tempfile.mkstemp(prefix="mnt_{}".format(nom_site), suffix=".tif", dir=working_dir)[1]
         commande = "gdal_merge.py -o " + nom_mnt
@@ -474,7 +474,7 @@ def fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt, rep_swbd
                                    "e022n28", "e023n28", "w074n01", "e034n02", "e035n02"]
         for i, racine_nom_eau in enumerate(liste_fic_eau):
             print(racine_nom_eau)
-            shp = glob.glob(rep_swbd + '/' + racine_nom_eau + "*.shp")
+            shp = glob.glob(wdir + '/' + racine_nom_eau + "*.shp")
             # if shp file does not exist
             if len(shp) == 0:
                 print('missing SWBD watr file : ', racine_nom_eau)

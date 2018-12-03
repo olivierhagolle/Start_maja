@@ -38,8 +38,24 @@ class TuilageSentinel(object):
     Reprojette et decoupe un mnt SRTM sur les tuiles d'un site 
     Les paramètres sont dans parametres.py, dont le nom du site qui sert à déterminer le fichier de paramètres du tuilage d'un site (ex pyrenees.py)
     
-    """
-    def run(self, dirInSRTM, dirInWater, dirOut, dirOutWater, resolution, site, mnt, waterOnly, workingDir = None):
+    """    
+    def unzip_water(self, dirInWater, filenames, dirOut):
+        """
+        Unzip Water-SWBD files
+        """
+        import zipfile
+        import re
+        files = []
+        for pattern in filenames:
+            files += list(os.path.join(dirInWater, f) for f in os.listdir(dirInWater) if re.search(pattern, f))
+        for fn in files:
+            print("Unzipping {0}".format(fn))
+            zip_ref = zipfile.ZipFile(fn, 'r')
+            zip_ref.extractall(dirOut)
+            zip_ref.close()
+        return 0
+    
+    def run(self, dirInSRTM, dirInWater, dirOut, dirOutWater, resolution, site, mnt, waterOnly, wdir = None, water_zipped = False):
         from math import ceil, floor
         from osgeo import osr
         os.environ['LC_NUMERIC'] = 'C'
@@ -146,17 +162,18 @@ class TuilageSentinel(object):
         
                 liste_fic_eau.append("%s%03d%s%02d" % (ew, num_x, ns, num_y))
                 liste_centre_eau.append([x + 0.5, y + 0.5])
-        
-        print(liste_fic_eau)
-        
+                
         print("longitudes", ul_latlon_swbd[0], lr_latlon_swbd[0])
         print("latitudes", lr_latlon_swbd[1], ul_latlon_swbd[1])
         print("center coordinates", liste_centre_eau)
         print(liste_fic_eau)
         
+        if(water_zipped):
+            self.unzip_water(dirInWater, liste_fic_eau, wdir)
+        
         # Fusion des mnt_srtm en un seul
         (fic_mnt_in, fic_eau_in) = lib_mnt.fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt_in, rep_swbd, site.nom,
-                                              calcul_masque_eau_mnt, working_dir=workingDir)
+                                              calcul_masque_eau_mnt, wdir=wdir)
         print("############", fic_mnt_in)
         
         ####################Boucle de création des fichiers MNT et eau pour chaque tuile
@@ -270,4 +287,4 @@ if __name__ == "__main__":
         else:
             site = converter.getSiteFromFile(options.fic_site)
         mntcreator = TuilageSentinel()
-        mntcreator.run(dirInSRTM, dirInWater, dirOut, dirOutWater, options.COARSE_RES, site=site, mnt=options.mnt, waterOnly=options.eau_seulement)
+        mntcreator.run(dirInSRTM, dirInWater, dirOut, dirOutWater, options.COARSE_RES, site=site, mnt=options.mnt, waterOnly=options.eau_seulement, water_zipped=False)
