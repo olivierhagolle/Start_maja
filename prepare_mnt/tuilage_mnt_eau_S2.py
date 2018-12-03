@@ -47,7 +47,7 @@ class TuilageSentinel(object):
         import re
         files = []
         for pattern in filenames:
-            files += list(os.path.join(dirInWater, f) for f in os.listdir(dirInWater) if re.search(pattern, f))
+            files += list(os.path.join(dirInWater, f) for f in os.listdir(dirInWater) if re.search(pattern + "*zip", f))
         for fn in files:
             print("Unzipping {0}".format(fn))
             zip_ref = zipfile.ZipFile(fn, 'r')
