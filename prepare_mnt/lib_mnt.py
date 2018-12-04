@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')) #Import relative modules
+
 import glob
 import numpy as np
 import os
@@ -9,9 +12,7 @@ import shutil
 import re
 import tempfile
 from osgeo import gdal, ogr, osr
-
 import scipy.ndimage as nd
-
 
 # Returns true if coordinate is land
 def TestLand(lon, lat):
@@ -474,7 +475,7 @@ def fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt, rep_swbd
                                    "e022n28", "e023n28", "w074n01", "e034n02", "e035n02"]
         for i, racine_nom_eau in enumerate(liste_fic_eau):
             print(racine_nom_eau)
-            shp = glob.glob(wdir + '/' + racine_nom_eau + "*.shp")
+            shp = glob.glob(os.path.join(wdir, racine_nom_eau + "*.shp"))
             # if shp file does not exist
             if len(shp) == 0:
                 print('missing SWBD watr file : ', racine_nom_eau)

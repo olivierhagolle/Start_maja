@@ -11,12 +11,10 @@ Created on:     Tue Sep 11 15:31:00 2018
 """
 
 import sys, os
+assert sys.version_info >= (2,7)
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')) #Import relative modules
 from Common import FileSystem
-from prepare_mnt import tuilage_mnt_eau_S2 as tiling
 from prepare_mnt import conversion_format_maja as conversion
-from prepare_mnt.tuilage_mnt_eau_S2 import TuilageParamsConverter
-from prepare_mnt import lib_mnt
 
 class DTMCreator():
     """

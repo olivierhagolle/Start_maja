@@ -1,10 +1,9 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import sys
+import sys, os
 assert sys.version_info >= (2,7)
-sys.path.append(sys.path[0] + "/..")
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')) #Import relative modules
 
 from prepare_mnt import lib_mnt
 
@@ -47,7 +46,9 @@ class TuilageSentinel(object):
         import re
         files = []
         for pattern in filenames:
-            files += list(os.path.join(dirInWater, f) for f in os.listdir(dirInWater) if re.search(pattern + "*zip", f))
+            files += list(os.path.join(dirInWater, f) for f in os.listdir(dirInWater) if re.search(pattern + ".*?\.zip", f))
+        if(len(files) == 0):
+            raise OSError("Cannot find SWBD zip files!")
         for fn in files:
             print("Unzipping {0}".format(fn))
             zip_ref = zipfile.ZipFile(fn, 'r')
