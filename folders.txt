@@ -1,5 +1,6 @@
+[PATH]
 repCode=/mnt/data/home/hagolleo/PROG/S2/lance_maja
 repWork=/mnt/data/SENTINEL2/MAJA
 repL1  =/mnt/data/SENTINEL2/L1C_PDGS
 repL2  =/mnt/data/SENTINEL2/L2A_MAJA
-repMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
+exeMaja=/mnt/data/home/petruccib/Install-MAJA/maja/core/1.0/bin/maja
