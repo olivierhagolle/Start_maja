@@ -12,16 +12,17 @@ def createDirectory(path):
            if a file with the same name already exists
     @param path The full path to the new directory
     """
-    if os.path.exists(path) and not os.path.isdir(path):
-        raise OSError("Cannot create the output directory because there is a file with the same name. Remove: {0}".format(path))
-
+    if os.path.exists(path):
+        if not os.path.isdir(path):
+            raise OSError("Cannot create the output directory because there is a file with the same name. Remove: {0}".format(path))
+        else:
+            logging.info("Directory already existing: %s" % path)
     else:
         try:
             os.makedirs(path)
         except:
-            log.debug("Cannot create directory {0}".format(path))
-            return 1
-    return 0
+            raise OSError("Cannot create directory {0}".format(path))
+    return
 
 def removeFile(filename):
     """
