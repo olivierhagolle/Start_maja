@@ -26,9 +26,9 @@ class Start_maja(object):
                 r"^SENTINEL2[AB]_[-\d]+_L\w+_TXXXXX_\w_V[\d-]+$",
                 r"^S2[AB]_OPER_SSC_L2VALD_XXXXX_\w+.HDR$",
                 r"^S2[AB]_OPER_PRD_MSIL1C_PDMC_\w+_R\d+_V\w+.SAFE$"]
-    regL8 = [r"^LC8_[a-zA-Z]+$",
-                r"^LANDSAT8-_\w+_L\w+_TXXXXX_\w_V\w+$",
-                r"^LC08_[a-zA-Z_]+$"]
+    regL8 = [r"^LC8\w+$",
+                r"^LANDSAT8-[\w-]+_[-\d]+_L\w+_TXXXXX_\w_V[\d-]+$",
+                r"^LC08\w+$"]
     regVns = [r"^VENUS-XS_[-\d]+_L\w+_XXXXX_\w_V\w+",
                  r"^VE_VM\d{2}_VSC_L2VALD_\w+.HDR$",
                  r"^VE_TEST_VSC_L1VALD_\w+.HDR$"]
@@ -201,9 +201,9 @@ class Start_maja(object):
         
         prods = []
         for prod in os.listdir(os.path.join(rep, specifier)):
-            for pattern in reg:
+            for i, pattern in enumerate(reg):
                 if(re.search(re.compile(pattern.replace("XXXXX", tile)), prod)):
-                    prods.append(prod)
+                    prods.append((prod, i))
         return prods
     
     def getAllProducts(self, site, tile, repL1, repL2):
@@ -217,7 +217,7 @@ class Start_maja(object):
             if(repL1filtered and not prevL1):
                 prevL1 = repL1filtered
                 prevL2 = repL2filtered
-            elif(repL1filtered and prevL1):
+            elif(repL1filtered and prevL1 or repL2filtered and prevL2):
                 raise OSError("Products for multiple platforms found: %s, %s" % (prevL1, prevL2))
         if(not prevL1):
             raise OSError("Cannot find L1 products for tile %s in %s" % (tile, repL1))

@@ -22,19 +22,24 @@ class testStart_maja(LoggedTestCase.LoggedTestCase):
         s2 = ["S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE",
               "SENTINEL2B_20171008-105012-463_L1C_T31TCH_C_V1-0",
               "S2B_MSIL1C_20180316T103021_N0206_R108_T32TMR_20180316T123927.SAFE"]
+        tilesS2 = ["29RPQ", "31TCH", "32TMR"]
         l8 = ["LANDSAT8-OLITIRS-XSTHPAN_20170501-103532-111_L1C_T31TCH_C_V1-0",
               "LC80390222013076EDC00",
               "LC080390222013076EDC00"]
+        tilesL8 = ["31TCH", "ABCDE", "NONAME"]
         vns = ["VENUS-XS_20180201-051359-000_L1C_KHUMBU_C_V1-0",
                "VE_VM01_VSC_L2VALD_ISRAW906_20180317.HDR"]
-        
-        for prod in s2:
-            self.assertTrue(re.search(pattern, prod) for pattern in Start_maja.regS2)
-        for prod in l8:
-            self.assertTrue(re.search(pattern, prod) for pattern in Start_maja.regL8)
-        for prod in vns:
-            self.assertTrue(re.search(pattern, prod) for pattern in Start_maja.regVns)
-
+        tilesVns = ["KHUMBU", "ISRAW906"]
+        for prod, tile in zip(s2, tilesS2):
+            l = list(re.search(pattern.replace("XXXXX", tile), prod) for pattern in Start_maja.regS2)
+            self.assertFalse(all(v is None for v in l))
+        for prod, tile in zip(l8, tilesL8):
+            l = list(re.search(pattern.replace("XXXXX", tile), prod) for pattern in Start_maja.regL8)
+            self.assertFalse(all(v is None for v in l))
+        for prod, tile in zip(vns, tilesVns):
+            l = list(re.search(pattern.replace("XXXXX", tile), prod) for pattern in Start_maja.regVns)
+            self.assertFalse(all(v is None for v in l))
+            
     @testFunction.test_function
     def test_AuxRegexes(self):
         import re
@@ -81,4 +86,5 @@ class testStart_maja(LoggedTestCase.LoggedTestCase):
         for dtm in dtms:
             self.assertTrue(re.search(Start_maja.regDTM, dtm))
         for gipp in gippVns + gippS2 + gippL8:
-            self.assertTrue(re.search(pattern, gipp) for pattern in Start_maja.regGIPP)
+            l = list(re.search(pattern, gipp) for pattern in Start_maja.regGIPP)
+            self.assertFalse(all(v is None for v in l))
