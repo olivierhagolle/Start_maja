@@ -78,20 +78,13 @@ class Start_maja(object):
         self.orbit = orbit
         if(not os.path.isfile(folder)):
             raise OSError("Cannot find folder definition file!")
-        logging.debug("Searching for DTM")
-        if(dtm is None):
-            logging.info("No DTM specified. Searching for DTM in %s" % self.current_dir)
-            dtm = self.current_dir
-        dtms = [f for f in os.listdir(dtm) if re.search(self.regDTM + self.tile + "\w+", os.path.basename(f))]
-        if(len(dtms) != 1):
-            raise OSError("Error finding DTM for %s in %s" % (self.tile, dtm))
-        self.dtm = dtms[0]
-        logging.debug("...found %s" % self.dtm)
         self.folder = folder
+        self.dtm = self.getDTMFiles(dtm)
         if(re.search(self.date_regex, start)):
             self.start = DateConverter.stringToDatetime(start.replace("-", ""))
         else:
             raise ValueError("Unknown date encountered: %s" % start)
+        self.userconf = os.path.join(self.current_dir, "userconf")
         return
     
     @staticmethod
@@ -145,10 +138,42 @@ class Start_maja(object):
         """
         Create symlink from src to dst and raise Exception if it didnt work
         """
+        if(os.path.exists(dst) and os.path.islink(dst)):
+            logging.debug("File already existing: %s" % dst)
+            return
+        
         try:
             os.symlink(src, dst)
         except:
-            raise OSError("Cannot create symlink for %s in %s. Does your plaform support symlinks?" % src, dst)
+            raise OSError("Cannot create symlink for %s at %s. Does your plaform support symlinks?" % (src, dst))
+    
+    def getDTMFiles(self, dtm_dir):
+        """
+        Find DTM folder for tile and search for associated HDR and DBL files
+        A DTM folder has the following naming structure:
+            S2__TEST_AUX_REFDE2_TILEID_0001 with TILEID e.g. T31TCH, KHUMBU ...
+        Inside the folder, a single .HDR file and an associated .DBL.DIR file
+        has to be found. OSError is thrown otherwise.
+        :param dtm_dir: The directory containing the DTM folder.
+        """
+        logging.debug("Searching for DTM")
+        if(dtm_dir is None):
+            logging.info("No DTM specified. Searching for DTM in %s" % self.current_dir)
+            dtm_dir = self.current_dir
+        dtm_folder = [f for f in os.listdir(dtm_dir) if re.search(self.regDTM + self.tile + "\w+", os.path.basename(f))]        
+        if(len(dtm_folder) != 1):
+            raise OSError("Error finding DTM folder for %s in %s" % (self.tile, dtm_dir))
+        hdr_files, dbl_files = [], []
+        for f in os.listdir(os.path.join(dtm_dir, dtm_folder[0])):
+            if(re.search(self.regDTM + self.tile + "\w*" + ".HDR", os.path.basename(f))):
+                hdr_files.append(os.path.join(dtm_dir, dtm_folder[0], f))
+            if(re.search(self.regDTM + self.tile + "\w*" + ".DBL", os.path.basename(f))):
+                dbl_files.append(os.path.join(dtm_dir, dtm_folder[0], f))
+        if(len(hdr_files) != 1):
+            raise OSError("More than one .HDR file found for DTM %s in %s" % (self.tile, dtm_dir))
+        dtm = [os.path.join(dtm_dir, dtm_folder[0], f) for f in hdr_files + dbl_files]
+        logging.debug("...found %s" % dtm_folder[0])
+        return dtm
     
     def readFoldersFile(self, cfg_file):
         """
@@ -187,23 +212,28 @@ class Start_maja(object):
         return repWork, repL1, repL2, exeMaja, repCAMS
     
     @staticmethod
-    def getPlatformProducts(site, tile, rep, reg):
-        """
-        Get the available products for a given platform regex
-        """
+    def getSpecifier(site, tile):
         if(site == None):
             specifier = tile
         else:
             specifier = os.path.join(site, tile)
-        
+        return specifier
+    
+    @staticmethod
+    def getPlatformProducts(site, tile, rep, reg):
+        """
+        Get the available products for a given platform regex
+        """
+        specifier = Start_maja.getSpecifier(site, tile)
         if(not os.path.isdir(os.path.join(rep, specifier))):
             return []
         
         prods = []
-        for prod in os.listdir(os.path.join(rep, specifier)):
+        input_dir = os.path.join(rep, specifier)
+        for prod in os.listdir(input_dir):
             for i, pattern in enumerate(reg):
                 if(re.search(re.compile(pattern.replace("XXXXX", tile)), prod)):
-                    prods.append((prod, i))
+                    prods.append((os.path.join(input_dir, prod), i))
         return prods
     
     def getAllProducts(self, site, tile, repL1, repL2):
@@ -234,27 +264,94 @@ class Start_maja(object):
         logging.info("Selected mode: %s" % mode)
         return prevL1, prevL2, mode
     
-    def createInputDir(self):
+    def createInputDir(self, wdir, products, dtm, gipps):
         """
         Set up all files of the input directory, which are:
             Product (1C and eventually 2A)
             GIPPs
             DTM
-            (CAMS)
+            (CAMS) if existing
         """
         
-        pass
+        from Common.FileSystem import createDirectory
+        
+        input_dir = os.path.join(wdir, "StartMaja")
+        createDirectory(input_dir)
+        
+        for prod, i in products:
+            self.symlink(prod, os.path.join(input_dir, os.path.basename(prod)))
+        for f in dtm:
+            self.symlink(f, os.path.join(input_dir, os.path.basename(f)))
+        for gipp in os.listdir(gipps):
+            self.symlink(os.path.join(gipps, gipp), os.path.join(input_dir, os.path.basename(gipp)))
+        return input_dir
     
-    def launchMAJA(self, maja_exe, input_dir, out_dir, mode, tile, conf):
+    @staticmethod
+    def runExternalApplication(name, args):
         """
-        Run the MAJA processing
+        Run an external application using the subprocess module
+        :param name: the Name of the application
+        :param args: The list of arguments to run the app with
+        :return: The return code of the App
         """
-        pass
+        from timeit import default_timer as timer
+        import subprocess
+        fullArgs = [name] + args
+        logging.info(" ".join(a for a in fullArgs))
+        fullArgs = fullArgs #Prepend other programs here
+        start = timer()
+        proc = subprocess.Popen(fullArgs, shell=False, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        while (True):
+            # Read line from stdout, break if EOF reached, append line to output
+            line = proc.stdout.readline().decode('utf-8')
+            #Poll(): Used to get the return code at the end of the execution
+            if (line == "") and proc.poll() is not None:
+                break
+            logging.debug(line[:-1])
+        end = timer()
+        returnCode = proc.returncode
+        #If this is not the testRun, raise an Error:
+        if(returnCode != 0):
+            raise subprocess.CalledProcessError(returnCode, name)
+        #Print total execution time for the App:
+        logging.info("{0} took: {1}s".format(os.path.basename(name), end - start))
+        return returnCode
+
+    def launchMAJA(self, maja_exe, input_dir, out_dir, mode, tile, conf, verbose):
+        """
+        Run the MAJA processor for the given input_dir, mode and tile 
+        """
+        
+        args = [
+                "-i",
+                input_dir,
+                "-o",
+                out_dir,
+                "-m",
+                "L2" + mode,
+                "-ucs",
+                conf,
+                "--TileId",
+                tile]
+        
+        if(verbose):
+            args += ["-l", "DEBUG"]
+        return self.runExternalApplication(maja_exe, args)
 
     def run(self):
+        from Common import FileSystem
         repWork, repL1, repL2, exeMaja, repCAMS = self.readFoldersFile(self.folder)
-        self.getAllProducts(self.site, self.tile, repL1, repL2)
-        self.createInputDir()
+        prodsL1, prodsL2, mode = self.getAllProducts(self.site, self.tile, repL1, repL2)
+        input_dir = self.createInputDir(repWork, prodsL1 + prodsL2, self.dtm, self.gipp)
+        specifier = self.getSpecifier(self.site, self.tile)
+        output_dir = os.path.join(repL2, specifier)
+        if(not os.path.exists(output_dir)):
+            FileSystem.createDirectory(output_dir)
+        
+        self.launchMAJA(exeMaja, input_dir, repWork, mode, self.tile, self.userconf, self.verbose)
+        #FileSystem.removeDirectory(input_dir)
+        logging.info("=============Start_Maja v%s finished==============" % self.version)
+
         pass
 
 if __name__ == "__main__":
