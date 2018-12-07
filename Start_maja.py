@@ -48,7 +48,7 @@ class Start_maja(object):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     
     
-    def __init__(self, gipp, tile, site, orbit, folder, dtm, start, end, verbose):
+    def __init__(self, gipp, tile, site, folder, dtm, start, end, verbose):
         """
         Init the instance using the old start_maja parameters
         """
@@ -76,7 +76,6 @@ class Start_maja(object):
         self.site = site
         if(self.site == None):
             logging.info("No site specified. Searching for product directly by TileID")
-        self.orbit = orbit
         if(not os.path.isfile(folder)):
             raise OSError("Cannot find folder definition file!")
         self.folder = folder
@@ -180,30 +179,6 @@ class Start_maja(object):
         logging.debug("...found %s" % dtm_folder[0])
         return dtm
     
-    def getCAMSFiles(self, cams_dir):
-        """
-        Find CAMS folder and search for associated HDR and DBL files
-        A CAMS folder has the following naming structure:
-            MMM_TEST_EXO_CAMS_YYYYMMDDThhmmss_YYYYMMDDThhmmss
-            with MMM = mission (e.g. S2_)
-        Inside the folder, a single .HDR file and an associated .DBL.DIR/.DBL file
-        has to be found. OSError is thrown otherwise.
-        :param dtm_dir: The directory containing the CAMS folder.
-        """
-        logging.debug("Searching for CAMS")
-        hdr_files, dbl_files = [], []
-        for f in os.listdir(cams_dir):
-            if(re.search(self.regCAMS + ".HDR", os.path.basename(f))):
-                hdr_files.append(os.path.join(cams_dir, f))
-            if(re.search(self.regCAMS + ".DBL", os.path.basename(f))):
-                dbl_files.append(os.path.join(cams_dir, f))
-        if(len(hdr_files) > len(dbl_files)):
-            raise OSError("One or more CAMS HDR files imcomplete: #HDR=%s, #DBL=%s"
-                % (len(hdr_files), len(dbl_files)))
-        cams = hdr_files + dbl_files
-        logging.debug("...found %s CAMS files" % len(hdr_files))
-        return cams
-    
     def readFoldersFile(self, cfg_file):
         """
         Read contents of the folders.txt file containing at least the config params:
@@ -234,18 +209,57 @@ class Start_maja(object):
             repCAMS = config.get("PATH", "repCAMS")
             if(not os.path.isdir(repCAMS)):
                 raise OSError("repCAMS is missing: %s" % repCAMS)
-        except configparser.NoOptionError:
+        except:
             logging.warning("repCAMS is missing. Processing without CAMS")
             repCAMS = None
         
         return repWork, repL1, repL2, exeMaja, repCAMS
+    
+    def getCAMSFiles(self, cams_dir):
+        """
+        Find CAMS folder and search for associated HDR and DBL files
+        A CAMS folder has the following naming structure:
+            MMM_TEST_EXO_CAMS_YYYYMMDDThhmmss_YYYYMMDDThhmmss
+            with MMM = mission (e.g. S2_)
+        Inside the folder, a single .HDR file and an associated .DBL.DIR/.DBL file
+        has to be found. OSError is thrown otherwise.
+        :param dtm_dir: The directory containing the CAMS folder.
+        """
+        hdr_files, dbl_files = [], []
+        if(cams_dir == None):
+            return []
+        logging.debug("Searching for CAMS")
+        for f in os.listdir(cams_dir):
+            if(re.search(self.regCAMS + ".HDR", os.path.basename(f))):
+                hdr_files.append(os.path.join(cams_dir, f))
+            if(re.search(self.regCAMS + ".DBL", os.path.basename(f))):
+                dbl_files.append(os.path.join(cams_dir, f))
+        if(len(hdr_files) > len(dbl_files)):
+            raise OSError("One or more CAMS HDR files imcomplete: #HDR=%s, #DBL=%s"
+                % (len(hdr_files), len(dbl_files)))
+        cams = hdr_files + dbl_files
+        logging.debug("...found %s CAMS files" % len(hdr_files))
+        return cams
+    
+    @staticmethod
+    def filterCAMSByDate(cams_files, start_date, end_date):
+        """
+        Filter out all CAMS files if they are between the given start_date and end_date
+        """
+        from Common import DateConverter as dc
+        cams_filtered = []
+        for cams in cams_files:
+            date = dc.getCAMSDate(cams)
+            if(date <= start_date or date >= end_date):
+                cams_filtered.append(cams)
+        return cams_filtered
     
     @staticmethod
     def getSpecifier(site, tile):
         if(site == None):
             specifier = tile
         else:
-            specifier = os.path.join(site, tile)
+            specifier = site
         return specifier
     
     @staticmethod
@@ -254,11 +268,10 @@ class Start_maja(object):
         Get the available products for a given platform regex
         """
         specifier = Start_maja.getSpecifier(site, tile)
-        if(not os.path.isdir(os.path.join(rep, specifier))):
-            return []
-        
         prods = []
         input_dir = os.path.join(rep, specifier)
+        if(not os.path.isdir(os.path.join(rep, specifier))):
+            return []
         for prod in os.listdir(input_dir):
             for i, pattern in enumerate(reg):
                 if(re.search(re.compile(pattern.replace("XXXXX", tile)), prod)):
@@ -281,7 +294,8 @@ class Start_maja(object):
             elif(repL1filtered and prevL1 or repL2filtered and prevL2):
                 raise OSError("Products for multiple platforms found: %s, %s" % (prevL1, prevL2))
         if(not prevL1):
-            raise OSError("CannprodsL1 = ot find L1 products for tile %s in %s" % (tile, repL1))
+            raise OSError("Cannot find L1 products for site %s and tile %s in %s"
+                          % (site, tile, repL1))
         if(not prevL2):
             logging.debug("No L2 products found.")
             
@@ -405,19 +419,29 @@ class Start_maja(object):
         return self.runExternalApplication(maja_exe, args)
 
     def run(self):
+        """
+        Run the whole artillery:
+            - Find all L1 and L2 products
+            - Find all CAMS files
+            - Filter both by start and end dates, if there are
+            - Determine the Mode: INIT, BACKWARD, NOMINAL
+            - Create the input directory and linking all the needed inputs
+            - Create the output directory
+            - Run MAJA
+        """
         from Common import FileSystem
         repWork, repL1, repL2, exeMaja, repCAMS = self.readFoldersFile(self.folder)
         availProdsL1, availProdsL2, platform = self.getAllProducts(self.site, self.tile, repL1, repL2)
         availCAMS = self.getCAMSFiles(repCAMS)
+        cams = self.filterCAMSByDate(availCAMS,self.start, self.end)
         prodsL1, prodsL2 = self.filterProductsByDate(availProdsL1, availProdsL2, platform, self.start, self.end)
         mode = self.determineMode(prodsL1, prodsL2)
-        input_dir = self.createInputDir(repWork, prodsL1 + prodsL2, availCAMS, self.dtm, self.gipp)
+        input_dir = self.createInputDir(repWork, prodsL1 + prodsL2, cams, self.dtm, self.gipp)
         specifier = self.getSpecifier(self.site, self.tile)
         output_dir = os.path.join(repL2, specifier)
         if(not os.path.exists(output_dir)):
             FileSystem.createDirectory(output_dir)
-        
-        self.launchMAJA(exeMaja, input_dir, output_dir, mode, self.tile, self.userconf, self.verbose)
+        #self.launchMAJA(exeMaja, input_dir, output_dir, mode, self.tile, self.userconf, self.verbose)
         FileSystem.removeDirectory(input_dir)
         logging.info("=============Start_Maja v%s finished=============" % self.version)
 
@@ -429,7 +453,6 @@ if __name__ == "__main__":
     parser.add_argument("-g", "--gipp", help="Name of the GIPP folder to be used", type=str, required=True)
     parser.add_argument("-t", "--tile", help="Tile number", type=str, required=True)
     parser.add_argument("-s", "--site", help="Site name. If not specified, the tile number is used directly for finding the L1/L2 product", type=str, required=False)
-    parser.add_argument("-o", "--orbit", help="Orbit number", type=int, required=True)
     parser.add_argument("-f", "--folder", type=str, help="Folder definition file", required=True)
     parser.add_argument("-m", "--dtm", type=str, help="DTM folder. If none is specified, it will be searched for in the code directory", required=False)
     parser.add_argument("-d", "--start", help="Start date for processing in format YYYY-MM-DD (optional)", type=str, required=False, default="2000-01-01")
@@ -437,5 +460,5 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", help="Will provide debug logs. Default is false", type=str, default="false")
     args = parser.parse_args()
     
-    s = Start_maja(args.gipp, args.tile, args.site, args.orbit, args.folder, args.dtm, args.start, args.end, args.verbose)
+    s = Start_maja(args.gipp, args.tile, args.site, args.folder, args.dtm, args.start, args.end, args.verbose)
     s.run()
