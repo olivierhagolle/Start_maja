@@ -151,6 +151,8 @@ class Start_maja(object):
             os.symlink(src, dst)
         except:
             raise OSError("Cannot create symlink for %s at %s. Does your plaform support symlinks?" % (src, dst))
+    def findDTMFiles(self, dtm_dir):
+        pass
     
     def getDTMFiles(self, dtm_dir):
         """
@@ -165,10 +167,22 @@ class Start_maja(object):
         if(dtm_dir is None):
             logging.info("No DTM specified. Searching for DTM in %s" % self.current_dir)
             dtm_dir = self.current_dir
+            
+        hdr_files, dbl_files = [], []
+        for f in os.listdir(os.path.join(dtm_dir)):
+            if(re.search(self.regDTM + self.tile + "\w*" + ".HDR", os.path.basename(f))):
+                hdr_files.append(os.path.join(dtm_dir, f))
+            if(re.search(self.regDTM + self.tile + "\w*" + ".DBL", os.path.basename(f))):
+                dbl_files.append(os.path.join(dtm_dir, f))
+        if(len(hdr_files) == 1 and len(dbl_files) >= 1):
+            logging.debug("...found %s" % os.path.basename(hdr_files[0]))
+            return hdr_files + dbl_files
+        
+        #If not found yet, search for folder with the same name:
+        hdr_files, dbl_files = [], []
         dtm_folder = [f for f in os.listdir(dtm_dir) if re.search(self.regDTM + self.tile + "\w+", os.path.basename(f))]        
         if(len(dtm_folder) != 1):
             raise OSError("Error finding DTM folder for %s in %s" % (self.tile, dtm_dir))
-        hdr_files, dbl_files = [], []
         for f in os.listdir(os.path.join(dtm_dir, dtm_folder[0])):
             if(re.search(self.regDTM + self.tile + "\w*" + ".HDR", os.path.basename(f))):
                 hdr_files.append(os.path.join(dtm_dir, dtm_folder[0], f))
@@ -177,7 +191,7 @@ class Start_maja(object):
         if(len(hdr_files) != 1):
             raise OSError("More than one .HDR file found for DTM %s in %s" % (self.tile, dtm_dir))
         dtm = [os.path.join(dtm_dir, dtm_folder[0], f) for f in hdr_files + dbl_files]
-        logging.debug("...found %s" % dtm_folder[0])
+        logging.debug("...found %s" % os.path.basename(hdr_files[0]))
         return dtm
     
     def readFoldersFile(self, cfg_file):
