@@ -33,7 +33,7 @@ class Start_maja(object):
     regVns = [r"^VENUS-XS_[-\d]+_L(1C|2A)_XXXXX_\w_V\w+",
                  r"^VE_\w{4}_VSC_L[12]VALD_\w+.HDR$"]
     regCAMS = r"\w{3}_TEST_EXO_CAMS_\w+"
-    regDTM = r"\w+_AUX_REFDE2_\w+"
+    regDTM = r"\w+_AUX_REFDE2_\w*"
     regGIPP = ["\w+GIP_" + gipp + "\w+" for gipp in ["L2ALBD",
                                                      "L2DIFT",
                                                      "L2DIRT",
@@ -232,16 +232,18 @@ class Start_maja(object):
         Set the L1 and L2 product directory paths. If input_dirs is set, it
         overloads first the L1C directory, then the L2A directory
         """
-        if(not os.path.isdir(prodL1)):
-            raise OSError("repL1 is missing: %s" % prodL1)
-        if(not os.path.isdir(prodL2)):
-            raise OSError("repL2 is missing: %s" % prodL2)
         if(not input_dirs):
+            if(not os.path.isdir(prodL1)):
+                raise OSError("repL1 is missing: %s" % prodL1)
+            if(not os.path.isdir(prodL2)):
+                raise OSError("repL2 is missing: %s" % prodL2)
             return prodL1, prodL2
         
         if(len(input_dirs) == 1):
             if(not os.path.exists(input_dirs[0])):
                 raise OSError("Cannot find L1C directory: %s" % input_dirs[0])
+            if(not os.path.isdir(prodL2)):
+                raise OSError("repL2 is missing: %s" % prodL2)
             return input_dirs[0], prodL2
         elif(len(input_dirs) == 2):
             if(not os.path.exists(input_dirs[0])):
