@@ -81,7 +81,7 @@ class testDTMCreation(LoggedTestCase.LoggedTestCase):
 
     @testFunction.test_function
     def testGetSiteInfoMuscate(self):
-        product = "/home/akynos/MAJA/inputs/L1/31TCH_MUSCATE/SENTINEL2B_20171008-105012-463_L1C_T31TCH_C_V1-0"
+        product = "/home/akynos/MAJA/inputs/L1/31TCH/SENTINEL2B_20171008-105012-463_L1C_T31TCH_C_V1-0"
         srtm = "/home/akynos/MAJA/DTM/Creation/SRTM"
         water = "/home/akynos/MAJA/DTM/Creation/Water"
         c = DTMCreation.DTMCreator(dirProduct=product, kml=None, granuleID=None, dirSRTM=srtm, dirWater=water)
