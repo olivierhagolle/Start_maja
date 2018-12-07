@@ -483,7 +483,7 @@ class Start_maja(object):
         output_dir = os.path.join(repL2, specifier)
         if(not os.path.exists(output_dir)):
             FileSystem.createDirectory(output_dir)
-        #self.launchMAJA(exeMaja, input_dir, output_dir, mode, self.tile, self.userconf, self.verbose)
+        self.launchMAJA(exeMaja, input_dir, output_dir, mode, self.tile, self.userconf, self.verbose)
         FileSystem.removeDirectory(input_dir)
         logging.info("=============Start_Maja v%s finished=============" % self.version)
 
@@ -494,7 +494,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-g", "--gipp", help="Name of the GIPP folder to be used", type=str, required=True)
     parser.add_argument("-t", "--tile", help="Tile number", type=str, required=True)
-    parser.add_argument("-i", "--input", help="Product input directory list. This OVERLOADS the L1C dir (and if given) the L2C dir!", nargs="+", type=str, required=False)
+    parser.add_argument("-i", "--input", help="Product input directory list. This OVERLOADS the L1C dir (and if given) the L2C dir!", nargs="+", required=False)
     parser.add_argument("-s", "--site", help="Site name. If not specified, the tile number is used directly for finding the L1/L2 product", type=str, required=False)
     parser.add_argument("-f", "--folder", type=str, help="Folder definition file", required=True)
     parser.add_argument("-m", "--dtm", type=str, help="DTM folder. If none is specified, it will be searched for in the code directory", required=False)
