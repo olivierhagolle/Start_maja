@@ -30,7 +30,6 @@ def stringToDatetime(s):
         return dt.strptime(s, "%Y%m%d")
     raise ValueError("Unknown datetime string {0}".format(s))
     
-    
 def getDateFromProduct(product, platform):
     """
     Get the acquisition date of a S2, L8 or Vns product using its filename
@@ -39,7 +38,6 @@ def getDateFromProduct(product, platform):
     :return: The datetime of the product
     :type return: datetime.datetime
     """
-    from Common import DateConverter
     import os
     path, productType = product
     filename = os.path.basename(path)
@@ -73,4 +71,15 @@ def getDateFromProduct(product, platform):
             datetimeAsString = os.path.splitext(filename)[0].split("_")[-1]
     if(datetimeAsString == None):
         raise ValueError("Unknown platform found for product %s" % filename)
-    return DateConverter.stringToDatetime(datetimeAsString)
+    return stringToDatetime(datetimeAsString)
+
+def getCAMSDate(filename):
+    """
+    Get the date from a cams filename.
+    Filename is something like:
+    S2__TEST_EXO_CAMS_YYYYMMDDTHHmmSS_YYYYMMDDTHHmmSS.HDR
+    With the first YYYYMMDDTHHmmSS being the date we are searching for
+    :param filename: The filename of a CAMS file
+    """
+    from os.path import splitext
+    return stringToDatetime(splitext(filename)[0].split("_")[-2].split("T")[0])
