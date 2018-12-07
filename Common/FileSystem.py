@@ -22,7 +22,7 @@ def createDirectory(path):
             os.makedirs(path)
         except:
             raise OSError("Cannot create directory {0}".format(path))
-    return
+    return 0
 
 def removeFile(filename):
     """
