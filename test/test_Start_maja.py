@@ -25,8 +25,9 @@ class testStart_maja(LoggedTestCase.LoggedTestCase):
         tilesS2 = ["29RPQ", "31TCH", "32TMR"]
         l8 = ["LANDSAT8-OLITIRS-XSTHPAN_20170501-103532-111_L1C_T31TCH_C_V1-0",
               "LC80390222013076EDC00",
-              "LC080390222013076EDC00"]
-        tilesL8 = ["31TCH", "ABCDE", "NONAME"]
+              "LC08_L1TP_199029_20170527_20170615_01_T1",
+              "L8_TEST_L8C_L2VALD_198030_20130626.HDR"]
+        tilesL8 = ["31TCH", "ABCDE", "NONAME", "NONAME"]
         vns = ["VENUS-XS_20180201-051359-000_L1C_KHUMBU_C_V1-0",
                "VE_VM01_VSC_L2VALD_ISRAW906_20180317.HDR"]
         tilesVns = ["KHUMBU", "ISRAW906"]
@@ -39,10 +40,13 @@ class testStart_maja(LoggedTestCase.LoggedTestCase):
         for prod, tile in zip(vns, tilesVns):
             l = list(re.search(pattern.replace("XXXXX", tile), prod) for pattern in Start_maja.regVns)
             self.assertFalse(all(v is None for v in l))
-            
+    
     @testFunction.test_function
     def test_AuxRegexes(self):
         import re
+        cams = ["S2__TEST_EXO_CAMS_20171008T030000_20180628T174612.HDR",
+                "S2__TEST_EXO_CAMS_20171008T150000_20180628T174630.DBL.DIR",
+                "S2__TEST_EXO_CAMS_20171010T030000_20180628T174724.DBL"]
         dtms = ["S2__TEST_AUX_REFDE2_T29RPQ_0001",
                "NONAME_TEST_AUX_REFDE2_TKHUMBU_0001"]
         gippVns = ["VE_TEST_GIP_L2ALBD_L_ALLSITES_00010_20000101_99991231.HDR",
@@ -83,6 +87,8 @@ class testStart_maja(LoggedTestCase.LoggedTestCase):
                     "L8_TEST_GIP_L2TOCR_L_CONTINEN_90001_00000000_99999999.HDR",
                     "L8_TEST_GIP_L2ALBD_L_CONTINEN_90001_00000000_99999999.HDR",
                     "L8_TEST_GIP_L2SMAC_L_ALLSITES_90001_00000000_99999999.EEF"]
+        for f in cams:
+            self.assertTrue(re.search(Start_maja.regCAMS, f))
         for dtm in dtms:
             self.assertTrue(re.search(Start_maja.regDTM, dtm))
         for gipp in gippVns + gippS2 + gippL8:

@@ -21,17 +21,18 @@ class Start_maja(object):
     """
     version = "3.0.1"
     #For examples of all regex expressions see unittests!
-    date_regex = r"\d{4}-\d{2}-\d{2}"
+    date_regex = r"\d{4}-\d{2}-\d{2}" #YYYY-MM-DD
     regS2 = [r"^S2[AB]_MSIL1C_\d+T\d+_N\d+_R\d+_TXXXXX_\d+T\d+.SAFE$",
-                r"^SENTINEL2[AB]_[-\d]+_L\w+_TXXXXX_\w_V[\d-]+$",
-                r"^S2[AB]_OPER_SSC_L2VALD_XXXXX_\w+.HDR$",
+                r"^SENTINEL2[AB]_[-\d]+_L(1C|2A)_TXXXXX_\w_V[\d-]+$",
+                r"^S2[AB]_OPER_SSC_L[12]VALD_XXXXX_\w+.HDR$",
                 r"^S2[AB]_OPER_PRD_MSIL1C_PDMC_\w+_R\d+_V\w+.SAFE$"]
-    regL8 = [r"^LC8\w+$",
-                r"^LANDSAT8-[\w-]+_[-\d]+_L\w+_TXXXXX_\w_V[\d-]+$",
-                r"^LC08\w+$"]
-    regVns = [r"^VENUS-XS_[-\d]+_L\w+_XXXXX_\w_V\w+",
-                 r"^VE_VM\d{2}_VSC_L2VALD_\w+.HDR$",
-                 r"^VE_TEST_VSC_L1VALD_\w+.HDR$"]
+    regL8 = [r"^LC08_L\w+",
+                r"^LC8\w+$",
+                r"^LANDSAT8-[\w-]+_[-\d]+_L(1C|2A)_TXXXXX_\w_V[\d-]+$",
+                r"^L8_\w{4}_L8C_L[12]VALD_[\d_]+.HDR$"]
+    regVns = [r"^VENUS-XS_[-\d]+_L(1C|2A)_XXXXX_\w_V\w+",
+                 r"^VE_\w{4}_VSC_L[12]VALD_\w+.HDR$"]
+    regCAMS = r"\w{3}_TEST_EXO_CAMS_\w+"
     regDTM = r"\w+_AUX_REFDE2_\w+"
     regGIPP = ["\w+GIP_" + gipp + "\w+" for gipp in ["L2ALBD",
                                                      "L2DIFT",
@@ -47,7 +48,7 @@ class Start_maja(object):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     
     
-    def __init__(self, gipp, tile, site, orbit, folder, dtm, start, verbose):
+    def __init__(self, gipp, tile, site, orbit, folder, dtm, start, end, verbose):
         """
         Init the instance using the old start_maja parameters
         """
@@ -84,6 +85,10 @@ class Start_maja(object):
             self.start = DateConverter.stringToDatetime(start.replace("-", ""))
         else:
             raise ValueError("Unknown date encountered: %s" % start)
+        if(re.search(self.date_regex, end)):
+            self.end = DateConverter.stringToDatetime(end.replace("-", ""))
+        else:
+            raise ValueError("Unknown date encountered: %s" % end)
         self.userconf = os.path.join(self.current_dir, "userconf")
         return
     
@@ -175,6 +180,30 @@ class Start_maja(object):
         logging.debug("...found %s" % dtm_folder[0])
         return dtm
     
+    def getCAMSFiles(self, cams_dir):
+        """
+        Find CAMS folder and search for associated HDR and DBL files
+        A CAMS folder has the following naming structure:
+            MMM_TEST_EXO_CAMS_YYYYMMDDThhmmss_YYYYMMDDThhmmss
+            with MMM = mission (e.g. S2_)
+        Inside the folder, a single .HDR file and an associated .DBL.DIR/.DBL file
+        has to be found. OSError is thrown otherwise.
+        :param dtm_dir: The directory containing the CAMS folder.
+        """
+        logging.debug("Searching for CAMS")
+        hdr_files, dbl_files = [], []
+        for f in os.listdir(cams_dir):
+            if(re.search(self.regCAMS + ".HDR", os.path.basename(f))):
+                hdr_files.append(os.path.join(cams_dir, f))
+            if(re.search(self.regCAMS + ".DBL", os.path.basename(f))):
+                dbl_files.append(os.path.join(cams_dir, f))
+        if(len(hdr_files) > len(dbl_files)):
+            raise OSError("One or more CAMS HDR files imcomplete: #HDR=%s, #DBL=%s"
+                % (len(hdr_files), len(dbl_files)))
+        cams = hdr_files + dbl_files
+        logging.debug("...found %s CAMS files" % len(hdr_files))
+        return cams
+    
     def readFoldersFile(self, cfg_file):
         """
         Read contents of the folders.txt file containing at least the config params:
@@ -241,30 +270,65 @@ class Start_maja(object):
         Get all available L1 and L2 products for the tile and site
         """
         prevL1, prevL2 = [], []
-        for platform in [self.regS2, self.regL8, self.regVns]:
+        platformID = -1
+        for i, platform in enumerate([self.regS2, self.regL8, self.regVns]):
             repL1filtered = self.getPlatformProducts(site, tile, repL1, platform)
             repL2filtered = self.getPlatformProducts(site, tile, repL2, platform)
             if(repL1filtered and not prevL1):
+                platformID = i
                 prevL1 = repL1filtered
                 prevL2 = repL2filtered
             elif(repL1filtered and prevL1 or repL2filtered and prevL2):
                 raise OSError("Products for multiple platforms found: %s, %s" % (prevL1, prevL2))
         if(not prevL1):
-            raise OSError("Cannot find L1 products for tile %s in %s" % (tile, repL1))
+            raise OSError("CannprodsL1 = ot find L1 products for tile %s in %s" % (tile, repL1))
         if(not prevL2):
             logging.debug("No L2 products found.")
             
-        #Determine mode:
-        if(len(prevL1) > 1):
-            mode = "BACKWARD"
-        elif(len(prevL2) == 1 and len(prevL1) == 1):
-            mode = "NOMINAL"
-        elif(len(prevL1) == 1):
-            mode = "INIT"
-        logging.info("Selected mode: %s" % mode)
-        return prevL1, prevL2, mode
+        return prevL1, prevL2, platformID
     
-    def createInputDir(self, wdir, products, dtm, gipps):
+    @staticmethod
+    def filterProductsByDate(prodsL1, prodsL2, platform, start_date, end_date):
+        """
+        Filter out all products if they are between the given start_date and end_date
+        """
+        from Common import DateConverter as dc
+        prodsL1filtered, prodsL2filtered = [], []
+        for prod in prodsL1:
+            d = dc.getDateFromProduct(prod, platform)
+            if(d >= start_date and d <= end_date):
+                prodsL1filtered.append(prod)
+        for prod in prodsL2:
+            d = dc.getDateFromProduct(prod, platform)
+            if(d >= start_date and d <= end_date):
+                prodsL2filtered.append(prod)
+        if(len(prodsL1filtered) == 0):
+            raise ValueError("No L1 products between %s and %s" %
+                             (dc.datetimeToStringShort(start_date),
+                              dc.datetimeToStringShort(end_date)))
+        
+        return prodsL1filtered, prodsL2filtered
+    
+    @staticmethod
+    def determineMode(prodsL1, prodsL2):
+        """
+        Determine the mode that Maja will run in depending
+        on the available L1 and L2 products
+        """
+        #Determine mode:
+        if(len(prodsL1) > 1):
+            mode = "BACKWARD"
+        elif(len(prodsL2) == 1 and len(prodsL1) == 1):
+            mode = "NOMINAL"
+        elif(len(prodsL1) == 1):
+            mode = "INIT"
+        else:
+            raise ValueError("Unknown configuration encountered: Products L1: %s, Products L2: %s"
+                             % (len(prodsL1), len(prodsL2)))
+        logging.info("Selected mode: %s" % mode)
+        return mode
+        
+    def createInputDir(self, wdir, products, cams, dtm, gipps):
         """
         Set up all files of the input directory, which are:
             Product (1C and eventually 2A)
@@ -280,12 +344,14 @@ class Start_maja(object):
         
         for prod, i in products:
             self.symlink(prod, os.path.join(input_dir, os.path.basename(prod)))
+        for f in cams:
+            self.symlink(f, os.path.join(input_dir, os.path.basename(f)))
         for f in dtm:
             self.symlink(f, os.path.join(input_dir, os.path.basename(f)))
         for gipp in os.listdir(gipps):
             self.symlink(os.path.join(gipps, gipp), os.path.join(input_dir, os.path.basename(gipp)))
         return input_dir
-    
+
     @staticmethod
     def runExternalApplication(name, args):
         """
@@ -313,7 +379,7 @@ class Start_maja(object):
         #If this is not the testRun, raise an Error:
         if(returnCode != 0):
             raise subprocess.CalledProcessError(returnCode, name)
-        #Print total execution time for the App:
+        #Show total execution time for the App:
         logging.info("{0} took: {1}s".format(os.path.basename(name), end - start))
         return returnCode
 
@@ -341,16 +407,19 @@ class Start_maja(object):
     def run(self):
         from Common import FileSystem
         repWork, repL1, repL2, exeMaja, repCAMS = self.readFoldersFile(self.folder)
-        prodsL1, prodsL2, mode = self.getAllProducts(self.site, self.tile, repL1, repL2)
-        input_dir = self.createInputDir(repWork, prodsL1 + prodsL2, self.dtm, self.gipp)
+        availProdsL1, availProdsL2, platform = self.getAllProducts(self.site, self.tile, repL1, repL2)
+        availCAMS = self.getCAMSFiles(repCAMS)
+        prodsL1, prodsL2 = self.filterProductsByDate(availProdsL1, availProdsL2, platform, self.start, self.end)
+        mode = self.determineMode(prodsL1, prodsL2)
+        input_dir = self.createInputDir(repWork, prodsL1 + prodsL2, availCAMS, self.dtm, self.gipp)
         specifier = self.getSpecifier(self.site, self.tile)
         output_dir = os.path.join(repL2, specifier)
         if(not os.path.exists(output_dir)):
             FileSystem.createDirectory(output_dir)
         
-        self.launchMAJA(exeMaja, input_dir, repWork, mode, self.tile, self.userconf, self.verbose)
-        #FileSystem.removeDirectory(input_dir)
-        logging.info("=============Start_Maja v%s finished==============" % self.version)
+        self.launchMAJA(exeMaja, input_dir, output_dir, mode, self.tile, self.userconf, self.verbose)
+        FileSystem.removeDirectory(input_dir)
+        logging.info("=============Start_Maja v%s finished=============" % self.version)
 
         pass
 
@@ -364,8 +433,9 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--folder", type=str, help="Folder definition file", required=True)
     parser.add_argument("-m", "--dtm", type=str, help="DTM folder. If none is specified, it will be searched for in the code directory", required=False)
     parser.add_argument("-d", "--start", help="Start date for processing in format YYYY-MM-DD (optional)", type=str, required=False, default="2000-01-01")
+    parser.add_argument("-e", "--end", help="Start date for processing in format YYYY-MM-DD (optional)", type=str, required=False, default="3000-01-01")
     parser.add_argument("-v", "--verbose", help="Will provide debug logs. Default is false", type=str, default="false")
     args = parser.parse_args()
     
-    s = Start_maja(args.gipp, args.tile, args.site, args.orbit, args.folder, args.dtm, args.start, args.verbose)
+    s = Start_maja(args.gipp, args.tile, args.site, args.orbit, args.folder, args.dtm, args.start, args.end, args.verbose)
     s.run()
