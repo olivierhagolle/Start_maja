@@ -48,7 +48,7 @@ class Start_maja(object):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     
     
-    def __init__(self, gipp, tile, site, folder, dtm, start, end, verbose):
+    def __init__(self, input_dirs, gipp, tile, site, folder, dtm, start, end, verbose):
         """
         Init the instance using the old start_maja parameters
         """
@@ -60,6 +60,7 @@ class Start_maja(object):
             self.initLoggers(msgLevel=logging.INFO)
         logging.info("=============This is Start_Maja v%s==============" % self.version)
         
+        self.input_dirs = input_dirs
         logging.debug("Checking GIPP files")
         if(not os.path.isdir(gipp)):
             raise OSError("Cannot find GIPP folder: %s" % gipp)
@@ -215,6 +216,28 @@ class Start_maja(object):
         
         return repWork, repL1, repL2, exeMaja, repCAMS
     
+    @staticmethod
+    def setInputDirectories(prodL1, prodL2, input_dirs):
+        """
+        Set the L1 and L2 product directory paths. If input_dirs is set, it
+        overloads first the L1C directory, then the L2A directory
+        """
+        if(not input_dirs):
+            return prodL1, prodL2
+        
+        if(len(input_dirs) == 1):
+            if(not os.path.exists(input_dirs[0])):
+                raise OSError("Cannot find L1C directory: %s" % input_dirs[0])
+            return input_dirs[0], prodL2
+        elif(len(input_dirs) == 2):
+            if(not os.path.exists(input_dirs[0])):
+                raise OSError("Cannot find L1C directory: %s" % input_dirs[0])
+            if(not os.path.exists(input_dirs[1])):
+                raise OSError("Cannot find L2A directory: %s" % input_dirs[1])
+            return input_dirs[0], input_dirs[1]
+        
+        raise ValueError("More than two input directories given: %s" % input_dirs)
+        
     def getCAMSFiles(self, cams_dir):
         """
         Find CAMS folder and search for associated HDR and DBL files
@@ -263,30 +286,32 @@ class Start_maja(object):
         return specifier
     
     @staticmethod
-    def getPlatformProducts(site, tile, rep, reg):
+    def getPlatformProducts(input_dir, tile, reg):
         """
         Get the available products for a given platform regex
         """
-        specifier = Start_maja.getSpecifier(site, tile)
         prods = []
-        input_dir = os.path.join(rep, specifier)
-        if(not os.path.isdir(os.path.join(rep, specifier))):
-            return []
+        if(not os.path.isdir(input_dir)):
+            return prods
         for prod in os.listdir(input_dir):
             for i, pattern in enumerate(reg):
                 if(re.search(re.compile(pattern.replace("XXXXX", tile)), prod)):
                     prods.append((os.path.join(input_dir, prod), i))
         return prods
     
-    def getAllProducts(self, site, tile, repL1, repL2):
+    def getAllProducts(self, site, tile, repL1, repL2, input_dirs):
         """
         Get all available L1 and L2 products for the tile and site
         """
         prevL1, prevL2 = [], []
         platformID = -1
+        specifier = Start_maja.getSpecifier(site, tile)
+        input_repL1 = os.path.join(repL1, specifier)
+        input_repL2 = os.path.join(repL2, specifier)
+        input_dirL1, input_dirL2 = self.setInputDirectories(input_repL1, input_repL2, input_dirs)
         for i, platform in enumerate([self.regS2, self.regL8, self.regVns]):
-            repL1filtered = self.getPlatformProducts(site, tile, repL1, platform)
-            repL2filtered = self.getPlatformProducts(site, tile, repL2, platform)
+            repL1filtered = self.getPlatformProducts(input_dirL1, tile, platform)
+            repL2filtered = self.getPlatformProducts(input_dirL2, tile, platform)
             if(repL1filtered and not prevL1):
                 platformID = i
                 prevL1 = repL1filtered
@@ -294,7 +319,7 @@ class Start_maja(object):
             elif(repL1filtered and prevL1 or repL2filtered and prevL2):
                 raise OSError("Products for multiple platforms found: %s, %s" % (prevL1, prevL2))
         if(not prevL1):
-            raise OSError("Cannot find L1 products for site %s and tile %s in %s"
+            raise OSError("Cannot find L1 products for site %s or tile %s in %s"
                           % (site, tile, repL1))
         if(not prevL2):
             logging.debug("No L2 products found.")
@@ -398,7 +423,8 @@ class Start_maja(object):
         return returnCode
 
     def launchMAJA(self, maja_exe, input_dir, out_dir, mode, tile, conf, verbose):
-        """
+        """        print(input_dirL2)
+
         Run the MAJA processor for the given input_dir, mode and tile 
         """
         
@@ -431,7 +457,7 @@ class Start_maja(object):
         """
         from Common import FileSystem
         repWork, repL1, repL2, exeMaja, repCAMS = self.readFoldersFile(self.folder)
-        availProdsL1, availProdsL2, platform = self.getAllProducts(self.site, self.tile, repL1, repL2)
+        availProdsL1, availProdsL2, platform = self.getAllProducts(self.site, self.tile, repL1, repL2, self.input_dirs)
         availCAMS = self.getCAMSFiles(repCAMS)
         cams = self.filterCAMSByDate(availCAMS,self.start, self.end)
         prodsL1, prodsL2 = self.filterProductsByDate(availProdsL1, availProdsL2, platform, self.start, self.end)
@@ -452,6 +478,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-g", "--gipp", help="Name of the GIPP folder to be used", type=str, required=True)
     parser.add_argument("-t", "--tile", help="Tile number", type=str, required=True)
+    parser.add_argument("-i", "--input", help="Product input directory list. This OVERLOADS the L1C dir (and if given) the L2C dir!", nargs="+", type=str, required=False)
     parser.add_argument("-s", "--site", help="Site name. If not specified, the tile number is used directly for finding the L1/L2 product", type=str, required=False)
     parser.add_argument("-f", "--folder", type=str, help="Folder definition file", required=True)
     parser.add_argument("-m", "--dtm", type=str, help="DTM folder. If none is specified, it will be searched for in the code directory", required=False)
@@ -460,5 +487,5 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", help="Will provide debug logs. Default is false", type=str, default="false")
     args = parser.parse_args()
     
-    s = Start_maja(args.gipp, args.tile, args.site, args.folder, args.dtm, args.start, args.end, args.verbose)
+    s = Start_maja(args.input, args.gipp, args.tile, args.site, args.folder, args.dtm, args.start, args.end, args.verbose)
     s.run()
