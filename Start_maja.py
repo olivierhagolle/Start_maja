@@ -211,11 +211,7 @@ class Start_maja(object):
         if(not os.path.isdir(repWork)):
             raise OSError("repWork is missing: %s" % repWork)
         repL1 = config.get("PATH", "repL1")
-        if(not os.path.isdir(repL1)):
-            raise OSError("repL1 is missing: %s" % repL1)
         repL2 = config.get("PATH", "repL2")
-        if(not os.path.isdir(repL2)):
-            raise OSError("repL2 is missing: %s" % repL2)
         exeMaja = config.get("PATH", "exeMaja")
         if(not os.path.isfile(exeMaja)):
             raise OSError("exeMaja is missing: %s" % exeMaja)
@@ -236,6 +232,10 @@ class Start_maja(object):
         Set the L1 and L2 product directory paths. If input_dirs is set, it
         overloads first the L1C directory, then the L2A directory
         """
+        if(not os.path.isdir(prodL1)):
+            raise OSError("repL1 is missing: %s" % prodL1)
+        if(not os.path.isdir(prodL2)):
+            raise OSError("repL2 is missing: %s" % prodL2)
         if(not input_dirs):
             return prodL1, prodL2
         
