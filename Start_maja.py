@@ -48,7 +48,7 @@ class Start_maja(object):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     
     
-    def __init__(self, input_dirs, gipp, tile, site, folder, dtm, start, end, verbose):
+    def __init__(self, input_dirs, gipp, tile, site, folder, dtm, start, end, overwrite, nbackward, verbose):
         """
         Init the instance using the old start_maja parameters
         """
@@ -90,6 +90,9 @@ class Start_maja(object):
         else:
             raise ValueError("Unknown date encountered: %s" % end)
         self.userconf = os.path.join(self.current_dir, "userconf")
+        self.nbackward = nbackward
+        self.overwrite = self.str2bool(overwrite)
+            
         return
     
     @staticmethod
@@ -295,6 +298,9 @@ class Start_maja(object):
     
     @staticmethod
     def getSpecifier(site, tile):
+        """
+        Determine whether the products are ordered by site and tile or only by tile
+        """
         if(site == None):
             specifier = tile
         else:
@@ -343,12 +349,35 @@ class Start_maja(object):
         return prevL1, prevL2, platformID
     
     @staticmethod
-    def filterProductsByDate(prodsL1, prodsL2, platform, start_date, end_date):
+    def filterProductsByDate(prodsL1, prodsL2, platform, start_date, end_date, nbackward):
         """
         Filter out all products if they are between the given start_date and end_date
         """
         from Common import DateConverter as dc
         prodsL1filtered, prodsL2filtered = [], []
+        print(prodsL1)
+        print(prodsL2)
+        #Get the first available L1 product for the current start date
+        processL1 = [dc.getDateFromProduct(d, platform) for d in prodsL1 if dc.getDateFromProduct(d, platform) >= start_date]
+        if(not processL1):
+            raise ValueError("No products found after start date %s" % dc.datetimeToString(start_date))
+        startL1 = sorted(processL1)[0]
+        #Get products before this date
+        prevL1 = [d for d in prodsL1 if dc.getDateFromProduct(d, platform) < startL1]
+        prevL2 = [d for d in prodsL2 if dc.getDateFromProduct(d, platform) < startL1]
+        if(prevL2):
+            mode = ["NOMINAL"]
+        elif(prevL1):
+            mode = ["BACKWARD"]
+            if(len(prevL1) < nbackward):
+                logging.warning("Less than %s L1 products found for the %s mode" % (nbackward, mode[0]))
+        elif(not prevL1):
+            mode = ["INIT"]
+            logging.warning("Missing previous L2 products. Will begin with INIT mode")
+        else:
+            raise ValueError("Unknown configuration encountered with products %s %s", prevL1, prevL2)
+        print(mode)
+        exit(1)
         for prod in prodsL1:
             d = dc.getDateFromProduct(prod, platform)
             if(d >= start_date and d <= end_date):
@@ -363,6 +392,9 @@ class Start_maja(object):
                               dc.datetimeToStringShort(end_date)))
         
         return prodsL1filtered, prodsL2filtered
+    
+    def createWorkplans(prodsL1, prodsL2, platform, start_date, end_date):
+        pass
     
     @staticmethod
     def determineMode(prodsL1, prodsL2):
@@ -476,7 +508,7 @@ class Start_maja(object):
         availProdsL1, availProdsL2, platform = self.getAllProducts(self.site, self.tile, repL1, repL2, self.input_dirs)
         availCAMS = self.getCAMSFiles(repCAMS)
         cams = self.filterCAMSByDate(availCAMS,self.start, self.end)
-        prodsL1, prodsL2 = self.filterProductsByDate(availProdsL1, availProdsL2, platform, self.start, self.end)
+        prodsL1, prodsL2 = self.filterProductsByDate(availProdsL1, availProdsL2, platform, self.start, self.end, self.nbackward)
         mode = self.determineMode(prodsL1, prodsL2)
         input_dir = self.createInputDir(repWork, prodsL1 + prodsL2, cams, self.dtm, self.gipp)
         specifier = self.getSpecifier(self.site, self.tile)
@@ -501,7 +533,10 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--start", help="Start date for processing in format YYYY-MM-DD (optional)", type=str, required=False, default="2000-01-01")
     parser.add_argument("-e", "--end", help="Start date for processing in format YYYY-MM-DD (optional)", type=str, required=False, default="3000-01-01")
     parser.add_argument("-v", "--verbose", help="Will provide debug logs. Default is false", type=str, default="false")
+    parser.add_argument("--overwrite", help="Will Overwrite existing L2A products. Default is false", type=str, default="false")
+    parser.add_argument("--nbackward", help="Number of products (if available) used to run in backward mode. Default is 8.", type=int, default=int(8))
+
     args = parser.parse_args()
     
-    s = Start_maja(args.input, args.gipp, args.tile, args.site, args.folder, args.dtm, args.start, args.end, args.verbose)
+    s = Start_maja(args.input, args.gipp, args.tile, args.site, args.folder, args.dtm, args.start, args.end, args.overwrite, args.nbackward, args.verbose)
     s.run()
