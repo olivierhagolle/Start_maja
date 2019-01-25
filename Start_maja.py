@@ -393,8 +393,27 @@ class Start_maja(object):
         
         return prodsL1filtered, prodsL2filtered
     
-    def createWorkplans(prodsL1, prodsL2, platform, start_date, end_date):
-        pass
+    def createWorkplans(self, prodsL1, prodsL2, platform, start_date, end_date, n_backward):
+        """
+        Create a workplan for each Level-1 product found between the given date period
+        For the first product available, check on top if an L2 product from the date
+        before is present to run in NOMINAL.
+        If not, check if there are at minimum n_backward products to run
+        a BACKWARD processing.
+        If both of those conditions are not met, a simple INIT is run and the rest
+        in NOMINAL
+        :param prodsL1: All L1 products found
+        :param prodsL2: All L2 products found
+        :param platform: The platform of the L1 and L2 products
+        :param start_date: Beginning of the desired processing period
+        :param end_date: End of the desired processing period
+        :param n_backward: Minimum number of products to be used for a BACKWARD mode
+        :return: List of workplans to be executed
+        """
+        from Common import DateConverter as dc
+        prodsL1filtered, prodsL2filtered = [], []
+        
+        return []
     
     @staticmethod
     def determineMode(prodsL1, prodsL2):
@@ -498,25 +517,27 @@ class Start_maja(object):
             - Find all L1 and L2 products
             - Find all CAMS files
             - Filter both by start and end dates, if there are
-            - Determine the Mode: INIT, BACKWARD, NOMINAL
-            - Create the input directory and linking all the needed inputs
-            - Create the output directory
-            - Run MAJA
+            - Determine the Workplans and a mode for each (INIT, BACKWARD, NOMINAL)
+            - For each workplan:
+            -   Create the input directory and link all the needed inputs
+            -   Create the output directory
+            -   Run MAJA
         """
         from Common import FileSystem
         repWork, repL1, repL2, exeMaja, repCAMS = self.readFoldersFile(self.folder)
         availProdsL1, availProdsL2, platform = self.getAllProducts(self.site, self.tile, repL1, repL2, self.input_dirs)
         availCAMS = self.getCAMSFiles(repCAMS)
         cams = self.filterCAMSByDate(availCAMS,self.start, self.end)
-        prodsL1, prodsL2 = self.filterProductsByDate(availProdsL1, availProdsL2, platform, self.start, self.end, self.nbackward)
-        mode = self.determineMode(prodsL1, prodsL2)
-        input_dir = self.createInputDir(repWork, prodsL1 + prodsL2, cams, self.dtm, self.gipp)
-        specifier = self.getSpecifier(self.site, self.tile)
-        output_dir = os.path.join(repL2, specifier)
-        if(not os.path.exists(output_dir)):
-            FileSystem.createDirectory(output_dir)
-        self.launchMAJA(exeMaja, input_dir, output_dir, mode, self.tile, self.userconf, self.verbose)
-        FileSystem.removeDirectory(input_dir)
+        workplans = self.createWorkplans(availProdsL1, availProdsL2, platform, self.start, self.end, self.nbackward)
+        exit(1)
+        for wp in workplans:
+            input_dir = self.createInputDir(repWork, wp.productsL1 + wp.productsL2, cams, self.dtm, self.gipp)
+            specifier = self.getSpecifier(self.site, self.tile)
+            output_dir = os.path.join(repL2, specifier)
+            if(not os.path.exists(output_dir)):
+                FileSystem.createDirectory(output_dir)
+            wp.execute(exeMaja, input_dir, output_dir, self.tile, self.userconf, self.verbose)
+            FileSystem.removeDirectory(input_dir)
         logging.info("=============Start_Maja v%s finished=============" % self.version)
 
         pass
