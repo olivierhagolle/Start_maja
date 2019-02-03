@@ -11,6 +11,7 @@ Created on:     Fri Jan 11 16:57:37 2019
 """
 
 import os
+from os.path import basename as bname
 import logging
 
 class Workplan(object):
@@ -22,9 +23,10 @@ class Workplan(object):
     conf = None
     mode = None
     
-    def __init__(self, L1, L2, CAMS, DTM, tile, conf, checkL2=False):
-        self.productsL1 = L1
-        self.productsL2 = L2
+    def __init__(self, date, L1, L2, CAMS, DTM, tile, conf, checkL2=False):
+        self.date = date
+        self.L1 = L1
+        self.L2 = L2
         self.cams = CAMS
         self.dtm = DTM
         self.tile = tile
@@ -33,7 +35,8 @@ class Workplan(object):
         pass
     
     def __str__(self):
-        return str("%5s | %8s | %8s | %8s" % (self.tile, self.mode, self.productsL1, self.productsL2))
+        from Common import DateConverter as dc
+        return str("%8s | %5s | %8s | %70s | %15s" % (dc.datetimeToStringShort(self.date), self.tile, self.mode, bname(self.L1[0]), "from previous"))
     
     def execute(self):
         """
@@ -140,6 +143,10 @@ class ModeInit(Workplan):
         """
         raise NotImplementedError
         
+    def __str__(self):
+        from Common import DateConverter as dc
+        return str("%8s | %5s | %8s | %70s | %15s" % (dc.datetimeToStringShort(self.date), self.tile, self.mode, bname(self.L1[0]), "No previous L2"))
+    
 class ModeBackward(Workplan):
     mode = "BACKWARD"
     
@@ -149,6 +156,10 @@ class ModeBackward(Workplan):
         """
         raise NotImplementedError
         
+    def __str__(self):
+        from Common import DateConverter as dc
+        return str("%8s | %5s | %8s | %70s | %15s" % (dc.datetimeToStringShort(self.date), self.tile, self.mode, bname(self.L1[0][0]), "%s products" % len(self.L1)))
+    
 class ModeNominal(Workplan):
     mode = "NOMINAL"
     

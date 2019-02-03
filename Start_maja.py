@@ -89,8 +89,11 @@ class Start_maja(object):
             self.end = DateConverter.stringToDatetime(end.replace("-", ""))
         else:
             raise ValueError("Unknown date encountered: %s" % end)
+        if(self.start > self.end):
+            raise ValueError("Start date has to be before the end date!")
         self.userconf = os.path.join(self.current_dir, "userconf")
-        self.nbackward = nbackward
+        #Subtract 1, which means including the actual product:
+        self.nbackward = nbackward - 1
         self.overwrite = self.str2bool(overwrite)
             
         return
@@ -377,7 +380,7 @@ class Start_maja(object):
         
         return prodsL1filtered, prodsL2filtered
     
-    def createWorkplans(self, prodsL1, prodsL2, platform, start_date, end_date, n_backward):
+    def createWorkplans(self, prodsL1, prodsL2, platform, tile, CAMS, DTM, start_date, conf, end_date, n_backward):
         """
         Create a workplan for each Level-1 product found between the given date period
         For the first product available, check on top if an L2 product from the date
@@ -410,22 +413,54 @@ class Start_maja(object):
         workplans = []
         # First product: Check if L2 existing, if not check if BACKWARD possible:
         dateL1 = dc.getDateFromProduct(datesL1filtered[0][1], platform)
+        if(dateL1 > end_date):
+            raise ValueError("No workplan can be created for the chosen period %s to %s" % (dc.datetimeToStringShort(start_date), dc.datetimeToStringShort(end_date)))
         prodL2 = dc.findPreviousL2Product(datesL2, dateL1)
         pastL1 = dc.findNewerProducts(datesL1filtered, dateL1)
         if prodL2:
-            workplans.append(wp.ModeNominal(L1=prodsL1[0], L2=prodL2[1], CAMS=[], DTM=None, tile=None, conf=None))
+            workplans.append(wp.ModeNominal(date=datesL1filtered[0][0],
+                                            L1=datesL1filtered[0][1],
+                                            L2=prodL2[0][1],
+                                            CAMS=CAMS,
+                                            DTM=DTM,
+                                            tile=tile,
+                                            conf=conf
+                                            ))
         elif len(pastL1) >= n_backward:
             logging.warning("No previous L2 product found. Beginning in BACKWARD mode")
-            workplans.append(wp.ModeBackward(L1=[prodsL1[0]] + pastL1[:n_backward], L2=None, CAMS=[], DTM=None, tile=None, conf=None))
+            workplans.append(wp.ModeBackward(date=datesL1filtered[0][0],
+                                             L1=[datesL1filtered[0][1]] + [prod for date,prod in pastL1[:n_backward]],
+                                             L2=None,
+                                             CAMS=CAMS,
+                                            DTM=DTM,
+                                            tile=tile,
+                                            conf=conf
+                                             ))
         else:
+            print("Test1", datesL1filtered[0])
             # If both fail, go for an INIT mode and log a warning:
             logging.warning("Less than %s L1 products found. Beginning in INIT mode" % n_backward)
-            workplans.append(wp.ModeInit(L1=prodsL1[0], L2=None, CAMS=[], DTM=None, tile=None, conf=None))
+            workplans.append(wp.ModeInit(date=datesL1filtered[0][0],
+                                         L1=datesL1filtered[0][1],
+                                         L2=None,
+                                         CAMS=CAMS,
+                                         DTM=DTM,
+                                         tile=tile,
+                                         conf=conf
+                                         ))
         # For the rest: Setup NOMINAL
         for date, prod in datesL1filtered[1:]:
             if date > end_date:
                 continue
-            workplans.append(wp.ModeNominal(L1=prodsL1[0], L2=None, CAMS=[], DTM=None, tile=None, conf=None, checkL2=True))
+            workplans.append(wp.ModeNominal(date=date,
+                                            L1=prod,
+                                            L2=None,
+                                            CAMS=CAMS,
+                                            DTM=DTM,
+                                            tile=tile,
+                                            conf=conf,
+                                            checkL2=True
+                                            ))
         
         # This should never happen:
         if not workplans:
@@ -450,7 +485,12 @@ class Start_maja(object):
         availProdsL1, availProdsL2, platform = self.getAllProducts(self.site, self.tile, repL1, repL2, self.input_dirs)
         availCAMS = self.getCAMSFiles(repCAMS)
         cams = self.filterCAMSByDate(availCAMS,self.start, self.end)
-        workplans = self.createWorkplans(availProdsL1, availProdsL2, platform, self.start, self.end, self.nbackward)
+        workplans = self.createWorkplans(prodsL1=availProdsL1, prodsL2=availProdsL2, platform=platform, CAMS=cams,
+                                         DTM=self.dtm, tile=self.tile, conf=self.userconf, start_date=self.start, 
+                                         end_date=self.end, n_backward=self.nbackward)
+        logging.info("%s workplan(s) successfully created:" % len(workplans))
+        # Print without the logging-formatting:
+        print(str("%8s | %5s | %8s | %70s | %15s" % ("DATE", "TILE", "MODE", "L1-PRODUCT", "INFO/L2-PRODUCT")))
         for wp in workplans:
             print(wp)
 #            input_dir = self.createInputDir(repWork, wp.productsL1 + wp.productsL2, cams, self.dtm, self.gipp)
