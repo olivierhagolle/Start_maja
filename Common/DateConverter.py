@@ -30,6 +30,43 @@ def stringToDatetime(s):
         return dt.strptime(s, "%Y%m%d")
     raise ValueError("Unknown datetime string {0}".format(s))
     
+def findPreviousL2Product(dates, pivot):
+    """
+    Find the nearest older date to pivot in the items list
+    :param items: List of datetimes
+    :param pivot: Reference datetime 
+    :return: Datetime in items closest to pivot or None if not existing
+    """
+    # Search only on the days older that pivot:
+    past_dates = findOlderProducts(dates, pivot)
+    if not past_dates:
+        return None
+    return min(past_dates, key=lambda x: abs(x[0] - pivot))
+    
+def findOlderProducts(dates, pivot):
+    """
+    Find all older dates to pivot in the items list
+    :param items: List of datetimes
+    :param pivot: Reference datetime 
+    :return: Datetimes older than pivot or None if not existing
+    """
+    past_dates = [(date, prod)
+                    for date, prod in dates
+                    if date < pivot]
+    return past_dates
+    
+def findNewerProducts(dates, pivot):
+    """
+    Find all newer dates to pivot in the items list
+    :param items: List of datetimes
+    :param pivot: Reference datetime 
+    :return: Datetimes newer than pivot or None if not existing
+    """
+    past_dates = [(date, prod)
+                    for date, prod in dates
+                    if date > pivot]
+    return past_dates
+    
 def getDateFromProduct(product, platform):
     """
     Get the acquisition date of a S2, L8 or Vns product using its filename

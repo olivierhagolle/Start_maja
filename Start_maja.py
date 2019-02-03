@@ -68,7 +68,7 @@ class Start_maja(object):
             if not [f for f in os.listdir(gipp) if re.search(regGIPP, f)]:
                 raise OSError("Missing GIPP file: %s" % regGIPP.replace("\w+", "*"))
         self.gipp = gipp
-        logging.debug("...found")
+        logging.debug("...found %s" % gipp)
         
         if(tile[0] == "T" and len(tile) == 6 and tile[1:2].isdigit()):
             self.tile = tile[1:] #Remove the T from e.g. T32ABC
@@ -395,13 +395,43 @@ class Start_maja(object):
         :return: List of workplans to be executed
         """
         from Common import DateConverter as dc
-        prodsL1filtered, prodsL2filtered = [], []
-        from Common import Workplan as wp
+        from Chain import Workplan as wp
         
-        w = wp.ModeInit([],[], [], None, None, None)
-        print(str(w))
+        # Create list of L2 and L1 products with their respective date:
+        datesL2 = sorted([(dc.getDateFromProduct(prod, platform), prod) for prod in prodsL2], key=lambda tup: tup[0])
+        datesL1 = sorted([(dc.getDateFromProduct(prod, platform), prod) for prod in prodsL1], key=lambda tup: tup[0])
         
-        return []
+        # Filter out all L1 products before the start_date:
+        datesL1filtered = [(date, prod) for date, prod in datesL1 if date > start_date]
+        if len(datesL1) - len(datesL1filtered) > 0:
+            logging.info("Discarding %s products older than the start date %s" %
+                         (len(datesL1) - len(datesL1filtered), dc.datetimeToStringShort(start_date)))
+        
+        workplans = []
+        # First product: Check if L2 existing, if not check if BACKWARD possible:
+        dateL1 = dc.getDateFromProduct(datesL1filtered[0][1], platform)
+        prodL2 = dc.findPreviousL2Product(datesL2, dateL1)
+        pastL1 = dc.findNewerProducts(datesL1filtered, dateL1)
+        if prodL2:
+            workplans.append(wp.ModeNominal(L1=prodsL1[0], L2=prodL2[1], CAMS=[], DTM=None, tile=None, conf=None))
+        elif len(pastL1) >= n_backward:
+            logging.warning("No previous L2 product found. Beginning in BACKWARD mode")
+            workplans.append(wp.ModeBackward(L1=[prodsL1[0]] + pastL1[:n_backward], L2=None, CAMS=[], DTM=None, tile=None, conf=None))
+        else:
+            # If both fail, go for an INIT mode and log a warning:
+            logging.warning("Less than %s L1 products found. Beginning in INIT mode" % n_backward)
+            workplans.append(wp.ModeInit(L1=prodsL1[0], L2=None, CAMS=[], DTM=None, tile=None, conf=None))
+        # For the rest: Setup NOMINAL
+        for date, prod in datesL1filtered[1:]:
+            if date > end_date:
+                continue
+            workplans.append(wp.ModeNominal(L1=prodsL1[0], L2=None, CAMS=[], DTM=None, tile=None, conf=None, checkL2=True))
+        
+        # This should never happen:
+        if not workplans:
+            raise ValueError("No workplans created!")
+        
+        return workplans
 
     def run(self):
         """
@@ -421,15 +451,15 @@ class Start_maja(object):
         availCAMS = self.getCAMSFiles(repCAMS)
         cams = self.filterCAMSByDate(availCAMS,self.start, self.end)
         workplans = self.createWorkplans(availProdsL1, availProdsL2, platform, self.start, self.end, self.nbackward)
-        exit(1)
         for wp in workplans:
-            input_dir = self.createInputDir(repWork, wp.productsL1 + wp.productsL2, cams, self.dtm, self.gipp)
-            specifier = self.getSpecifier(self.site, self.tile)
-            output_dir = os.path.join(repL2, specifier)
-            if(not os.path.exists(output_dir)):
-                FileSystem.createDirectory(output_dir)
-            wp.execute(exeMaja, input_dir, output_dir, self.tile, self.userconf, self.verbose)
-            FileSystem.removeDirectory(input_dir)
+            print(wp)
+#            input_dir = self.createInputDir(repWork, wp.productsL1 + wp.productsL2, cams, self.dtm, self.gipp)
+#            specifier = self.getSpecifier(self.site, self.tile)
+#            output_dir = os.path.join(repL2, specifier)
+#            if(not os.path.exists(output_dir)):
+#                FileSystem.createDirectory(output_dir)
+#            wp.execute(exeMaja, input_dir, output_dir, self.tile, self.userconf, self.verbose)
+#            FileSystem.removeDirectory(input_dir)
         logging.info("=============Start_Maja v%s finished=============" % self.version)
 
         pass

@@ -22,13 +22,14 @@ class Workplan(object):
     conf = None
     mode = None
     
-    def __init__(self, L1, L2, CAMS, DTM, tile, conf):
+    def __init__(self, L1, L2, CAMS, DTM, tile, conf, checkL2=False):
         self.productsL1 = L1
         self.productsL2 = L2
         self.cams = CAMS
         self.dtm = DTM
         self.tile = tile
         self.conf = conf
+        self.checkL2 = checkL2
         pass
     
     def __str__(self):
