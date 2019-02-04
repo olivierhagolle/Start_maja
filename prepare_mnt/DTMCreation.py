@@ -72,12 +72,7 @@ class DTMCreator():
             print("Found Water zip-archives...")
             self.WaterZipped = True
         else:
-            files = [f for f in os.listdir(dirWater) if re.search(self.filenameWater.replace("zip","shp"), f)]
-            if(files):
-                self.WaterZipped = False
-                print("Found unextracted Water archives...")
-            else:
-                raise OSError("Cannot find Water-Mask archives in directory: {0}".format(dirWater))
+            raise OSError("Cannot find Water-Mask zip-archives in directory: {0}".format(dirWater))
 
         self.dirInSRTM = dirSRTM
         self.dirInWater = dirWater

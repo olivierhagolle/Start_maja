@@ -13,6 +13,8 @@ import re
 import tempfile
 from osgeo import gdal, ogr, osr
 import scipy.ndimage as nd
+from os.path import join as pjoin
+
 
 # Returns true if coordinate is land
 def TestLand(lon, lat):
@@ -220,7 +222,7 @@ def calcule_nom_tuile(tx, ty, site, nom_site):
 
 class classe_mnt:
     def __init__(self, rep, rac, ulx, uly, lrx, lry, res, chaine_proj):
-        self.racine = rep + rac
+        self.racine = rep
         self.ulx = ulx
         self.uly = uly
         self.lrx = lrx
@@ -289,7 +291,6 @@ class classe_mnt:
         fic_mnt = rac_mnt + '.mnt'
         fic_hdr_mnt_float = rac_mnt + 'float.hdr'
         fic_mnt_float = rac_mnt + 'float.mnt'
-
         # calcul du mnt int
         self.decoupe_int(mnt_in, fic_mnt)
 
@@ -416,12 +417,19 @@ class classe_mnt:
 #################################################################################
 ########################### Fusion DEM and water masks   ########################
 #################################################################################
-def fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt, rep_swbd, nom_site, calcul_eau_mnt, wdir=None):
-    if wdir is None:
-        working_dir = tempfile.mkdtemp(prefix="{}_".format(nom_site))
-    else:
-        working_dir = tempfile.mkdtemp(prefix="{}_".format(nom_site), dir=wdir)
+def fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt, rep_swbd, nom_site, calcul_eau_mnt, working_dir):
     print("liste_fic_mnt", liste_fic_mnt)
+    if not liste_fic_eau:
+        raise ValueError("Cannot find SWBD files!")
+
+    # Unzip SWBD-files:
+    for swbd in liste_fic_eau:
+        filenameWater = r"%s\w.zip" % swbd
+        files = [f for f in os.listdir(rep_swbd) if re.search(filenameWater, f)]
+        if len(files) != 1:
+            raise OSError("No unique SWBD file found for %s in %s" % (swbd, rep_swbd))
+        commande = "unzip -o %s -d %s" % (pjoin(rep_swbd, files[0]), working_dir)
+        os.system(commande)
     for fic in liste_fic_mnt:
         print("FIC: {0}".format(fic))
         print(type(rep_mnt), type(fic))
@@ -434,14 +442,14 @@ def fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt, rep_swbd
         nom_mnt = tempfile.mkstemp(prefix="mnt_{}".format(nom_site), suffix=".tif", dir=working_dir)[1]
         commande = "gdal_merge.py -o " + nom_mnt
         for fic_mnt in liste_fic_mnt:
-            commande = commande + " " + rep_mnt + fic_mnt + " "
+            commande = commande + " " + pjoin(working_dir, fic_mnt) + " "
         if os.path.exists(nom_mnt):
             os.remove(nom_mnt)
         print(commande)
         os.system(commande)
 
     elif len(liste_fic_mnt) == 1:
-        nom_mnt = os.path.join(working_dir, liste_fic_mnt[0])
+        nom_mnt = pjoin(working_dir, liste_fic_mnt[0])
     else:
         print("liste_fic_mnt is empty")
         raise ("ErreurDeParametreSite")
@@ -475,7 +483,7 @@ def fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt, rep_swbd
                                    "e022n28", "e023n28", "w074n01", "e034n02", "e035n02"]
         for i, racine_nom_eau in enumerate(liste_fic_eau):
             print(racine_nom_eau)
-            shp = glob.glob(os.path.join(wdir, racine_nom_eau + "*.shp"))
+            shp = glob.glob(os.path.join(working_dir, racine_nom_eau + "*.shp"))
             # if shp file does not exist
             if len(shp) == 0:
                 print('missing SWBD watr file : ', racine_nom_eau)
