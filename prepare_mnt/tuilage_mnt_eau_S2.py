@@ -1,11 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import sys
+import sys, os
 assert sys.version_info >= (2,7)
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')) #Import relative modules
 
-sys.path.append(sys.path[0] + "/..")
 from prepare_mnt import lib_mnt
 
 class TuilageParamsConverter(object):
@@ -38,8 +37,26 @@ class TuilageSentinel(object):
     Reprojette et decoupe un mnt SRTM sur les tuiles d'un site 
     Les paramètres sont dans parametres.py, dont le nom du site qui sert à déterminer le fichier de paramètres du tuilage d'un site (ex pyrenees.py)
     
-    """
-    def run(self, dirInSRTM, dirInWater, dirOut, dirOutWater, resolution, site, mnt, waterOnly, workingDir = None):
+    """    
+    def unzip_water(self, dirInWater, filenames, dirOut):
+        """
+        Unzip Water-SWBD files
+        """
+        import zipfile
+        import re
+        files = []
+        for pattern in filenames:
+            files += list(os.path.join(dirInWater, f) for f in os.listdir(dirInWater) if re.search(pattern + ".*?\.zip", f))
+        if(len(files) == 0):
+            raise OSError("Cannot find SWBD zip files!")
+        for fn in files:
+            print("Unzipping {0}".format(fn))
+            zip_ref = zipfile.ZipFile(fn, 'r')
+            zip_ref.extractall(dirOut)
+            zip_ref.close()
+        return 0
+    
+    def run(self, dirInSRTM, dirInWater, dirOut, dirOutWater, resolution, site, mnt, waterOnly, wdir = None, water_zipped = False):
         from math import ceil, floor
         from osgeo import osr
         os.environ['LC_NUMERIC'] = 'C'
@@ -75,8 +92,8 @@ class TuilageSentinel(object):
                 print("#################################################")
                 sys.exit(-3)
         
-            ul_latlon_srtm = [int(ul_latlon[0] + 180) // 5 + 1, int(60 - ul_latlon[1]) // 5 + 1]
-            lr_latlon_srtm = [int(lr_latlon[0] + 180) // 5 + 1, int(60 - lr_latlon[1]) // 5 + 1]
+            ul_latlon_srtm = [int(int(ul_latlon[0] + 180) / 5 + 1), int(int(60 - ul_latlon[1]) / 5 + 1)]
+            lr_latlon_srtm = [int(int(lr_latlon[0] + 180) / 5 + 1), int(int(60 - lr_latlon[1]) / 5 + 1)]
             print(ul_latlon_srtm)
             print(lr_latlon_srtm)
             for x in range(ul_latlon_srtm[0], lr_latlon_srtm[0] + 1):
@@ -146,17 +163,21 @@ class TuilageSentinel(object):
         
                 liste_fic_eau.append("%s%03d%s%02d" % (ew, num_x, ns, num_y))
                 liste_centre_eau.append([x + 0.5, y + 0.5])
-        
-        print(liste_fic_eau)
-        
+                
         print("longitudes", ul_latlon_swbd[0], lr_latlon_swbd[0])
         print("latitudes", lr_latlon_swbd[1], ul_latlon_swbd[1])
         print("center coordinates", liste_centre_eau)
         print(liste_fic_eau)
-        
+
+        import tempfile
+        print(wdir)
+        if wdir is None:
+            working_dir = tempfile.mkdtemp()
+        else:
+            working_dir = tempfile.mkdtemp(dir=wdir)
         # Fusion des mnt_srtm en un seul
         (fic_mnt_in, fic_eau_in) = lib_mnt.fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt_in, rep_swbd, site.nom,
-                                              calcul_masque_eau_mnt, working_dir=workingDir)
+                                              calcul_masque_eau_mnt, working_dir=working_dir)
         print("############", fic_mnt_in)
         
         ####################Boucle de création des fichiers MNT et eau pour chaque tuile
@@ -178,13 +199,10 @@ class TuilageSentinel(object):
         
                 print("nom de la tuile", nom_tuile, tx, ty)
                 ###pour le MNT
-                rep_mnt_out = os.path.join(rep_mnt, nom_tuile)
+                rep_mnt_out = working_dir
                 print("MNT Reps: {0} {1} {2}".format(rep_mnt, rep_mnt_in, rep_mnt_out))
 
                 if waterOnly == False:
-                    if not (os.path.exists(rep_mnt_out)):
-                        os.makedirs(rep_mnt_out)
-        
                     # Resolution SRTM_RES
                     print("############### c'est parti")
                     mnt_90m = lib_mnt.classe_mnt(rep_mnt_out, nom_tuile, ulx, uly, lrx_90m, lry_90m, SRTM_RES, site.chaine_proj)
@@ -270,4 +288,4 @@ if __name__ == "__main__":
         else:
             site = converter.getSiteFromFile(options.fic_site)
         mntcreator = TuilageSentinel()
-        mntcreator.run(dirInSRTM, dirInWater, dirOut, dirOutWater, options.COARSE_RES, site=site, mnt=options.mnt, waterOnly=options.eau_seulement)
+        mntcreator.run(dirInSRTM, dirInWater, dirOut, dirOutWater, options.COARSE_RES, site=site, mnt=options.mnt, waterOnly=options.eau_seulement, water_zipped=False)

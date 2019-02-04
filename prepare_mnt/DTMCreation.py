@@ -10,14 +10,11 @@ Project:        StartMaja, CNES
 Created on:     Tue Sep 11 15:31:00 2018
 """
 
-import sys
+import sys, os
 assert sys.version_info >= (2,7)
-sys.path.append(sys.path[0] + "/..")
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')) #Import relative modules
 from Common import FileSystem
-from prepare_mnt import tuilage_mnt_eau_S2 as tiling
 from prepare_mnt import conversion_format_maja as conversion
-from prepare_mnt.tuilage_mnt_eau_S2 import TuilageParamsConverter
-from prepare_mnt import lib_mnt
 
 class DTMCreator():
     """
@@ -75,12 +72,7 @@ class DTMCreator():
             print("Found Water zip-archives...")
             self.WaterZipped = True
         else:
-            files = [f for f in os.listdir(dirWater) if re.search(self.filenameWater.replace("zip","shp"), f)]
-            if(files):
-                self.WaterZipped = False
-                print("Found unextracted Water archives...")
-            else:
-                raise OSError("Cannot find Water-Mask archives in directory: {0}".format(dirWater))
+            raise OSError("Cannot find Water-Mask zip-archives in directory: {0}".format(dirWater))
 
         self.dirInSRTM = dirSRTM
         self.dirInWater = dirWater
@@ -174,6 +166,7 @@ class DTMCreator():
         :param dtype: Type of metadata - Natif or Muscate for now
         """
         from lxml import etree
+        from prepare_mnt.tuilage_mnt_eau_S2 import TuilageParamsConverter
         if(dtype == self.typeNatif):
             xpathTileName = "/n1:Level-1C_Tile_ID/n1:General_Info/TILE_ID"
             xpathCSName = "/n1:Level-1C_Tile_ID/n1:Geometric_Info/Tile_Geocoding/HORIZONTAL_CS_NAME"
@@ -263,24 +256,17 @@ class DTMCreator():
         if(self.mode == self.modeMTD):
             self.site = self.getSiteInfo(self.mtd, self.dtype)
         elif(self.mode == self.modeGranule):
+            from prepare_mnt import lib_mnt
             self.site = lib_mnt.lire_fichier_site_kml(self.kml, self.granule)
         if(tempout == None):
-            tempout = os.path.join("/tmp", self.site.nom)
+            import tempfile
+            tempout = tempfile.mkdtemp(prefix=self.site.nom)
         print("Working directory: {0}".format(tempout))
         FileSystem.createDirectory(tempout) #Try to create tempout dir
-        #Unzip Water-SRTM files if needed:
-        if(self.WaterZipped):
-            import zipfile
-            import re
-            files = [os.path.join(self.dirInWater, f) for f in os.listdir(self.dirInWater) if re.search(self.filenameWater, f)]
-            for fn in files:
-                print("Unzipping {0}".format(fn))
-                zip_ref = zipfile.ZipFile(fn, 'r')
-                zip_ref.extractall(tempout)
-                zip_ref.close()
-                self.dirInWater = tempout
+        from prepare_mnt import tuilage_mnt_eau_S2 as tiling
         mntcreator = tiling.TuilageSentinel()
-        mntcreator.run(self.dirInSRTM, self.dirInWater,tempout, tempout, self.coarseRes, site=self.site, mnt=self.mntType, waterOnly=self.waterOnly, workingDir=tempout)
+        mntcreator.run(self.dirInSRTM, self.dirInWater,tempout, tempout, self.coarseRes, site=self.site, mnt=self.mntType, waterOnly=self.waterOnly, wdir=tempout,
+                       water_zipped = self.WaterZipped)
         
         if(self.waterOnly == False):
             converter = conversion.MAJAConverter()

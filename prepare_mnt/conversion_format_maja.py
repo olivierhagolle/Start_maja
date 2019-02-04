@@ -1,8 +1,9 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
-sys.path.append('..') #Import relative modules
+import sys,os
+assert sys.version_info >= (2,7)
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')) #Import relative modules
 
 import os.path
 import glob
