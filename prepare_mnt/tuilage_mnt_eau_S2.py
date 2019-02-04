@@ -168,13 +168,16 @@ class TuilageSentinel(object):
         print("latitudes", lr_latlon_swbd[1], ul_latlon_swbd[1])
         print("center coordinates", liste_centre_eau)
         print(liste_fic_eau)
-        
-        if(water_zipped):
-            self.unzip_water(dirInWater, liste_fic_eau, wdir)
-        
+
+        import tempfile
+        if wdir is None:
+            working_dir = tempfile.mkdtemp(prefix="{}_".format(site.nom))
+        else:
+            working_dir = tempfile.mkdtemp(prefix="{}_".format(site.nom), dir=wdir)
+
         # Fusion des mnt_srtm en un seul
         (fic_mnt_in, fic_eau_in) = lib_mnt.fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt_in, rep_swbd, site.nom,
-                                              calcul_masque_eau_mnt, wdir=wdir)
+                                              calcul_masque_eau_mnt, working_dir=working_dir)
         print("############", fic_mnt_in)
         
         ####################Boucle de création des fichiers MNT et eau pour chaque tuile
@@ -196,13 +199,10 @@ class TuilageSentinel(object):
         
                 print("nom de la tuile", nom_tuile, tx, ty)
                 ###pour le MNT
-                rep_mnt_out = os.path.join(rep_mnt, nom_tuile)
+                rep_mnt_out = working_dir
                 print("MNT Reps: {0} {1} {2}".format(rep_mnt, rep_mnt_in, rep_mnt_out))
 
                 if waterOnly == False:
-                    if not (os.path.exists(rep_mnt_out)):
-                        os.makedirs(rep_mnt_out)
-        
                     # Resolution SRTM_RES
                     print("############### c'est parti")
                     mnt_90m = lib_mnt.classe_mnt(rep_mnt_out, nom_tuile, ulx, uly, lrx_90m, lry_90m, SRTM_RES, site.chaine_proj)
