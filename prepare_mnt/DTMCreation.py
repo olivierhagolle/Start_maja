@@ -275,6 +275,13 @@ class DTMCreator():
         print("Finished DTM creation for {0}".format(self.site.nom))
     
 if __name__ == "__main__":
+    from osgeo import gdal, gdal_array
+    # Script runs fine with gdal >= 2.1.x
+    if int(gdal.VersionInfo()) <= 2010000:
+        raise ImportError("Please update your GDAL version to >2.1")
+    # Bug with v2.3.0 results in errors within the script:
+    if int(gdal.VersionInfo()) == 2030000:
+        raise ImportError("prepare_mnt can not run on GDAL 2.3.0. Please select another version")
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input",help="The path to the native or muscate L1C product folder.", required=False, type=str)
