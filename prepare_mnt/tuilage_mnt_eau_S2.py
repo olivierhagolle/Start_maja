@@ -231,7 +231,7 @@ class TuilageSentinel(object):
                 if not (os.path.exists(rep_eau_out)):
                     os.mkdir(rep_eau_out)
         
-                eau = lib_mnt.classe_mnt(rep_eau_out, nom_tuile, ulx, uly, lrx_coarse, lry_coarse, resolution, site.chaine_proj)
+                eau = lib_mnt.classe_mnt(rep_mnt_out, nom_tuile, ulx, uly, lrx_coarse, lry_coarse, resolution, site.chaine_proj)
                 if calcul_masque_eau_mnt == 0:
                     eau.decoupe_eau(fic_eau_in)
                 else:
