@@ -170,11 +170,11 @@ class TuilageSentinel(object):
         print(liste_fic_eau)
 
         import tempfile
+        print(wdir)
         if wdir is None:
-            working_dir = tempfile.mkdtemp(prefix="{}_".format(site.nom))
+            working_dir = tempfile.mkdtemp()
         else:
-            working_dir = tempfile.mkdtemp(prefix="{}_".format(site.nom), dir=wdir)
-
+            working_dir = tempfile.mkdtemp(dir=wdir)
         # Fusion des mnt_srtm en un seul
         (fic_mnt_in, fic_eau_in) = lib_mnt.fusion_mnt(liste_fic_mnt, liste_fic_eau, liste_centre_eau, rep_mnt_in, rep_swbd, site.nom,
                                               calcul_masque_eau_mnt, working_dir=working_dir)

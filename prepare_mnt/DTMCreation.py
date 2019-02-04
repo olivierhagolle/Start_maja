@@ -259,7 +259,8 @@ class DTMCreator():
             from prepare_mnt import lib_mnt
             self.site = lib_mnt.lire_fichier_site_kml(self.kml, self.granule)
         if(tempout == None):
-            tempout = os.path.join("/tmp", self.site.nom)
+            import tempfile
+            tempout = tempfile.mkdtemp(prefix=self.site.nom)
         print("Working directory: {0}".format(tempout))
         FileSystem.createDirectory(tempout) #Try to create tempout dir
         from prepare_mnt import tuilage_mnt_eau_S2 as tiling
