@@ -2,20 +2,20 @@
 
 
 
- <p align="center">
-**==================================================**
+ 
+**============================================================**
 
-**Start_Maja repository has moved**
+**Start_Maja repository has moved to CNES github repository**
 
-**==================================================**
+**============================================================**
 
 Except if you really want to use old versions, 
 please use the new repository : 
 
-https://github.com/CNES/Start-MAJA
+**https://github.com/CNES/Start-MAJA**
 
-**=================================================**
-</p> 
+**============================================================**
+
 
 
 
