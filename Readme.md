@@ -5,7 +5,7 @@
  
 **============================================================**
 
-**Start_Maja repository has moved to CNES github repository**
+**This repository is deprecated. Start_Maja has moved to CNES github repository**
 
 **============================================================**
 
