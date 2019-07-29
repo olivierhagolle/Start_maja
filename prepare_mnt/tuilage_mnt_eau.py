@@ -8,6 +8,7 @@ Les paramètres sont dans parametres.py, dont le nom du site qui sert à déterm
 """
 import optparse
 
+
 ###########################################################################
 class OptionParser(optparse.OptionParser):
 

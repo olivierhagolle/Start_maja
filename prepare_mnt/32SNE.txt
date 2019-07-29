@@ -1,0 +1,12 @@
+proj=UTM32N
+EPSG_out=32632
+chaine_proj=EPSG:32632
+tx_min=0
+ty_min=0
+tx_max=0
+ty_max=0
+pas_x=109800
+pas_y=109800
+orig_x=499980
+orig_y=4000020
+marge=0
