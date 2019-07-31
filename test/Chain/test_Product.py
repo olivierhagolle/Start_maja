@@ -17,16 +17,6 @@ import os
 from os import path as p
 
 
-def touch(path):
-    """
-    Create a new dummy-file of given path
-    :param path: The full path to the file
-    :return:
-    """
-    with open(path, 'a'):
-        os.utime(path, None)
-
-
 class TestProduct(LoggedTestCase.LoggedTestCase):
     root = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE"
 
@@ -42,24 +32,24 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
         :return:
         """
         os.makedirs(self.root)
-        touch(p.join(self.root, self.file_a1))
-        touch(p.join(self.root, self.file_a2))
-        touch(p.join(self.root, self.file_b1))
-        touch(p.join(self.root, self.file_c1))
+        testFunction.touch(p.join(self.root, self.file_a1))
+        testFunction.touch(p.join(self.root, self.file_a2))
+        testFunction.touch(p.join(self.root, self.file_b1))
+        testFunction.touch(p.join(self.root, self.file_c1))
         for i in range(2):
             subdir = p.join(self.root, self.subdir_prefix + str(i))
             os.makedirs(subdir)
-            touch(p.join(subdir, self.file_a1))
-            touch(p.join(subdir, self.file_a2))
-            touch(p.join(subdir, self.file_b1))
-            touch(p.join(subdir, self.file_c1))
+            testFunction.touch(p.join(subdir, self.file_a1))
+            testFunction.touch(p.join(subdir, self.file_a2))
+            testFunction.touch(p.join(subdir, self.file_b1))
+            testFunction.touch(p.join(subdir, self.file_c1))
             for j in range(2):
                 ssubdir = p.join(subdir, self.subdir_prefix + str(j))
                 os.makedirs(ssubdir)
-                touch(p.join(ssubdir, self.file_a1))
-                touch(p.join(ssubdir, self.file_a2))
-                touch(p.join(ssubdir, self.file_b1))
-                touch(p.join(ssubdir, self.file_c1))
+                testFunction.touch(p.join(ssubdir, self.file_a1))
+                testFunction.touch(p.join(ssubdir, self.file_a2))
+                testFunction.touch(p.join(ssubdir, self.file_b1))
+                testFunction.touch(p.join(ssubdir, self.file_c1))
 
     def tearDown(self):
         import shutil
@@ -69,16 +59,24 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
     def test_get_file_depth1(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/a"
-        self.assertEqual(expected, product.get_file(filename="^a$"))
+        dirnames_e = p.normpath(expected).split(os.sep)
+        filename = p.basename(expected)
+        calculated = product.get_file(filename="^a$")
+        dirnames_c = p.normpath(calculated).split(os.sep)
+        for exp, calc in zip(dirnames_c[-1:], dirnames_e[-1:]):
+            self.assertEqual(exp[:-1], calc[:-1])
+        self.assertEqual(filename, p.basename(calculated))
 
     @testFunction.test_function
     def test_get_file_depth2(self):
         product = MajaProduct(self.root).factory()
         expected = r"S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/subdir0/a"
-        dirname = p.dirname(expected)[:-1]
+        dirnames_e = p.normpath(expected).split(os.sep)
         filename = p.basename(expected)
         calculated = product.get_file(folders="subdir*", filename="^a$")
-        self.assertEqual(dirname, p.dirname(calculated)[:-1])
+        dirnames_c = p.normpath(calculated).split(os.sep)
+        for exp, calc in zip(dirnames_c[-2:], dirnames_e[-2:]):
+            self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
 
     @testFunction.test_function
@@ -89,7 +87,7 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
         filename = p.basename(expected)
         calculated = product.get_file(folders="subdir*/subdir*", filename="*xml")
         dirnames_c = p.normpath(calculated).split(os.sep)
-        for exp, calc in zip(dirnames_c, dirnames_e):
+        for exp, calc in zip(dirnames_c[-3:], dirnames_e[-3:]):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
 
@@ -97,10 +95,34 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
     def test_get_file_ending(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/c.xml"
-        self.assertEqual(expected, product.get_file(filename="./*xml"))
+        dirnames_e = p.normpath(expected).split(os.sep)
+        filename = p.basename(expected)
+        calculated = product.get_file(folders=".", filename="*xml")
+        dirnames_c = p.normpath(calculated).split(os.sep)
+        for exp, calc in zip(dirnames_c[-1:], dirnames_e[-1:]):
+            self.assertEqual(exp[:-1], calc[:-1])
+        self.assertEqual(filename, p.basename(calculated))
 
     @testFunction.test_function
     def test_get_file_full(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/b.jpg"
-        self.assertEqual(expected, product.get_file(folders="./", filename="b.jpg"))
+        dirnames_e = p.normpath(expected).split(os.sep)
+        filename = p.basename(expected)
+        calculated = product.get_file(filename="b.jpg")
+        dirnames_c = p.normpath(calculated).split(os.sep)
+        for exp, calc in zip(dirnames_c[-1:], dirnames_e[-1:]):
+            self.assertEqual(exp[:-1], calc[:-1])
+        self.assertEqual(filename, p.basename(calculated))
+
+    @testFunction.test_function
+    def test_get_folder_above(self):
+        product = MajaProduct(self.root).factory()
+        expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/b.jpg"
+        dirnames_e = p.normpath(expected).split(os.sep)
+        filename = p.basename(expected)
+        calculated = product.get_file(folders="./subdir0/../", filename="b.jpg")
+        dirnames_c = p.normpath(calculated).split(os.sep)
+        for exp, calc in zip(dirnames_c[-1:], dirnames_e[-1:]):
+            self.assertEqual(exp[:-1], calc[:-1])
+        self.assertEqual(filename, p.basename(calculated))

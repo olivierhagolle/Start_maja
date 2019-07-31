@@ -13,91 +13,94 @@ Created on:     Tue Dec  5 10:26:05 2018
 from Unittest import LoggedTestCase
 from Unittest import testFunction
 from Chain.Product import MajaProduct
-from Chain.S2Product import Sentinel2Natif, Sentinel2Muscate, Sentinel2SSC
+from Chain.VSProduct import VenusMuscate, VenusNatif
+from os import path
 
+class TestVSProduct(LoggedTestCase.LoggedTestCase):
 
-class TestL8Product(LoggedTestCase.LoggedTestCase):
-
-    prod_l8_mus = ["LANDSAT8-OLITIRS-XSTHPAN_20170501-103532-111_L1C_T31TCH_C_V1-0",
-                   "LANDSAT8_20170501-103532-111_L2A_T31TCH_C_V1-0"]
-    prod_l8_lc1 = ["LC80390222013076EDC00"]
-    prod_l8_lc2 = ["LC08_L1TP_199029_20170527_20170615_01_T1"]
-    prod_l8_nat = ["L8_TEST_L8C_L2VALD_198030_20130626.DBL.DIR"]
-    prod_s2_nat = ["S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE",
-                   "S2B_MSIL1C_20180316T103021_N0206_R108_T32TMR_20180316T123927.SAFE"]
-    prod_s2_prd = ["S2A_OPER_PRD_MSIL1C_PDMC_20161109T171237_R135_V20160924T074932_20160924T081448.SAFE"]
-    prod_s2_ssc = ["S2A_OPER_SSC_L2VALD_36JTT____20160914.DBL.DIR",
-                   "S2B_OPER_SSC_L1VALD_21MXT____20180925.DBL.DIR"]
-    prod_s2_mus = ["SENTINEL2B_20171008-105012-463_L1C_T31TCH_C_V1-0",
-                   "SENTINEL2A_20161206-105012-463_L2A_T31TCH_C_V1-0",
-                   "SENTINEL2X_20190415-000000-000_L3A_T31UFR_C_V1-1"]
-    prod_vs_mus = ["VENUS-XS_20180201-051359-000_L1C_KHUMBU_C_V1-0",
-                   "VENUS_20180201-051359-000_L2A_KHUMBU_C_V1-0",
-                   "VENUS-XS_20180201-051359-000_L3A_KHUMBU_C_V1-0"]
     prod_vs_nat = ["VE_VM01_VSC_L2VALD_ISRAW906_20180317.DBL.DIR",
                    "VE_OPER_VSC_L1VALD_UNH_20180329.DBL.DIR"]
+    prod_vs_mus = ["VENUS-XS_20180201-051359-000_L1C_KHUMBU_C_V1-0",
+                   "VENUS_20180201-051359-000_L2A_KHUMBU_C_V1-0",
+                   "VENUS-XS_20180201-000000-000_L3A_KHUMBU_C_V1-0"]
+    prods_other = ["LANDSAT8-OLITIRS-XSTHPAN_20170501-103532-111_L1C_T31TCH_C_V1-0",
+                   "LANDSAT8_20170501-103532-111_L2A_T31TCH_C_V1-0",
+                   "LC80390222013076EDC00",
+                   "LC08_L1TP_199029_20170527_20170615_01_T1",
+                   "L8_TEST_L8C_L2VALD_198030_20130626.DBL.DIR",
+                   "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE",
+                   "S2B_MSIL1C_20180316T103021_N0206_R108_T32TMR_20180316T123927.SAFE",
+                   "S2A_OPER_PRD_MSIL1C_PDMC_20161109T171237_R135_V20160924T074932_20160924T081448.SAFE",
+                   "S2A_OPER_SSC_L2VALD_36JTT____20160914.DBL.DIR",
+                   "S2B_OPER_SSC_L1VALD_21MXT____20180925.DBL.DIR",
+                   "SENTINEL2B_20171008-105012-463_L1C_T31TCH_C_V1-0",
+                   "SENTINEL2A_20161206-105012-463_L2A_T31TCH_C_V1-0",
+                   "SENTINEL2X_20190415-000000-000_L3A_T31UFR_C_V1-1"]
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Simulate the basic folder + metadata_file structure
+        :return:
+        """
+        import os
+        for root in cls.prod_vs_nat:
+            os.makedirs(root)
+            metadata = root.split(".")[0] + ".HDR"
+            testFunction.touch(metadata)
+        for root in cls.prod_vs_mus:
+            os.makedirs(root)
+            metadata = path.join(root, root + "_MTD_ALL.xml")
+            testFunction.touch(metadata)
+
+    @classmethod
+    def tearDownClass(cls):
+        import shutil
+        import os
+        for root in cls.prod_vs_nat:
+            shutil.rmtree(root)
+            metadata = root.split(".")[0] + ".HDR"
+            os.remove(metadata)
+        for root in cls.prod_vs_mus:
+            shutil.rmtree(root)
 
     @testFunction.test_function
-    def test_reg_l8_muscate(self):
-        tiles = ["31TCH", "31TCH", "31UFR"]
+    def test_reg_vs_muscate(self):
+        tiles = ["KHUMBU", "KHUMBU", "KHUMBU"]
         levels = ["l1c", "l2a", "l3a"]
-        dates = ["20171008T105012", "20161206T105012", "20190415T000000"]
-        for prod, tile, date, level in zip(self.prod_s2_mus, tiles, dates, levels):
+        dates = ["20180201T051359", "20180201T051359", "20180201T000000"]
+        for prod, tile, date, level in zip(self.prod_vs_mus, tiles, dates, levels):
             p = MajaProduct(prod).factory()
-            self.assertIsInstance(p, Sentinel2Muscate)
+            self.assertIsInstance(p, VenusMuscate)
             self.assertEqual(p.get_level(), level)
-            self.assertEqual(p.get_platform(), "sentinel2")
+            self.assertEqual(p.get_platform(), "venus")
             self.assertEqual(p.get_type(), "muscate")
             self.assertEqual(p.get_tile(), tile)
             self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
+            self.assertTrue(path.basename(p.get_metadata_file()).endswith("_MTD_ALL.xml"))
+            self.assertTrue(path.exists(p.get_metadata_file()))
 
         # Other prods:
-        for prod in self.prod_s2_prd + self.prod_s2_ssc + self.prod_s2_nat:
+        for prod in self.prod_vs_nat + self.prods_other:
             p = MajaProduct(prod).factory()
-            self.assertNotIsInstance(p, Sentinel2Muscate)
+            self.assertNotIsInstance(p, VenusMuscate)
 
     @testFunction.test_function
-    def test_reg_l8_natif(self):
-        tiles = ["29RPQ", "32TMR"]
-        dates = ["20170412T110621", "20180316T103021"]
-        for prod, tile, date in zip(self.prod_s2_nat, tiles, dates):
+    def test_reg_vs_natif(self):
+        tiles = ["ISRAW906", "UNH"]
+        dates = ["20180317T120000", "20180329T120000"]
+        for prod, tile, date in zip(self.prod_vs_nat, tiles, dates):
             p = MajaProduct(prod).factory()
-            self.assertIsInstance(p, Sentinel2Natif)
+            self.assertIsInstance(p, VenusNatif)
             self.assertEqual(p.get_level(), "l1c")
-            self.assertEqual(p.get_platform(), "sentinel2")
+            self.assertEqual(p.get_platform(), "venus")
             self.assertEqual(p.get_type(), "natif")
             self.assertEqual(p.get_tile(), tile)
             self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
+            self.assertEqual(path.basename(p.get_metadata_file()), prod.split(".")[0] + ".HDR")
+            self.assertTrue(path.exists(p.get_metadata_file()))
 
         # Other prods:
-        for prod in self.prod_s2_prd + self.prod_s2_ssc + self.prod_s2_mus:
+        for prod in self.prod_vs_mus + self.prods_other:
             p = MajaProduct(prod).factory()
-            self.assertNotIsInstance(p, Sentinel2Natif)
-
-    @testFunction.test_function
-    def test_reg_l8_ssc(self):
-        tiles = ["36JTT", "21MXT"]
-        dates = ["20160914T120000", "20180925T120000"]
-        levels = ["l2a", "l1c"]
-        for prod, tile, date, level in zip(self.prod_s2_ssc, tiles, dates, levels):
-            p = MajaProduct(prod).factory()
-            self.assertIsInstance(p, Sentinel2SSC)
-            self.assertEqual(p.get_level(), level)
-            self.assertEqual(p.get_platform(), "sentinel2")
-            self.assertEqual(p.get_type(), "ssc")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-
-        # Other prods:
-        for prod in self.prod_s2_prd + self.prod_s2_nat + self.prod_s2_mus:
-            p = MajaProduct(prod).factory()
-            self.assertNotIsInstance(p, Sentinel2SSC)
-
-    @testFunction.test_function
-    def test_reg_s2_prd(self):
-        tiles = [None]
-        dates = ["20161109T171237"]
-        levels = ["l1c"]
-        for prod, tile, date, level in zip(self.prod_s2_prd, tiles, dates, levels):
-            # Currently not supported
-            self.assertIsNone(MajaProduct(prod).factory())
+            self.assertNotIsInstance(p, VenusNatif)

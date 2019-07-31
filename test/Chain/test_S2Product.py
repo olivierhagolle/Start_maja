@@ -14,6 +14,7 @@ from Unittest import LoggedTestCase
 from Unittest import testFunction
 from Chain.Product import MajaProduct
 from Chain.S2Product import Sentinel2Natif, Sentinel2Muscate, Sentinel2SSC
+from os import path
 
 
 class TestS2Product(LoggedTestCase.LoggedTestCase):
@@ -36,6 +37,37 @@ class TestS2Product(LoggedTestCase.LoggedTestCase):
                    "VE_VM01_VSC_L2VALD_ISRAW906_20180317.DBL.DIR",
                    "VE_OPER_VSC_L1VALD_UNH_20180329.DBL.DIR"]
 
+    @classmethod
+    def setUpClass(cls):
+        """
+        Simulate the basic folder + metadata_file structure
+        :return:
+        """
+        import os
+        for root in cls.prod_s2_ssc:
+            os.makedirs(root)
+            metadata = root.split(".")[0] + ".HDR"
+            testFunction.touch(metadata)
+        for root in cls.prod_s2_mus:
+            os.makedirs(root)
+            metadata = path.join(root, root + "_MTD_ALL.xml")
+            testFunction.touch(metadata)
+        for root in cls.prod_s2_nat:
+            os.makedirs(root)
+            metadata = path.join(root, "MTD_MSIL1C.xml")
+            testFunction.touch(metadata)
+
+    @classmethod
+    def tearDownClass(cls):
+        import shutil
+        import os
+        for root in cls.prod_s2_ssc:
+            shutil.rmtree(root)
+            metadata = root.split(".")[0] + ".HDR"
+            os.remove(metadata)
+        for root in cls.prod_s2_mus + cls.prod_s2_nat:
+            shutil.rmtree(root)
+
     @testFunction.test_function
     def test_reg_s2_muscate(self):
         tiles = ["31TCH", "31TCH", "31UFR"]
@@ -49,7 +81,8 @@ class TestS2Product(LoggedTestCase.LoggedTestCase):
             self.assertEqual(p.get_type(), "muscate")
             self.assertEqual(p.get_tile(), tile)
             self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-
+            self.assertTrue(path.basename(p.get_metadata_file()).endswith("_MTD_ALL.xml"))
+            self.assertTrue(path.exists(p.get_metadata_file()))
         # Other prods:
         for prod in self.prod_s2_prd + self.prod_s2_ssc + self.prod_s2_nat + self.prods_other:
             p = MajaProduct(prod).factory()
@@ -67,6 +100,8 @@ class TestS2Product(LoggedTestCase.LoggedTestCase):
             self.assertEqual(p.get_type(), "natif")
             self.assertEqual(p.get_tile(), tile)
             self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
+            self.assertTrue(path.basename(p.get_metadata_file()), "MTD_MSIL1C.xml")
+            self.assertTrue(path.exists(p.get_metadata_file()))
 
         # Other prods:
         for prod in self.prod_s2_prd + self.prod_s2_ssc + self.prod_s2_mus + self.prods_other:
@@ -86,6 +121,8 @@ class TestS2Product(LoggedTestCase.LoggedTestCase):
             self.assertEqual(p.get_type(), "ssc")
             self.assertEqual(p.get_tile(), tile)
             self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
+            self.assertEqual(path.basename(p.get_metadata_file()), prod.split(".")[0] + ".HDR")
+            self.assertTrue(path.exists(p.get_metadata_file()))
 
         # Other prods:
         for prod in self.prod_s2_prd + self.prod_s2_nat + self.prod_s2_mus:

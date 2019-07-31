@@ -32,7 +32,8 @@ class Landsat8Natif(MajaProduct):
         return self.base.split("_")[4]
 
     def get_metadata_file(self):
-        return self.get_file(filename="MTD_MSIL1C.xml")
+        metadata_filename = "*" + self.get_tile() + "*" + self.get_date().strftime("%Y%m%d") + "*HDR"
+        return self.get_file(folders="..", filename=metadata_filename)
 
     def get_date(self):
         str_date = self.base.split(".")[0].split("_")[-1]
@@ -90,7 +91,7 @@ class Landsat8LC1(MajaProduct):
         return self.base[3:9]
 
     def get_metadata_file(self):
-        return self.get_file(filename="TBD")
+        return self.get_file(filename="*_MTL.txt")
 
     def get_date(self):
         year_doy = self.base[9:15]
@@ -115,7 +116,7 @@ class Landsat8LC2(MajaProduct):
         return self.base.split("_")[2]
 
     def get_metadata_file(self):
-        return self.get_file(filename="TBD")
+        return self.get_file(filename="*_MTL.txt")
 
     def get_date(self):
         str_date = self.base.split("_")[3]

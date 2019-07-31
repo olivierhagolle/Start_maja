@@ -101,7 +101,8 @@ class Sentinel2SSC(MajaProduct):
         raise ValueError("Cannot determine tile ID: %s" % self.base)
 
     def get_metadata_file(self):
-        return self.get_file(filename="TBD")
+        metadata_filename = "*" + self.get_tile() + "*" + self.get_date().strftime("%Y%m%d") + "*HDR"
+        return self.get_file(folders="../", filename=metadata_filename)
 
     def get_date(self):
         str_date = self.base.split(".")[0].split("_")[-1]

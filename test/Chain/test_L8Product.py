@@ -14,6 +14,7 @@ from Unittest import LoggedTestCase
 from Unittest import testFunction
 from Chain.Product import MajaProduct
 from Chain.L8Product import Landsat8Natif, Landsat8Muscate, Landsat8LC1, Landsat8LC2
+from os import path
 
 
 class TestL8Product(LoggedTestCase.LoggedTestCase):
@@ -37,6 +38,37 @@ class TestL8Product(LoggedTestCase.LoggedTestCase):
                    "VE_VM01_VSC_L2VALD_ISRAW906_20180317.DBL.DIR",
                    "VE_OPER_VSC_L1VALD_UNH_20180329.DBL.DIR"]
 
+    @classmethod
+    def setUpClass(cls):
+        """
+        Simulate the basic folder + metadata_file structure
+        :return:
+        """
+        import os
+        for root in cls.prod_l8_lc1 + cls.prod_l8_lc2:
+            os.makedirs(root)
+            metadata = path.join(root, root.split(".")[0] + "_MTL.txt")
+            testFunction.touch(metadata)
+        for root in cls.prod_l8_mus:
+            os.makedirs(root)
+            metadata = path.join(root, root + "_MTD_ALL.xml")
+            testFunction.touch(metadata)
+        for root in cls.prod_l8_nat:
+            os.makedirs(root)
+            metadata = root.split(".")[0] + ".HDR"
+            testFunction.touch(metadata)
+
+    @classmethod
+    def tearDownClass(cls):
+        import shutil
+        import os
+        for root in cls.prod_l8_nat:
+            shutil.rmtree(root)
+            metadata = root.split(".")[0] + ".HDR"
+            os.remove(metadata)
+        for root in cls.prod_l8_lc1 + cls.prod_l8_lc2 + cls.prod_l8_mus:
+            shutil.rmtree(root)
+
     @testFunction.test_function
     def test_reg_l8_muscate(self):
         tiles = ["31TCH", "31TCH"]
@@ -50,6 +82,8 @@ class TestL8Product(LoggedTestCase.LoggedTestCase):
             self.assertEqual(p.get_type(), "muscate")
             self.assertEqual(p.get_tile(), tile)
             self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
+            self.assertTrue(path.basename(p.get_metadata_file()).endswith("_MTD_ALL.xml"))
+            self.assertTrue(path.exists(p.get_metadata_file()))
 
         # Other prods:
         for prod in self.prod_l8_lc1 + self.prod_l8_lc2 + self.prod_l8_nat + self.prods_other:
@@ -68,6 +102,8 @@ class TestL8Product(LoggedTestCase.LoggedTestCase):
             self.assertEqual(p.get_type(), "natif")
             self.assertEqual(p.get_tile(), tile)
             self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
+            self.assertEqual(path.basename(p.get_metadata_file()), prod.split(".")[0] + ".HDR")
+            self.assertTrue(path.exists(p.get_metadata_file()))
 
         # Other prods:
         for prod in self.prod_l8_lc2 + self.prod_l8_lc1 + self.prod_l8_mus + self.prods_other:
@@ -87,6 +123,8 @@ class TestL8Product(LoggedTestCase.LoggedTestCase):
             self.assertEqual(p.get_type(), "lc1")
             self.assertEqual(p.get_tile(), tile)
             self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
+            self.assertEqual(path.basename(p.get_metadata_file()), prod.split(".")[0] + "_MTL.txt")
+            self.assertTrue(path.exists(p.get_metadata_file()))
 
         # Other prods:
         for prod in self.prod_l8_lc2 + self.prod_l8_nat + self.prod_l8_mus + self.prods_other:
@@ -106,6 +144,8 @@ class TestL8Product(LoggedTestCase.LoggedTestCase):
             self.assertEqual(p.get_type(), "lc2")
             self.assertEqual(p.get_tile(), tile)
             self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
+            self.assertEqual(path.basename(p.get_metadata_file()), prod.split(".")[0] + "_MTL.txt")
+            self.assertTrue(path.exists(p.get_metadata_file()))
 
         # Other prods:
         for prod in self.prod_l8_lc1 + self.prod_l8_nat + self.prod_l8_mus + self.prods_other:

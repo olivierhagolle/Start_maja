@@ -10,17 +10,16 @@ Project:        Start_maja, CNES
 Created on:     Sun Feb  3 17:15:00 2019
 """
 
-import re
 from datetime import datetime, timedelta
 from Chain.Product import MajaProduct
 
 
-class Landsat8Natif(MajaProduct):
+class VenusNatif(MajaProduct):
     """
-    A Landsat-8 natif product
+    A Venus natif product
     """
     def get_platform(self):
-        return "landsat8"
+        return "venus"
 
     def get_type(self):
         return "natif"
@@ -29,25 +28,23 @@ class Landsat8Natif(MajaProduct):
         return "l1c"
 
     def get_tile(self):
-        tile = re.search(self.reg_tile, self.base)
-        if tile:
-            return tile.group()[1:]
-        raise ValueError("Cannot determine tile ID: %s" % self.base)
+        return self.base.split("_")[4]
 
     def get_metadata_file(self):
-        return self.get_file(filename="MTD_MSIL1C.xml")
+        metadata_filename = "*" + self.get_tile() + "*" + self.get_date().strftime("%Y%m%d") + "*HDR"
+        return self.get_file(folders="../", filename=metadata_filename)
 
     def get_date(self):
-        str_date = self.base.split("_")[2]
-        return datetime.strptime(str_date, "%Y%m%dT%H%M%S")
+        str_date = self.base.split(".")[0].split("_")[-1]
+        return datetime.strptime(str_date, "%Y%m%d") + timedelta(hours=12)
 
 
-class Landsat8Muscate(MajaProduct):
+class VenusMuscate(MajaProduct):
     """
-    A Landsat-8 muscate product
+    A Venus muscate product
     """
     def get_platform(self):
-        return "landsat8"
+        return "venus"
 
     def get_type(self):
         return "muscate"
@@ -62,10 +59,7 @@ class Landsat8Muscate(MajaProduct):
         raise ValueError("Unknown product level for %s" % self.base)
 
     def get_tile(self):
-        tile = re.search(self.reg_tile, self.base)
-        if tile:
-            return tile.group()[1:]
-        raise ValueError("Cannot determine tile ID: %s" % self.base)
+        return self.base.split("_")[3]
 
     def get_metadata_file(self):
         return self.get_file(filename="*MTD_ALL.xml")
@@ -75,35 +69,3 @@ class Landsat8Muscate(MajaProduct):
         # Datetime has troubles parsing milliseconds, so it's removed:
         str_date_no_ms = str_date[:str_date.rfind("-")]
         return datetime.strptime(str_date_no_ms, "%Y%m%d-%H%M%S")
-
-
-class Landsat8SSC(MajaProduct):
-    """
-    A Landsat-8 ssc product
-    """
-    def get_platform(self):
-        return "landsat8"
-
-    def get_type(self):
-        return "ssc"
-
-    def get_level(self):
-        if self.base.find("_L1VALD") >= 0:
-            return "l1c"
-        elif self.base.find("_L2VALD") >= 0:
-            return "l2a"
-        raise ValueError("Unknown product level for %s" % self.base)
-
-    def get_tile(self):
-        tile = re.search(self.reg_tile[1:], self.base)
-        if tile:
-            return tile.group()
-        raise ValueError("Cannot determine tile ID: %s" % self.base)
-
-    def get_metadata_file(self):
-        return self.get_file(filename="TBD")
-
-    def get_date(self):
-        str_date = self.base.split(".")[0].split("_")[-1]
-        # Add a timedelta of 12hrs in order to compensate for the missing H/M/S:
-        return datetime.strptime(str_date, "%Y%m%d") + timedelta(hours=12)
