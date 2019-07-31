@@ -3,6 +3,7 @@
 import unittest
 import logging
 
+
 class LogThisTestCase(type):
     def __new__(cls, name, bases, dct):
         # if the TestCase already provides setUp, wrap it
@@ -32,6 +33,7 @@ class LogThisTestCase(type):
 
         # return the class instance with the replaced setUp/tearDown
         return type.__new__(cls, name, bases, dct)
+
 
 class LoggedTestCase(unittest.TestCase):
     __metaclass__ = LogThisTestCase
