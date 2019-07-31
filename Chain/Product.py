@@ -62,6 +62,21 @@ class MajaProduct(object):
             return Landsat8LC2(self.fpath)
         pass
 
+    @staticmethod
+    def __get_item(path, reg):
+        """
+        Find a specific file/folder within a directory
+        :param path: The full path to the directory
+        :param reg: The regex to be searched for
+        :return: The full path to the file/folder
+        """
+        import re
+        import os
+        available_dirs = [f for f in os.listdir(path) if re.search(reg, f)]
+        if not available_dirs:
+            raise IOError("Cannot find %s in %s" % (reg, path))
+        return os.path.join(path, available_dirs[0])
+
     def get_platform(self):
         raise NotImplementedError
 
@@ -72,16 +87,35 @@ class MajaProduct(object):
         raise NotImplementedError
 
     def get_file(self, **kwargs):
+        """
+        Get a single file from inside the root directory by glob or regex.
+        The file can have one of the following characteristics:
+        - folders: Inside a (sub-)folder
+        - filename: Filename with specific pattern
+        Or a combination of the two
+        :param kwargs: The folders and filename arguments
+        :return: The full path to the file if found or OSError if not.
+        """
+        import os
         supported_params = {
             param
             for param in ("folders", "filename")
             if kwargs.get(param, None) is not None
         }
+        search_folder = self.base
         for key in supported_params:
-            parameter = kwargs[key]
-            print(parameter)
-        return supported_params
-
+            # The function supports globbing, so replace the globs for regex-like ones
+            parameter = os.path.normpath(kwargs[key]).replace("*", ".*")
+            if key == "folders":
+                subdirs = parameter.split(os.sep)
+                # Recursively update the search folder for each sub folder
+                for sub in subdirs:
+                    if sub == ".":
+                        continue
+                    search_folder = self.__get_item(search_folder, sub)
+            elif key == "filename":
+                return self.__get_item(search_folder, parameter)
+        raise IOError("Cannot find file with parameters:", kwargs)
 
     def get_metadata_file(self):
         raise NotImplementedError
