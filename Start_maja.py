@@ -22,16 +22,7 @@ class StartMaja(object):
     """
     version = "3.0.1"
     date_regex = r"\d{4}-\d{2}-\d{2}"  # YYYY-MM-DD
-    regS2 = [r"^S2[AB]_MSIL1C_\d+T\d+_N\d+_R\d+_TXXXXX_\d+T\d+.SAFE$",
-             r"^SENTINEL2[AB]_[-\d]+_L(1C|2A)_TXXXXX_\w_V[\d-]+$",
-             r"^S2[AB]_OPER_SSC_L[12]VALD_XXXXX_\w+.HDR$",
-             r"^S2[AB]_OPER_PRD_MSIL1C_PDMC_\w+_R\d+_V\w+.SAFE$"]
-    regL8 = [r"^LC08_L\w+",
-             r"^LC8\w+$",
-             r"^LANDSAT8-[\w-]+_[-\d]+_L(1C|2A)_TXXXXX_\w_V[\d-]+$",
-             r"^L8_\w{4}_L8C_L[12]VALD_[\d_]+.HDR$"]
-    regVns = [r"^VENUS-XS_[-\d]+_L(1C|2A)_XXXXX_\w_V\w+",
-              r"^VE_\w{4}_VSC_L[12]VALD_\w+.HDR$"]
+
     regCAMS = r"\w{3}_TEST_EXO_CAMS_\w+"
     regDTM = r"\w+_AUX_REFDE2_\w*"
     regGIPP = [r"\w+GIP_" + gipp + "\w+" for gipp in ["L2ALBD",
@@ -92,7 +83,6 @@ class StartMaja(object):
         # Subtract 1, which means including the actual product:
         self.nbackward = nbackward - 1
         self.overwrite = self.str2bool(overwrite)
-            
         return
     
     @staticmethod
@@ -108,11 +98,10 @@ class StartMaja(object):
             return False
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
-    def init_loggers(self, msg_level=logging.DEBUG, filepath=""):
+    def init_loggers(self, msg_level=logging.DEBUG):
         """
         Init a file and a stdout logger
         :param msg_level: Standard msgLevel for both loggers. Default is DEBUG
-        :param filepath: The path to save the log-file to. If empty, no log-to-file will be done"
         """
         
         filename = "Start_Maja.log"
@@ -127,15 +116,6 @@ class StartMaja(object):
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
-        
-        # Currently deactivated
-        if filepath is not "":
-            dbg_full_path = os.path.join(filepath, filename)
-            print("Logging to file " + dbg_full_path)
-            self.create_directory(filepath)
-            file_handler = logging.FileHandler(dbg_full_path)
-            file_handler.setFormatter(formatter)
-            logger.addHandler(file_handler)
         return logger
     
     def get_dtm_files(self, dtm_dir):
@@ -184,10 +164,12 @@ class StartMaja(object):
             repWork, repL1, repL2 and exeMaja
         :param cfg_file: The path to the file
         """
-        import configparser
-        import os
+        try:
+            import configparser as cfg
+        except ImportError:
+            import ConfigParser as cfg
         # Parsing configuration file
-        config = configparser.ConfigParser()
+        config = cfg.ConfigParser()
         config.read(cfg_file)
     
         # get cfg parameters
@@ -204,7 +186,7 @@ class StartMaja(object):
             rep_cams = config.get("PATH", "repCAMS")
             if not os.path.isdir(rep_cams):
                 raise OSError("repCAMS is missing: %s" % rep_cams)
-        except configparser.NoOptionError:
+        except cfg.NoOptionError:
             logging.warning("repCAMS is missing. Processing without CAMS")
             rep_cams = None
         
