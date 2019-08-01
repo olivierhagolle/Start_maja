@@ -35,6 +35,17 @@ class MajaProduct(object):
         from os import path as p
         self.fpath = p.realpath(filepath)
         self.base = p.basename(self.fpath)
+        
+    def __str__(self):
+        return "\n".join(["Product:   " + self.base,
+                          "Acq-Date:  " + self.get_date().strftime("%Y-%m-%d %H:%M:%S"),
+                          "Platform:  " + self.get_platform(),
+                          "Level:     " + self.get_level(),
+                          "Tile/Site: " + self.get_tile(),
+                          ""])
+
+    def __repr__(self):
+        return self.__str__()
 
     def factory(self):
         """
@@ -89,4 +100,3 @@ class MajaProduct(object):
 
     def get_date(self):
         raise NotImplementedError
-
