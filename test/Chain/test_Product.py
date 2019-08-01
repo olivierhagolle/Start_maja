@@ -29,6 +29,7 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
     def setUp(self):
         """
         Sets up a random tree-like structure with a few sub-files and -folders
+        Similar to test_FileSystem.
         :return:
         """
         os.makedirs(self.root)
@@ -56,7 +57,7 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
         shutil.rmtree(self.root)
 
     @testFunction.test_function
-    def test_get_file_depth1(self):
+    def test_get_product_file_depth1(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/a"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -68,7 +69,7 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
         self.assertEqual(filename, p.basename(calculated))
 
     @testFunction.test_function
-    def test_get_file_depth2(self):
+    def test_get_product_file_depth2(self):
         product = MajaProduct(self.root).factory()
         expected = r"S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/subdir0/a"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -80,7 +81,7 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
         self.assertEqual(filename, p.basename(calculated))
 
     @testFunction.test_function
-    def test_get_file_depth3(self):
+    def test_get_product_file_depth3(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/subdir0/subdir1/c.xml"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -92,19 +93,7 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
         self.assertEqual(filename, p.basename(calculated))
 
     @testFunction.test_function
-    def test_get_file_ending(self):
-        product = MajaProduct(self.root).factory()
-        expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/c.xml"
-        dirnames_e = p.normpath(expected).split(os.sep)
-        filename = p.basename(expected)
-        calculated = product.get_file(folders=".", filename="*xml")
-        dirnames_c = p.normpath(calculated).split(os.sep)
-        for exp, calc in zip(dirnames_c[-1:], dirnames_e[-1:]):
-            self.assertEqual(exp[:-1], calc[:-1])
-        self.assertEqual(filename, p.basename(calculated))
-
-    @testFunction.test_function
-    def test_get_file_full(self):
+    def test_get_product_file_full(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/b.jpg"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -116,7 +105,7 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
         self.assertEqual(filename, p.basename(calculated))
 
     @testFunction.test_function
-    def test_get_folder_above(self):
+    def test_get_product_file_from_folder_above(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/b.jpg"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -126,3 +115,27 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
         for exp, calc in zip(dirnames_c[-1:], dirnames_e[-1:]):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
+
+    @testFunction.test_function
+    def test_get_product_folder(self):
+        product = MajaProduct(self.root).factory()
+        expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/subdir0"
+        dirnames_e = p.normpath(expected).split(os.sep)
+        filename = p.basename(expected)
+        calculated = product.get_file(folders="./subdir0/")
+        dirnames_c = p.normpath(calculated).split(os.sep)
+        for exp, calc in zip(dirnames_c[-1:], dirnames_e[-1:]):
+            self.assertEqual(exp[:-1], calc[:-1])
+        self.assertEqual(filename, p.basename(calculated))
+
+    @testFunction.test_function
+    def test_get_product_sub_folder(self):
+        product = MajaProduct(self.root).factory()
+        expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/subdir0"
+        dirnames_e = p.normpath(expected).split(os.sep)
+        filename = p.basename(expected)
+        calculated = product.get_file(folders="./subdir0/../subdir*")
+        dirnames_c = p.normpath(calculated).split(os.sep)
+        for exp, calc in zip(dirnames_c[-2:], dirnames_e[-2:]):
+            self.assertEqual(exp[:-1], calc[:-1])
+        self.assertEqual(filename[:-1], p.basename(calculated[:-1]))
