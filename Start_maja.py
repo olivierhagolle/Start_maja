@@ -17,6 +17,7 @@ import logging
 from os import path as p
 from Chain import Product
 
+
 class StartMaja(object):
     """
     Run the MAJA processor
@@ -24,28 +25,28 @@ class StartMaja(object):
     version = "3.0.1"
     date_regex = r"\d{4}-\d{2}-\d{2}"  # YYYY-MM-DD
 
-    regCAMS = r"\w{3}_TEST_EXO_CAMS_\w+"
+    regCAMS = r"\w{3}_(TEST|PROD)_EXO_CAMS_\w+"
     regDTM = r"\w+_AUX_REFDE2_\w*"
-    regGIPP = [r"\w+GIP_" + gipp + "\w+" for gipp in ["L2ALBD",
-                                                      "L2DIFT",
-                                                      "L2DIRT",
-                                                      "L2TOCR",
-                                                      "L2WATV"]] +\
-              [r"\w+GIP_" + gipp + "\w+" for gipp in ["CKEXTL",
-                                                      "CKQLTL",
-                                                      "L2COMM",
-                                                      "L2SITE",
-                                                      "L2SMAC"]]
-    
+    regGIPP = [r"\w+_(TEST|PROD)_GIP_" + gipp + "\w+" for gipp in ["L2ALBD",
+                                                                   "L2DIFT",
+                                                                   "L2DIRT",
+                                                                   "L2TOCR",
+                                                                   "L2WATV"]] +\
+              [r"\w+_(TEST|PROD)_GIP_" + gipp + "\w+" for gipp in ["CKEXTL",
+                                                                   "CKQLTL",
+                                                                   "L2COMM",
+                                                                   "L2SITE",
+                                                                   "L2SMAC"]]
+
     current_dir = p.dirname(p.realpath(__file__))
 
     def __init__(self, folder, tile, site, gipp, start, end, nbackward, verbose):
         """
         Init the instance using the old start_maja parameters
         """
-        from Common import DateConverter
+        from Common import DateConverter, ParameterConverter
         self.verbose = verbose
-        logging_level = logging.DEBUG if self.__str2bool(self.verbose) else logging.INFO
+        logging_level = logging.DEBUG if ParameterConverter.str2bool(self.verbose) else logging.INFO
         self.__init_loggers(msg_level=logging_level)
         logging.info("=============This is Start_Maja v%s==============" % self.version)
         self.folder = p.realpath(folder)
@@ -77,7 +78,6 @@ class StartMaja(object):
             self.path_input_l2 = p.join(self.rep_l2, self.site, self.tile)
 
         # Parse products
-        l1_products = Product.MajaProduct()
         if start and re.search(self.date_regex, start):
             self.start = DateConverter.stringToDatetime(start.replace("-", ""))
         else:
@@ -94,27 +94,13 @@ class StartMaja(object):
         # Subtract 1, which means including the actual product:
         self.nbackward = nbackward - 1
         return
-    
-    @staticmethod
-    def __str2bool(v):
-        """
-        Returns a boolean following a string input
-        :param v: String to be tested if it"s containing a True/False value
-        :return: True, if string contains ("yes", "true", "t", "y", "1"), false if not
-        """
-        if v.lower() in ("yes", "true", "t", "y", "1"):
-            return True
-        elif v.lower() in ("no", "false", "f", "n", "0"):
-            return False
-        raise argparse.ArgumentTypeError("Boolean value expected.")
 
-    def __init_loggers(self, msg_level=logging.DEBUG):
+    @staticmethod
+    def __init_loggers(msg_level=logging.DEBUG):
         """
-        Init a file and a stdout logger
+        Init a stdout logger
         :param msg_level: Standard msgLevel for both loggers. Default is DEBUG
         """
-        
-        filename = "Start_Maja.log"
 
         # Create default path or get the pathname without the extension, if there is one
         logger = logging.getLogger()
