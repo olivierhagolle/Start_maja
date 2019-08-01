@@ -14,7 +14,8 @@ import os
 import sys
 import re
 import logging
-
+from os import path as p
+from Chain import Product
 
 class StartMaja(object):
     """
@@ -36,40 +37,48 @@ class StartMaja(object):
                                                       "L2SITE",
                                                       "L2SMAC"]]
     
-    current_dir = os.path.dirname(os.path.realpath(__file__))
+    current_dir = p.dirname(p.realpath(__file__))
 
-    def __init__(self, input_dirs, gipp, tile, site, folder, dtm, start, end, overwrite, nbackward, verbose):
+    def __init__(self, folder, tile, site, gipp, start, end, nbackward, verbose):
         """
         Init the instance using the old start_maja parameters
         """
         from Common import DateConverter
         self.verbose = verbose
-        logging_level = logging.DEBUG if self.str2bool(self.verbose) else logging.INFO
-        self.init_loggers(msg_level=logging_level)
+        logging_level = logging.DEBUG if self.__str2bool(self.verbose) else logging.INFO
+        self.__init_loggers(msg_level=logging_level)
         logging.info("=============This is Start_Maja v%s==============" % self.version)
-        
-        self.input_dirs = input_dirs
+        self.folder = p.realpath(folder)
+        logging.debug("Checking config file: %s" % folder)
+        if not p.isfile(self.folder):
+            raise OSError("Cannot find folder definition file: %s" % self.folder)
+        self.rep_work, self.rep_l1, self.rep_l2, self.rep_mnt, self.maja, self.rep_cams = self.parse_config(self.folder)
+        logging.debug("Config file parsed without errors.")
         logging.debug("Checking GIPP files")
-        if not os.path.isdir(gipp):
-            raise OSError("Cannot find GIPP folder: %s" % gipp)
+        self.gipp = p.realpath(gipp)
+        if not p.isdir(self.gipp):
+            raise OSError("Cannot find GIPP folder: %s" % self.gipp)
         for regGIPP in self.regGIPP:
             if not [f for f in os.listdir(gipp) if re.search(regGIPP, f)]:
                 raise OSError("Missing GIPP file: %s" % regGIPP)
-        self.gipp = gipp
-        logging.debug("...found %s" % gipp)
+        logging.debug("Found GIPP: %s" % gipp)
         
-        if tile[0] == "T" and len(tile) == 6 and tile[1:2].isdigit():
+        if tile[0] == "T" and re.search(Product.MajaProduct.reg_tile, tile):
             self.tile = tile[1:]  # Remove the T from e.g. T32ABC
         else:
             self.tile = tile
         self.site = site
-        if not self.site:
+        if not site:
+            self.path_input_l1 = p.join(self.rep_l1, self.tile)
+            self.path_input_l2 = p.join(self.rep_l2, self.tile)
             logging.info("No site specified. Searching for product directly by TileID")
-        if not os.path.isfile(folder):
-            raise OSError("Cannot find folder definition file!")
-        self.folder = folder
-        self.dtm = self.get_dtm_files(dtm)
-        if re.search(self.date_regex, start):
+        else:
+            self.path_input_l1 = p.join(self.rep_l1, self.site, self.tile)
+            self.path_input_l2 = p.join(self.rep_l2, self.site, self.tile)
+
+        # Parse products
+        l1_products = Product.MajaProduct()
+        if start and re.search(self.date_regex, start):
             self.start = DateConverter.stringToDatetime(start.replace("-", ""))
         else:
             raise ValueError("Unknown date encountered: %s" % start)
@@ -79,14 +88,15 @@ class StartMaja(object):
             raise ValueError("Unknown date encountered: %s" % end)
         if self.start > self.end:
             raise ValueError("Start date has to be before the end date!")
-        self.userconf = os.path.join(self.current_dir, "userconf")
+        self.userconf = p.realpath(p.join(self.current_dir, "userconf"))
+        if not p.isdir(self.userconf):
+            raise OSError("Cannot find userconf %s" % self.userconf)
         # Subtract 1, which means including the actual product:
         self.nbackward = nbackward - 1
-        self.overwrite = self.str2bool(overwrite)
         return
     
     @staticmethod
-    def str2bool(v):
+    def __str2bool(v):
         """
         Returns a boolean following a string input
         :param v: String to be tested if it"s containing a True/False value
@@ -98,7 +108,7 @@ class StartMaja(object):
             return False
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
-    def init_loggers(self, msg_level=logging.DEBUG):
+    def __init_loggers(self, msg_level=logging.DEBUG):
         """
         Init a file and a stdout logger
         :param msg_level: Standard msgLevel for both loggers. Default is DEBUG
@@ -117,7 +127,57 @@ class StartMaja(object):
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
         return logger
+
+    @staticmethod
+    def __read_config_param(config, section, option):
+        """
+        Read a config parameter (a path) and check whether it exists
+        :param config: The parsed config file
+        :param section: The section to be searched for, e.g. PATH
+        :param option: The parameter name
+        :return: The path read as string or OSError if not
+        """
+
+        param = config.get(section, option)
+        if not p.exists(param):
+            raise OSError("%s %s is missing: %s" % (section, option, param))
+        return param
+
+    def parse_config(self, cfg_file):
+        """
+        Read contents of the config/folders.txt file containing:
+        Required params:
+            repWork, repL1, repL2, repMNT, exeMaja
+        Optional params:
+            repCAMS
+        :param cfg_file: The path to the file
+        :return: The parsed paths for each of the directories. None for the optional ones if not given.
+        """
+        try:
+            import configparser as cfg
+        except ImportError:
+            import ConfigParser as cfg
+        
+        # Parsing configuration file
+        config = cfg.ConfigParser()
+        config.read(cfg_file)
     
+        # get cfg parameters
+        rep_work = self.__read_config_param(config, "PATH", "repWork")
+        rep_l1 = self.__read_config_param(config, "PATH", "repL1")
+        rep_l2 = self.__read_config_param(config, "PATH", "repL2")
+        rep_mnt = self.__read_config_param(config, "PATH", "repMNT")
+        exe_maja = self.__read_config_param(config, "PATH", "exeMaja")
+
+        # CAMS is optional:
+        try:
+            rep_cams = self.__read_config_param(config, "PATH", "repCAMS")
+        except cfg.NoOptionError:
+            logging.warning("repCAMS is missing. Processing without CAMS")
+            rep_cams = None
+        
+        return rep_work, rep_l1, rep_l2, rep_mnt, exe_maja, rep_cams
+
     def get_dtm_files(self, dtm_dir):
         """
         Find DTM folder for tile and search for associated HDR and DBL files
@@ -131,67 +191,33 @@ class StartMaja(object):
         if dtm_dir is None:
             logging.info("No DTM specified. Searching for DTM in %s" % self.current_dir)
             dtm_dir = self.current_dir
-            
+
         hdr_files, dbl_files = [], []
-        for f in os.listdir(os.path.join(dtm_dir)):
-            if re.search(self.regDTM + self.tile + "\w*" + ".HDR", os.path.basename(f)):
-                hdr_files.append(os.path.join(dtm_dir, f))
-            if re.search(self.regDTM + self.tile + "\w*" + ".DBL", os.path.basename(f)):
-                dbl_files.append(os.path.join(dtm_dir, f))
+        for f in os.listdir(p.join(dtm_dir)):
+            if re.search(self.regDTM + self.tile + "\w*" + ".HDR", p.basename(f)):
+                hdr_files.append(p.join(dtm_dir, f))
+            if re.search(self.regDTM + self.tile + "\w*" + ".DBL", p.basename(f)):
+                dbl_files.append(p.join(dtm_dir, f))
         if len(hdr_files) == 1 and len(dbl_files) >= 1:
-            logging.debug("...found %s" % os.path.basename(hdr_files[0]))
+            logging.debug("...found %s" % p.basename(hdr_files[0]))
             return hdr_files + dbl_files
-        
+
         # If not found yet, search for folder with the same name:
         hdr_files, dbl_files = [], []
-        dtm_folder = [f for f in os.listdir(dtm_dir) if re.search(self.regDTM + self.tile + "\w+", os.path.basename(f))]        
+        dtm_folder = [f for f in os.listdir(dtm_dir) if re.search(self.regDTM + self.tile + "\w+", p.basename(f))]
         if len(dtm_folder) != 1:
             raise OSError("Error finding DTM folder for %s in %s" % (self.tile, dtm_dir))
-        for f in os.listdir(os.path.join(dtm_dir, dtm_folder[0])):
-            if re.search(self.regDTM + self.tile + "\w*" + ".HDR", os.path.basename(f)):
-                hdr_files.append(os.path.join(dtm_dir, dtm_folder[0], f))
-            if re.search(self.regDTM + self.tile + "\w*" + ".DBL", os.path.basename(f)):
-                dbl_files.append(os.path.join(dtm_dir, dtm_folder[0], f))
+        for f in os.listdir(p.join(dtm_dir, dtm_folder[0])):
+            if re.search(self.regDTM + self.tile + "\w*" + ".HDR", p.basename(f)):
+                hdr_files.append(p.join(dtm_dir, dtm_folder[0], f))
+            if re.search(self.regDTM + self.tile + "\w*" + ".DBL", p.basename(f)):
+                dbl_files.append(p.join(dtm_dir, dtm_folder[0], f))
         if len(hdr_files) != 1:
             raise OSError("More than one .HDR file found for DTM %s in %s" % (self.tile, dtm_dir))
-        dtm = [os.path.join(dtm_dir, dtm_folder[0], f) for f in hdr_files + dbl_files]
-        logging.debug("...found %s" % os.path.basename(hdr_files[0]))
+        dtm = [p.join(dtm_dir, dtm_folder[0], f) for f in hdr_files + dbl_files]
+        logging.debug("...found %s" % p.basename(hdr_files[0]))
         return dtm
-    
-    def read_folders_file(self, cfg_file):
-        """
-        Read contents of the folders.txt file containing at least the config params:
-            repWork, repL1, repL2 and exeMaja
-        :param cfg_file: The path to the file
-        """
-        try:
-            import configparser as cfg
-        except ImportError:
-            import ConfigParser as cfg
-        # Parsing configuration file
-        config = cfg.ConfigParser()
-        config.read(cfg_file)
-    
-        # get cfg parameters
-        rep_work = config.get("PATH", "repWork")
-        if not os.path.isdir(rep_work):
-            raise OSError("repWork is missing: %s" % rep_work)
-        rep_l1 = config.get("PATH", "repL1")
-        rep_l2 = config.get("PATH", "repL2")
-        exe_maja = config.get("PATH", "exeMaja")
-        if not os.path.isfile(exe_maja):
-            raise OSError("exeMaja is missing: %s" % exe_maja)
-        # CAMS is optional:
-        try:
-            rep_cams = config.get("PATH", "repCAMS")
-            if not os.path.isdir(rep_cams):
-                raise OSError("repCAMS is missing: %s" % rep_cams)
-        except cfg.NoOptionError:
-            logging.warning("repCAMS is missing. Processing without CAMS")
-            rep_cams = None
-        
-        return rep_work, rep_l1, rep_l2, exe_maja, rep_cams
-    
+
     @staticmethod
     def set_input_directories(prod_l1, prod_l2, input_dirs):
         """
@@ -199,22 +225,22 @@ class StartMaja(object):
         overloads first the L1C directory, then the L2A directory
         """
         if not input_dirs:
-            if not os.path.isdir(prod_l1):
+            if not p.isdir(prod_l1):
                 raise OSError("repL1 is missing: %s" % prod_l1)
-            if not os.path.isdir(prod_l2):
+            if not p.isdir(prod_l2):
                 raise OSError("repL2 is missing: %s" % prod_l2)
             return prod_l1, prod_l2
         
         if len(input_dirs) == 1:
-            if not os.path.exists(input_dirs[0]):
+            if not p.exists(input_dirs[0]):
                 raise OSError("Cannot find L1C directory: %s" % input_dirs[0])
-            if not os.path.isdir(prod_l2):
+            if not p.isdir(prod_l2):
                 raise OSError("repL2 is missing: %s" % prod_l2)
             return input_dirs[0], prod_l2
         elif len(input_dirs) == 2:
-            if not os.path.exists(input_dirs[0]):
+            if not p.exists(input_dirs[0]):
                 raise OSError("Cannot find L1C directory: %s" % input_dirs[0])
-            if not os.path.exists(input_dirs[1]):
+            if not p.exists(input_dirs[1]):
                 raise OSError("Cannot find L2A directory: %s" % input_dirs[1])
             return input_dirs[0], input_dirs[1]
         
@@ -235,10 +261,10 @@ class StartMaja(object):
             return []
         logging.debug("Searching for CAMS")
         for f in os.listdir(cams_dir):
-            if re.search(self.regCAMS + ".HDR", os.path.basename(f)):
-                hdr_files.append(os.path.join(cams_dir, f))
-            if re.search(self.regCAMS + ".DBL", os.path.basename(f)):
-                dbl_files.append(os.path.join(cams_dir, f))
+            if re.search(self.regCAMS + ".HDR", p.basename(f)):
+                hdr_files.append(p.join(cams_dir, f))
+            if re.search(self.regCAMS + ".DBL", p.basename(f)):
+                dbl_files.append(p.join(cams_dir, f))
         if len(hdr_files) > len(dbl_files):
             raise OSError("One or more CAMS HDR files imcomplete: #HDR=%s, #DBL=%s"
                           % (len(hdr_files), len(dbl_files)))
@@ -276,12 +302,12 @@ class StartMaja(object):
         Get the available products for a given platform regex
         """
         prods = []
-        if not os.path.isdir(input_dir):
+        if not p.isdir(input_dir):
             return prods
         for prod in os.listdir(input_dir):
             for i, pattern in enumerate(reg):
                 if re.search(re.compile(pattern.replace("XXXXX", tile)), prod):
-                    prods.append((os.path.join(input_dir, prod), i))
+                    prods.append((p.join(input_dir, prod), i))
         return prods
     
     def get_all_products(self, site, tile, rep_l1, rep_l2, input_dirs):
@@ -291,8 +317,8 @@ class StartMaja(object):
         prev_l1, prev_l2 = [], []
         platform_id = -1
         specifier = self.get_specifier(site, tile)
-        input_rep_l1 = os.path.join(rep_l1, specifier)
-        input_rep_l2 = os.path.join(rep_l2, specifier)
+        input_rep_l1 = p.join(rep_l1, specifier)
+        input_rep_l2 = p.join(rep_l2, specifier)
         input_dir_l1, input_dir_l2 = self.set_input_directories(input_rep_l1, input_rep_l2, input_dirs)
         for i, platform in enumerate([self.regS2, self.regL8, self.regVns]):
             rep_l1_filtered = self.get_platform_products(input_dir_l1, tile, platform)
@@ -458,7 +484,6 @@ class StartMaja(object):
             -   Run MAJA
         """
         from Common import FileSystem
-        rep_work, rep_l1, rep_l2, exeMaja, repCAMS = self.read_folders_file(self.folder)
         availProdsL1, availProdsL2, platform = self.get_all_products(self.site, self.tile, rep_l1, rep_l2, self.input_dirs)
         availCAMS = self.get_cams_files(repCAMS)
         cams = self.filter_cams(availCAMS,self.start, self.end)
@@ -472,8 +497,8 @@ class StartMaja(object):
             print(wp)
 #            input_dir = self.createInputDir(rep_work, wp.productsL1 + wp.productsL2, cams, self.dtm, self.gipp)
 #            specifier = self.getSpecifier(self.site, self.tile)
-#            output_dir = os.path.join(rep_l2, specifier)
-#            if(not os.path.exists(output_dir)):
+#            output_dir = p.join(rep_l2, specifier)
+#            if(not p.exists(output_dir)):
 #                FileSystem.createDirectory(output_dir)
 #            wp.execute(exeMaja, input_dir, output_dir, self.tile, self.userconf, self.verbose)
 #            FileSystem.removeDirectory(input_dir)
@@ -481,22 +506,31 @@ class StartMaja(object):
 
         pass
 
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("-g", "--gipp", help="Name of the GIPP folder to be used", type=str, required=True)
-    parser.add_argument("-t", "--tile", help="Tile number", type=str, required=True)
-    parser.add_argument("-i", "--input", help="Product input directory list. This OVERLOADS the L1C dir (and if given) the L2C dir!", nargs="+", required=False)
-    parser.add_argument("-s", "--site", help="Site name. If not specified, the tile number is used directly for finding the L1/L2 product", type=str, required=False)
-    parser.add_argument("-f", "--folder", type=str, help="Folder definition file", required=True)
-    parser.add_argument("-m", "--dtm", type=str, help="DTM folder. If none is specified, it will be searched for in the code directory", required=False)
-    parser.add_argument("-d", "--start", help="Start date for processing in format YYYY-MM-DD (optional)", type=str, required=False, default="2000-01-01")
-    parser.add_argument("-e", "--end", help="Start date for processing in format YYYY-MM-DD (optional)", type=str, required=False, default="3000-01-01")
-    parser.add_argument("-v", "--verbose", help="Will provide debug logs. Default is false", type=str, default="false")
-    parser.add_argument("--overwrite", help="Will Overwrite existing L2A products. Default is false", type=str, default="false")
-    parser.add_argument("--nbackward", help="Number of products (if available) used to run in backward mode. Default is 8.", type=int, default=int(8))
+    parser.add_argument("-g", "--gipp", help="Full path to the GIPP folder being used",
+                        type=str, required=True)
+    parser.add_argument("-t", "--tile", help="Tile number",
+                        type=str, required=True)
+    parser.add_argument("-s", "--site", help="Site name. If not specified,"
+                                             "the tile number is used directly for finding the L1/L2 product directory",
+                        type=str, required=False)
+    parser.add_argument("-f", "--folder", help="Config/Folder-definition file used for all permanent settings.",
+                        type=str, required=True)
+    parser.add_argument("-d", "--start", help="Start date for processing in format YYYY-MM-DD. If none is provided,"
+                                              "all products until the end date will be processed",
+                        type=str, required=False, default="2000-01-01")
+    parser.add_argument("-e", "--end", help="Start date for processing in format YYYY-MM-DD. If none is provided,"
+                                            "all products from the start date on will be processed",
+                        type=str, required=False, default="3000-01-01")
+    parser.add_argument("-v", "--verbose", help="Provides detailed logging for Maja. Default is false",
+                        type=str, default="false")
+    parser.add_argument("--nbackward", help="Number of products used to run in backward mode. Default is 8.",
+                        type=int, default=int(8))
 
     args = parser.parse_args()
     
-    s = StartMaja(args.input, args.gipp, args.tile, args.site, args.folder, args.dtm, args.start, args.end, args.overwrite, args.nbackward, args.verbose)
+    s = StartMaja(args.folder, args.tile, args.site, args.gipp, args.start, args.end, args.nbackward, args.verbose)
     s.run()
