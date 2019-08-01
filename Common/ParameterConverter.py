@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 def str2bool(v):
     """
     :brief: Returns a boolean following a string input
