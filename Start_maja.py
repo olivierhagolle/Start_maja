@@ -49,6 +49,9 @@ class StartMaja(object):
         logging_level = logging.DEBUG if ParameterConverter.str2bool(self.verbose) else logging.INFO
         self.__init_loggers(msg_level=logging_level)
         logging.info("=============This is Start_Maja v%s==============" % self.version)
+        self.userconf = p.realpath(p.join(self.current_dir, "userconf"))
+        if not p.isdir(self.userconf):
+            raise OSError("Cannot find userconf folder: %s" % self.userconf)
         self.folder = p.realpath(folder)
         logging.debug("Checking config file: %s" % folder)
         if not p.isfile(self.folder):
@@ -62,7 +65,7 @@ class StartMaja(object):
         for regGIPP in self.regGIPP:
             if not [f for f in os.listdir(gipp) if re.search(regGIPP, f)]:
                 raise OSError("Missing GIPP file: %s" % regGIPP)
-        logging.debug("Found GIPP: %s" % gipp)
+        logging.debug("Found GIPP folder: %s" % gipp)
         
         if tile[0] == "T" and re.search(Product.MajaProduct.reg_tile, tile):
             self.tile = tile[1:]  # Remove the T from e.g. T32ABC
@@ -72,11 +75,39 @@ class StartMaja(object):
         if not site:
             self.path_input_l1 = p.join(self.rep_l1, self.tile)
             self.path_input_l2 = p.join(self.rep_l2, self.tile)
-            logging.info("No site specified. Searching for product directly by TileID")
+            self.__site_info = "tile %s" % self.tile
+            logging.info("No site-folder specified. Searching for product directly by Tile-ID")
         else:
             self.path_input_l1 = p.join(self.rep_l1, self.site, self.tile)
             self.path_input_l2 = p.join(self.rep_l2, self.site, self.tile)
+            self.__site_info = "site %s and tile %s" % (self.site, self.tile)
 
+        # TODO wrap this in functions
+
+        if not p.isdir(self.path_input_l1):
+            raise OSError("L1 folder for %s not existing: %s" % (self.__site_info, self.path_input_l1))
+
+        if not p.isdir(self.path_input_l2):
+            logging.warning("L2 folder for %s not existing: %s" % (self.__site_info, self.path_input_l1))
+
+        self.avail_input_l1 = self.parse_products(self.path_input_l1)
+
+        if not self.avail_input_l1:
+            raise IOError("No L1C products detected for %s in %s" % (self.__site_info, self.path_input_l1))
+        else:
+            logging.info("%s L1C products detected for %s in %s" % (len(self.avail_input_l1),
+                                                                    self.__site_info,
+                                                                    self.path_input_l1))
+        self.avail_input_l2 = self.parse_products(self.path_input_l2)
+
+        if not self.avail_input_l2:
+            logging.warning("No L2A products detected for %s in %s" % (self.__site_info, self.path_input_l2))
+        else:
+            logging.info("%s L2A products detected for %s in %s" % (len(self.avail_input_l2),
+                                                                    self.__site_info,
+                                                                    self.path_input_l2))
+
+        # TODO if no dates given, parse then automatically
         # Parse products
         if start and re.search(self.date_regex, start):
             self.start = DateConverter.stringToDatetime(start.replace("-", ""))
@@ -88,9 +119,6 @@ class StartMaja(object):
             raise ValueError("Unknown date encountered: %s" % end)
         if self.start > self.end:
             raise ValueError("Start date has to be before the end date!")
-        self.userconf = p.realpath(p.join(self.current_dir, "userconf"))
-        if not p.isdir(self.userconf):
-            raise OSError("Cannot find userconf %s" % self.userconf)
         # Subtract 1, which means including the actual product:
         self.nbackward = nbackward - 1
         return
@@ -163,6 +191,16 @@ class StartMaja(object):
             rep_cams = None
         
         return rep_work, rep_l1, rep_l2, rep_mnt, exe_maja, rep_cams
+
+    @staticmethod
+    def parse_products(root):
+        """
+        Parse the products from the constructed L1- or L2- directories
+        :param root: The root folder to be searched from
+        :return: A list of MajaProducts available in the given directory
+        """
+        avail_folders = [f for f in os.listdir(root) if p.isdir(p.join(root, f))]
+        return [Product.MajaProduct(f).factory() for f in avail_folders]
 
     def get_dtm_files(self, dtm_dir):
         """
@@ -519,4 +557,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     s = StartMaja(args.folder, args.tile, args.site, args.gipp, args.start, args.end, args.nbackward, args.verbose)
-    s.run()
+    # s.run()
