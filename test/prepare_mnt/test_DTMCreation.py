@@ -14,13 +14,14 @@ from Unittest import LoggedTestCase
 from Unittest import testFunction
 from prepare_mnt import DTMCreation
 
-class testDTMCreation(LoggedTestCase.LoggedTestCase):
+
+class TestDTMCreation(LoggedTestCase.LoggedTestCase):
 
     @testFunction.test_function
     def testFileNotExisting(self):
         product = "a/b/c/notavalidproduct"
         with self.assertRaises(OSError):
-            #File not existing
+            # File not existing
             import os
             DTMCreation.DTMCreator(product, None, None, os.getcwd(), os.getcwd())
 
