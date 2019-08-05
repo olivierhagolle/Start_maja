@@ -1,0 +1,6 @@
+[PATH]
+repWork=None
+repL1  =None
+repL2  =None
+repMNT =None
+exeMaja=/opt/Maja-3.3.1_TM/bin/maja

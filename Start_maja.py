@@ -22,7 +22,7 @@ class StartMaja(object):
     """
     Run the MAJA processor
     """
-    version = "3.0.1"
+    version = "4.0.0rc1"
     date_regex = r"\d{4}-\d{2}-\d{2}"  # YYYY-MM-DD
 
     regCAMS = r"\w{3}_(TEST|PROD)_EXO_CAMS_\w+"
@@ -90,36 +90,51 @@ class StartMaja(object):
         if not p.isdir(self.path_input_l2):
             logging.warning("L2 folder for %s not existing: %s" % (self.__site_info, self.path_input_l1))
 
-        self.avail_input_l1 = self.parse_products(self.path_input_l1)
+        self.avail_input_l1 = self.get_available_products(self.path_input_l1, level="L1C", tile=self.tile)
 
         if not self.avail_input_l1:
             raise IOError("No L1C products detected for %s in %s" % (self.__site_info, self.path_input_l1))
         else:
-            logging.info("%s L1C products detected for %s in %s" % (len(self.avail_input_l1),
-                                                                    self.__site_info,
-                                                                    self.path_input_l1))
-        self.avail_input_l2 = self.parse_products(self.path_input_l2)
+            logging.info("%s L1C product(s) detected for %s in %s" % (len(self.avail_input_l1),
+                                                                      self.__site_info,
+                                                                      self.path_input_l1))
+        self.avail_input_l2 = self.get_available_products(self.path_input_l2, level="L2A", tile=self.tile)
 
         if not self.avail_input_l2:
             logging.warning("No L2A products detected for %s in %s" % (self.__site_info, self.path_input_l2))
         else:
-            logging.info("%s L2A products detected for %s in %s" % (len(self.avail_input_l2),
-                                                                    self.__site_info,
-                                                                    self.path_input_l2))
+            logging.info("%s L2A product(s) detected for %s in %s" % (len(self.avail_input_l2),
+                                                                      self.__site_info,
+                                                                      self.path_input_l2))
 
-        # TODO if no dates given, parse then automatically
+        platform = list(set([prod.get_platform() for prod in self.avail_input_l1 + self.avail_input_l2]))
+
+        if len(platform) != 1:
+            raise IOError("Cannot mix multiple platforms: %s" % platform)
+
+        # TODO if no dates given, parse them automatically
         # Parse products
-        if start and re.search(self.date_regex, start):
-            self.start = DateConverter.stringToDatetime(start.replace("-", ""))
+        if start:
+            if re.search(self.date_regex, start):
+                self.start = DateConverter.stringToDatetime(start.replace("-", ""))
+            else:
+                raise ValueError("Unknown date encountered: %s" % start)
         else:
-            raise ValueError("Unknown date encountered: %s" % start)
-        if re.search(self.date_regex, end):
-            self.end = DateConverter.stringToDatetime(end.replace("-", ""))
+            dates = sorted([prod.get_date() for prod in self.avail_input_l1])
+            self.start = dates[0]
+
+        if end:
+            if re.search(self.date_regex, end):
+                self.end = DateConverter.stringToDatetime(end.replace("-", ""))
+            else:
+                raise ValueError("Unknown date encountered: %s" % end)
         else:
-            raise ValueError("Unknown date encountered: %s" % end)
+            dates = sorted([prod.get_date() for prod in self.avail_input_l1])
+            self.end = dates[-1]
+
         if self.start > self.end:
             raise ValueError("Start date has to be before the end date!")
-        # Subtract 1, which means including the actual product:
+        # Subtract 1, which means excluding the actual product:
         self.nbackward = nbackward - 1
         return
 
@@ -193,28 +208,31 @@ class StartMaja(object):
         return rep_work, rep_l1, rep_l2, rep_mnt, exe_maja, rep_cams
 
     @staticmethod
-    def parse_products(root):
+    def get_available_products(root, level, tile):
         """
         Parse the products from the constructed L1- or L2- directories
         :param root: The root folder to be searched from
+        :param level: The product level to be search for
         :return: A list of MajaProducts available in the given directory
         """
         avail_folders = [f for f in os.listdir(root) if p.isdir(p.join(root, f))]
-        return [Product.MajaProduct(f).factory() for f in avail_folders]
+        avail_products = [Product.MajaProduct(f).factory() for f in avail_folders]
+        # Remove the ones that didn't work:
+        avail_products = [prod for prod in avail_products if prod is not None]
+        return [prod for prod in avail_products if prod.get_level() == level.lower() and prod.get_tile() == tile]
 
-    def get_dtm_files(self, dtm_dir):
+    def get_dtm(self):
         """
         Find DTM folder for tile and search for associated HDR and DBL files
         A DTM folder has the following naming structure:
-            S2__TEST_AUX_REFDE2_TILEID_0001 with TILEID e.g. T31TCH, KHUMBU ...
-        Inside the folder, a single .HDR file and an associated .DBL.DIR file
+            *_AUX_REFDE2_TILEID_*DBL.DIR with TILEID e.g. T31TCH, KHUMBU ...
+        A single .HDR file and an associated .DBL.DIR file
         has to be found. OSError is thrown otherwise.
-        :param dtm_dir: The directory containing the DTM folder.
         """
+        from Common import FileSystem
         logging.debug("Searching for DTM")
-        if dtm_dir is None:
-            logging.info("No DTM specified. Searching for DTM in %s" % self.current_dir)
-            dtm_dir = self.current_dir
+        hdr = FileSystem.get_file(folders=self.rep_mnt, name=self.regDTM + self.tile + "*HDR")
+        dbl = FileSystem.get_file(folders=self.rep_mnt, name=self.regDTM + self.tile + "*DBL.DIR")
 
         hdr_files, dbl_files = [], []
         for f in os.listdir(p.join(dtm_dir)):
