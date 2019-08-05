@@ -65,6 +65,26 @@ def __get_item(path, reg):
     return os.path.join(path, available_dirs[0])
 
 
+def find(pattern, path):
+    """
+    Find a file or dir in a directory-tree.
+    :param pattern: The filename to be searched for
+    :param path: The path to the root directory
+    :return: The file/directory if found. AssertionError if not.
+    """
+    import re
+    result = []
+    # TODO Add unittests
+    # TODO replace assertion
+    parameter = pattern.replace("*", ".*")
+    for root, dirs, files in os.walk(path):
+        for name in files + dirs:
+            if re.search(parameter, name):
+                result.append(os.path.join(root, name))
+    assert len(result) == 1
+    return result[0]
+
+
 def get_file(**kwargs):
     """
     Get a single file from inside the root directory by glob or regex.
