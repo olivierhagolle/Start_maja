@@ -76,7 +76,7 @@ class StartMaja(object):
             self.path_input_l1 = p.join(self.rep_l1, self.tile)
             self.path_input_l2 = p.join(self.rep_l2, self.tile)
             self.__site_info = "tile %s" % self.tile
-            logging.info("No site-folder specified. Searching for product directly by Tile-ID")
+            logging.debug("No site-folder specified. Searching for product directly by Tile-ID")
         else:
             self.path_input_l1 = p.join(self.rep_l1, self.site, self.tile)
             self.path_input_l2 = p.join(self.rep_l2, self.site, self.tile)
@@ -112,7 +112,6 @@ class StartMaja(object):
         if len(platform) != 1:
             raise IOError("Cannot mix multiple platforms: %s" % platform)
 
-        # TODO if no dates given, parse them automatically
         # Parse products
         if start:
             if re.search(self.date_regex, start):
@@ -136,6 +135,16 @@ class StartMaja(object):
             raise ValueError("Start date has to be before the end date!")
         # Subtract 1, which means excluding the actual product:
         self.nbackward = nbackward - 1
+
+        logging.debug("Searching for DTM")
+        try:
+            self.dtm_path = self.get_dtm()
+        except OSError as e:
+            logging.debug("Cannot find DTM!")
+            logging.debug(e)
+        else:
+            logging.debug("Found DTM: %s" % self.dtm_path[1])
+
         return
 
     @staticmethod
@@ -228,37 +237,13 @@ class StartMaja(object):
             *_AUX_REFDE2_TILEID_*DBL.DIR with TILEID e.g. T31TCH, KHUMBU ...
         A single .HDR file and an associated .DBL.DIR file
         has to be found. OSError is thrown otherwise.
+        :return: The full path to the hdr and dbl.dir
         """
         from Common import FileSystem
-        logging.debug("Searching for DTM")
-        hdr = FileSystem.get_file(folders=self.rep_mnt, name=self.regDTM + self.tile + "*HDR")
-        dbl = FileSystem.get_file(folders=self.rep_mnt, name=self.regDTM + self.tile + "*DBL.DIR")
-
-        hdr_files, dbl_files = [], []
-        for f in os.listdir(p.join(dtm_dir)):
-            if re.search(self.regDTM + self.tile + "\w*" + ".HDR", p.basename(f)):
-                hdr_files.append(p.join(dtm_dir, f))
-            if re.search(self.regDTM + self.tile + "\w*" + ".DBL", p.basename(f)):
-                dbl_files.append(p.join(dtm_dir, f))
-        if len(hdr_files) == 1 and len(dbl_files) >= 1:
-            logging.debug("...found %s" % p.basename(hdr_files[0]))
-            return hdr_files + dbl_files
-
-        # If not found yet, search for folder with the same name:
-        hdr_files, dbl_files = [], []
-        dtm_folder = [f for f in os.listdir(dtm_dir) if re.search(self.regDTM + self.tile + "\w+", p.basename(f))]
-        if len(dtm_folder) != 1:
-            raise OSError("Error finding DTM folder for %s in %s" % (self.tile, dtm_dir))
-        for f in os.listdir(p.join(dtm_dir, dtm_folder[0])):
-            if re.search(self.regDTM + self.tile + "\w*" + ".HDR", p.basename(f)):
-                hdr_files.append(p.join(dtm_dir, dtm_folder[0], f))
-            if re.search(self.regDTM + self.tile + "\w*" + ".DBL", p.basename(f)):
-                dbl_files.append(p.join(dtm_dir, dtm_folder[0], f))
-        if len(hdr_files) != 1:
-            raise OSError("More than one .HDR file found for DTM %s in %s" % (self.tile, dtm_dir))
-        dtm = [p.join(dtm_dir, dtm_folder[0], f) for f in hdr_files + dbl_files]
-        logging.debug("...found %s" % p.basename(hdr_files[0]))
-        return dtm
+        dbl = FileSystem.find(path=self.rep_mnt, pattern=self.regDTM + self.tile + "*DBL.DIR")
+        hdr_name = os.path.basename(dbl).split(".")[0]
+        hdr = FileSystem.get_file(root=p.dirname(dbl), filename=hdr_name + "*HDR")
+        return dbl, hdr
 
     @staticmethod
     def set_input_directories(prod_l1, prod_l2, input_dirs):
