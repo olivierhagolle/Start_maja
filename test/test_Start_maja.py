@@ -72,6 +72,25 @@ def create_dummy_product(root, product_level, **kwargs):
     return product_path, [platform, tile, date]
 
 
+def create_dummy_mnt(root, tile, platform="GEN"):
+    """
+    Create a dummy mnt with no content specific to a platform and tile
+    :param root: The path to create the mnt in
+    :param tile: The tile identifier
+    :param platform: The platform name, e.g. "S2" or "L8"
+    :return: Returns the directory containing the dummy mny
+    """
+    import random
+    basename = "_".join([platform, "TEST", "AUX", "REFDE2", tile, str(random.randint(0, 1000)).zfill(4)])
+    mnt_name = os.path.join(root, basename)
+    dbl_name = os.path.join(mnt_name, basename + ".DBL.DIR")
+    hdr_name = os.path.join(mnt_name, basename + ".HDR")
+    os.makedirs(mnt_name)
+    os.makedirs(dbl_name)
+    testFunction.touch(hdr_name)
+    return mnt_name
+
+
 def modify_folders_file(root, new_file, **kwargs):
     """
     Modify the template test_folders file with the given arguments
@@ -116,16 +135,16 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.product_root = os.path.join(cls.root, "31TCH")
+        cls.product_root = os.path.join(cls.root, cls.tile)
         os.makedirs(cls.product_root)
         cls.products += [create_dummy_product(cls.product_root, "L1C",
-                                              tile="T31TCH",
+                                              tile=cls.tile,
                                               date=cls.start_product)[0]]
         cls.products += [create_dummy_product(cls.product_root, "L1C",
-                                              tile="T31TCH",
+                                              tile=cls.tile,
                                               date=cls.end_product)[0]]
-        cls.products += [create_dummy_product(cls.product_root, "L1C", tile="T31TCH")[0] for _ in range(cls.n_dummies)]
-        cls.products += [create_dummy_product(cls.product_root, "L2A", tile="T31TCH")[0] for _ in range(cls.n_dummies)]
+        cls.products += [create_dummy_product(cls.product_root, "L1C", tile=cls.tile)[0] for _ in range(cls.n_dummies)]
+        cls.products += [create_dummy_product(cls.product_root, "L2A", tile=cls.tile)[0] for _ in range(cls.n_dummies)]
         cls.products += [create_dummy_product(cls.product_root, "L1C")[0] for _ in range(cls.n_not_used)]
         cls.products += [create_dummy_product(cls.product_root, "L2A")[0] for _ in range(cls.n_not_used)]
         cls.folders_file = os.path.join(cls.root, "test_working_folders_file.txt")
@@ -134,7 +153,7 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
                             repL1=os.getcwd(),
                             repL2=os.getcwd(),
                             repMNT=os.getcwd())
-
+        cls.mnt = create_dummy_mnt(root=cls.root, tile=cls.tile)
         assert os.path.isfile(cls.folders_file)
 
     @classmethod
@@ -143,6 +162,7 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
         # In case there's duplicates, remove them:
         shutil.rmtree(cls.product_root)
         os.remove(cls.folders_file)
+        shutil.rmtree(cls.mnt)
 
     @testFunction.test_function
     def test_cams_reg(self):

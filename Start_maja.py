@@ -16,7 +16,7 @@ import re
 import logging
 from os import path as p
 from Chain import Product
-
+from Common import FileSystem
 
 class StartMaja(object):
     """
@@ -26,7 +26,7 @@ class StartMaja(object):
     date_regex = r"\d{4}-\d{2}-\d{2}"  # YYYY-MM-DD
 
     regCAMS = r"\w{3}_(TEST|PROD)_EXO_CAMS_\w+"
-    regDTM = r"\w+_AUX_REFDE2_\w*"
+    regDTM = r"\w+_AUX_REFDE2_\w+"
     regGIPP = [r"\w+_(TEST|PROD)_GIP_" + gipp + "\w+" for gipp in ["L2ALBD",
                                                                    "L2DIFT",
                                                                    "L2DIRT",
@@ -71,16 +71,19 @@ class StartMaja(object):
             self.tile = tile[1:]  # Remove the T from e.g. T32ABC
         else:
             self.tile = tile
+
         self.site = site
-        if not site:
-            self.path_input_l1 = p.join(self.rep_l1, self.tile)
-            self.path_input_l2 = p.join(self.rep_l2, self.tile)
+        if self.site:
+            site_l1 = FileSystem.find(self.site, self.rep_l1)
+            site_l2 = FileSystem.find(self.site, self.rep_l2)
+            self.path_input_l1 = FileSystem.find(self.tile, site_l1)
+            self.path_input_l2 = FileSystem.find(self.tile, site_l2)
+            self.__site_info = "site %s and tile %s" % (self.site, self.tile)
+        else:
+            self.path_input_l1 = FileSystem.find(self.tile, self.rep_l1)
+            self.path_input_l2 = FileSystem.find(self.tile, self.rep_l2)
             self.__site_info = "tile %s" % self.tile
             logging.debug("No site-folder specified. Searching for product directly by Tile-ID")
-        else:
-            self.path_input_l1 = p.join(self.rep_l1, self.site, self.tile)
-            self.path_input_l2 = p.join(self.rep_l2, self.site, self.tile)
-            self.__site_info = "site %s and tile %s" % (self.site, self.tile)
 
         # TODO wrap this in functions
 
