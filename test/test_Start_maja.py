@@ -69,8 +69,7 @@ def create_dummy_product(root, product_level, **kwargs):
         os.makedirs(product_path)
         testFunction.touch(metadata_path)
     print(product_path)
-    return product_path, [platform, tile, date]
-
+    return product_path, date
 
 def create_dummy_mnt(root, tile, platform="GEN"):
     """
@@ -78,7 +77,7 @@ def create_dummy_mnt(root, tile, platform="GEN"):
     :param root: The path to create the mnt in
     :param tile: The tile identifier
     :param platform: The platform name, e.g. "S2" or "L8"
-    :return: Returns the directory containing the dummy mny
+    :return: Returns the directory containing the dummy mnt
     """
     import random
     basename = "_".join([platform, "TEST", "AUX", "REFDE2", tile, str(random.randint(0, 1000)).zfill(4)])
@@ -89,6 +88,7 @@ def create_dummy_mnt(root, tile, platform="GEN"):
     os.makedirs(dbl_name)
     testFunction.touch(hdr_name)
     return mnt_name
+
 
 
 def modify_folders_file(root, new_file, **kwargs):
@@ -115,6 +115,25 @@ def modify_folders_file(root, new_file, **kwargs):
     return new_file
 
 
+def create_dummy_cams(root, date, platform="GEN"):
+    """
+    Create a few dummy CAMS files
+    :param root: The path to create the cams folder in
+    :param date: The start date the cams file is valid for.
+    :param platform: The platform name, e.g. "S2" or "L8"
+    :return: Creates the directory containing the cams folder
+    """
+    end_date = datetime(2099, 1, 1, 23, 59, 59)
+
+    basename = "_".join([platform, "TEST", "EXO", "CAMS",
+                         date.strftime("%Y%m%dT%H%M%S"),
+                         end_date.strftime("%Y%m%dT%H%M%S")])
+    dbl_name = os.path.join(root, basename + ".DBL.DIR")
+    hdr_name = os.path.join(root, basename + ".HDR")
+    os.makedirs(dbl_name)
+    testFunction.touch(hdr_name)
+
+
 class TestStartMaja(LoggedTestCase.LoggedTestCase):
 
     root = os.getcwd()
@@ -123,7 +142,7 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
     start_product = datetime(2014, 12, 31, 10, 50)
     end_product = datetime(2099, 12, 31)
 
-    products = []
+    dates = []
     tile = "T31TCH"
     site = None
     gipp = os.path.join(os.getcwd(), "nominal")
@@ -137,16 +156,26 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
     def setUpClass(cls):
         cls.product_root = os.path.join(cls.root, cls.tile)
         os.makedirs(cls.product_root)
-        cls.products += [create_dummy_product(cls.product_root, "L1C",
-                                              tile=cls.tile,
-                                              date=cls.start_product)[0]]
-        cls.products += [create_dummy_product(cls.product_root, "L1C",
-                                              tile=cls.tile,
-                                              date=cls.end_product)[0]]
-        cls.products += [create_dummy_product(cls.product_root, "L1C", tile=cls.tile)[0] for _ in range(cls.n_dummies)]
-        cls.products += [create_dummy_product(cls.product_root, "L2A", tile=cls.tile)[0] for _ in range(cls.n_dummies)]
-        cls.products += [create_dummy_product(cls.product_root, "L1C")[0] for _ in range(cls.n_not_used)]
-        cls.products += [create_dummy_product(cls.product_root, "L2A")[0] for _ in range(cls.n_not_used)]
+        product, date = create_dummy_product(cls.product_root, "L1C",
+                                             tile=cls.tile,
+                                             date=cls.start_product)
+        cls.dates.append(date)
+        product, date = create_dummy_product(cls.product_root, "L1C",
+                                             tile=cls.tile,
+                                             date=cls.end_product)
+        cls.dates.append(date)
+
+        for i in range(cls.n_dummies):
+            product, date = create_dummy_product(cls.product_root, "L1C", tile=cls.tile)
+            cls.dates.append(date)
+            product, date = create_dummy_product(cls.product_root, "L2A", tile=cls.tile)
+            cls.dates.append(date)
+
+        for i in range(cls.n_not_used):
+            product, date = create_dummy_product(cls.product_root, "L1C")
+            cls.dates.append(date)
+            product, date = create_dummy_product(cls.product_root, "L2A")
+            cls.dates.append(date)
         cls.folders_file = os.path.join(cls.root, "test_working_folders_file.txt")
         modify_folders_file(cls.template_folders_file, new_file=cls.folders_file,
                             repWork=os.getcwd(),
@@ -154,6 +183,12 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
                             repL2=os.getcwd(),
                             repMNT=os.getcwd())
         cls.mnt = create_dummy_mnt(root=cls.root, tile=cls.tile)
+
+        cls.cams = os.path.join(cls.root, "CAMS")
+        os.makedirs(cls.cams)
+        for date in cls.dates:
+            create_dummy_cams(cls.cams, date)
+
         assert os.path.isfile(cls.folders_file)
 
     @classmethod
@@ -163,6 +198,7 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
         shutil.rmtree(cls.product_root)
         os.remove(cls.folders_file)
         shutil.rmtree(cls.mnt)
+        shutil.rmtree(cls.cams)
 
     @testFunction.test_function
     def test_cams_reg(self):
@@ -243,10 +279,10 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
 
     @testFunction.test_function
     def test_parasite_l2a_product(self):
-        self.products += [create_dummy_product(self.product_root, "L2A",
-                                               platform="LANDSAT8",
-                                               tile="T31TCH",
-                                               date=self.end_product)[0]]
+        create_dummy_product(self.product_root, "L2A",
+                             platform="LANDSAT8",
+                             tile="T31TCH",
+                             date=self.end_product)
         with self.assertRaises(IOError):
             StartMaja(self.folders_file,
                       self.tile,

@@ -18,26 +18,13 @@ from os import path as p
 from Chain import Product
 from Common import FileSystem
 
+
 class StartMaja(object):
     """
     Run the MAJA processor
     """
     version = "4.0.0rc1"
     date_regex = r"\d{4}-\d{2}-\d{2}"  # YYYY-MM-DD
-
-    regCAMS = r"\w{3}_(TEST|PROD)_EXO_CAMS_\w+"
-    regDTM = r"\w+_AUX_REFDE2_\w+"
-    regGIPP = [r"\w+_(TEST|PROD)_GIP_" + gipp + "\w+" for gipp in ["L2ALBD",
-                                                                   "L2DIFT",
-                                                                   "L2DIRT",
-                                                                   "L2TOCR",
-                                                                   "L2WATV"]] +\
-              [r"\w+_(TEST|PROD)_GIP_" + gipp + "\w+" for gipp in ["CKEXTL",
-                                                                   "CKQLTL",
-                                                                   "L2COMM",
-                                                                   "L2SITE",
-                                                                   "L2SMAC"]]
-
     current_dir = p.dirname(p.realpath(__file__))
 
     def __init__(self, folder, tile, site, gipp, start, end, nbackward, verbose):
@@ -148,6 +135,11 @@ class StartMaja(object):
         else:
             logging.debug("Found DTM: %s" % self.dtm_path[1])
 
+        self.cams_files = []
+        if self.rep_cams:
+            logging.debug("Searching for CAMS")
+            self.cams_files = self.get_cams_files(self.rep_cams)
+            logging.debug("...found %s CAMS files" % len(self.cams_files))
         return
 
     @staticmethod
@@ -225,6 +217,7 @@ class StartMaja(object):
         Parse the products from the constructed L1- or L2- directories
         :param root: The root folder to be searched from
         :param level: The product level to be search for
+        :param tile: The tileID
         :return: A list of MajaProducts available in the given directory
         """
         avail_folders = [f for f in os.listdir(root) if p.isdir(p.join(root, f))]
@@ -248,48 +241,19 @@ class StartMaja(object):
         hdr = FileSystem.get_file(root=p.dirname(dbl), filename=hdr_name + "*HDR")
         return dbl, hdr
 
-    @staticmethod
-    def set_input_directories(prod_l1, prod_l2, input_dirs):
-        """
-        Set the L1 and L2 product directory paths. If input_dirs is set, it
-        overloads first the L1C directory, then the L2A directory
-        """
-        if not input_dirs:
-            if not p.isdir(prod_l1):
-                raise OSError("repL1 is missing: %s" % prod_l1)
-            if not p.isdir(prod_l2):
-                raise OSError("repL2 is missing: %s" % prod_l2)
-            return prod_l1, prod_l2
-        
-        if len(input_dirs) == 1:
-            if not p.exists(input_dirs[0]):
-                raise OSError("Cannot find L1C directory: %s" % input_dirs[0])
-            if not p.isdir(prod_l2):
-                raise OSError("repL2 is missing: %s" % prod_l2)
-            return input_dirs[0], prod_l2
-        elif len(input_dirs) == 2:
-            if not p.exists(input_dirs[0]):
-                raise OSError("Cannot find L1C directory: %s" % input_dirs[0])
-            if not p.exists(input_dirs[1]):
-                raise OSError("Cannot find L2A directory: %s" % input_dirs[1])
-            return input_dirs[0], input_dirs[1]
-        
-        raise ValueError("More than two input directories given: %s" % input_dirs)
-        
     def get_cams_files(self, cams_dir):
         """
-        Find CAMS folder and search for associated HDR and DBL files
+        Find all associated CAMS- HDR and DBL files
         A CAMS folder has the following naming structure:
             MMM_TEST_EXO_CAMS_YYYYMMDDThhmmss_YYYYMMDDThhmmss
-            with MMM = mission (e.g. S2_)
+            with MMM = mission (see regex tests)
         Inside the folder, a single .HDR file and an associated .DBL.DIR/.DBL file
         has to be found. OSError is thrown otherwise.
-        :param cams_dir: The directory containing the CAMS folder.
+        :param cams_dir: The directory containing the CAMS files.
         """
         hdr_files, dbl_files = [], []
         if not cams_dir:
             return []
-        logging.debug("Searching for CAMS")
         for f in os.listdir(cams_dir):
             if re.search(self.regCAMS + ".HDR", p.basename(f)):
                 hdr_files.append(p.join(cams_dir, f))
@@ -299,7 +263,6 @@ class StartMaja(object):
             raise OSError("One or more CAMS HDR files imcomplete: #HDR=%s, #DBL=%s"
                           % (len(hdr_files), len(dbl_files)))
         cams = hdr_files + dbl_files
-        logging.debug("...found %s CAMS files" % len(hdr_files))
         return cams
     
     @staticmethod
