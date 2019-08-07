@@ -74,14 +74,13 @@ def find(pattern, path):
     """
     import re
     result = []
-    # TODO Add unittests
-    # TODO replace assertion
     parameter = pattern.replace("*", ".*")
     for root, dirs, files in os.walk(path):
         for name in files + dirs:
             if re.search(parameter, name):
                 result.append(os.path.join(root, name))
-    assert len(result) == 1
+    if not result:
+        raise ValueError("Cannot find %s in %s" % (parameter, path))
     return result[0]
 
 

@@ -154,3 +154,22 @@ class TestFileSystem(LoggedTestCase.LoggedTestCase):
         for exp, calc in zip(dirnames_c[-2:], dirnames_e[-2:]):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename[:-1], p.basename(calculated[:-1]))
+
+    @testFunction.test_function
+    def test_find_get_sub_folder(self):
+        expected = "subdir0"
+        calculated = FileSystem.find(path=self.root, pattern=expected)
+        self.assertEqual(expected, p.basename(calculated))
+
+    @testFunction.test_function
+    def test_find_get_file(self):
+        expected = "a.jpg"
+        calculated = FileSystem.find(path=self.root, pattern=expected)
+        self.assertEqual(expected, p.basename(calculated))
+
+    @testFunction.test_function
+    def test_find_get_subsubfolder(self):
+        expected = "subdir1"
+        calculated = FileSystem.find(path=self.root, pattern=expected)
+        self.assertEqual(expected, p.basename(calculated))
+
