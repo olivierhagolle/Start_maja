@@ -62,7 +62,7 @@ def __get_item(path, reg):
     available_dirs = [f for f in os.listdir(path) if re.search(reg, f)]
     if not available_dirs:
         raise IOError("Cannot find %s in %s" % (reg, path))
-    return os.path.join(path, available_dirs[0])
+    return os.path.abspath(os.path.join(path, available_dirs[0]))
 
 
 def find(pattern, path):
