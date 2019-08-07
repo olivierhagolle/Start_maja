@@ -20,6 +20,8 @@ class EarthExplorer(object):
 
     regex = r"^[\w-]+.DBL.DIR$"
 
+    # TODO Add platform detection
+
     def __new__(cls, dbl):
         """
         Instantiate a new EarthExplorer file
@@ -30,12 +32,8 @@ class EarthExplorer(object):
 
         if not os.path.isdir(dbl):
             return None
-        print(cls.regex)
-        print(dbl)
-        if re.search(os.path.basename(dbl), cls.regex):
-            print("NoPAss")
+        if not re.search(cls.regex, os.path.basename(dbl)):
             return None
-        print("Pass")
         cls.dbl = dbl
         cls.base = os.path.basename(dbl).split(".")[0]
         # Find associated HDR
@@ -80,3 +78,10 @@ class DTMFile(EarthExplorer):
     """
     regex = r"\w*_(TEST|PROD)_AUX_REFDE2_\w+"
 
+
+class GIPPFile(EarthExplorer):
+    regex = r"\w+_" \
+            r"(TEST|PROD)_" \
+            r"GIP_" \
+            r"(L2ALBD|L2DIFT|L2DIRT|L2TOCR|L2WATV|L2COMM|L2SITE|L2SMAC|CKEXTL|CKQLTL)_" \
+            r"\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
