@@ -156,13 +156,13 @@ class TestStartMaja(unittest.TestCase):
     def setUpClass(cls):
         cls.product_root = os.path.join(cls.root, cls.tile)
         os.makedirs(cls.product_root)
-        product, date = create_dummy_product(cls.product_root, "L1C",
-                                             tile=cls.tile,
-                                             date=cls.start_product)
+        cls.youngest, date = create_dummy_product(cls.product_root, "L1C",
+                                                  tile=cls.tile,
+                                                  date=cls.start_product)
         cls.dates.append(date)
-        product, date = create_dummy_product(cls.product_root, "L1C",
-                                             tile=cls.tile,
-                                             date=cls.end_product)
+        cls.oldest, date = create_dummy_product(cls.product_root, "L1C",
+                                                tile=cls.tile,
+                                                date=cls.end_product)
         cls.dates.append(date)
 
         for i in range(cls.n_dummies):
@@ -277,6 +277,19 @@ class TestStartMaja(unittest.TestCase):
 
         self.assertEqual(s.start, start)
         self.assertEqual(s.end, end)
+
+    def test_product_sorting(self):
+        s = StartMaja(self.folders_file,
+                      self.tile,
+                      self.site,
+                      self.gipp,
+                      self.start,
+                      self.end,
+                      self.nbackward,
+                      self.verbose)
+
+        self.assertEqual(s.avail_input_l1[0], self.youngest)
+        self.assertEqual(s.avail_input_l1[-1], self.oldest)
 
 
 if __name__ == '__main__':
