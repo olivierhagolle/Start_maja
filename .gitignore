@@ -90,6 +90,7 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+xunit-reports/
 
 # Translations
 *.mo
