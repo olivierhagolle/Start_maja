@@ -127,3 +127,20 @@ def get_file(**kwargs):
         return search_folder
     parameter = os.path.normpath(filename).replace("*", ".*")
     return __get_item(search_folder, parameter)
+
+
+def symlink(src, dst):
+    """
+    Create symlink from src to dst and raise Exception if it didnt work
+    :param src: The full path to the source file or folder
+    :param dst: The destination folder
+    :return: None. OSError if symlink cannot be created.
+    """
+    if os.path.exists(dst) and os.path.islink(dst):
+        logging.debug("File already existing: %s" % dst)
+        return
+
+    try:
+        os.symlink(src, dst)
+    except OSError:
+        raise OSError("Cannot create symlink for %s at %s. Does your plaform support symlinks?" % (src, dst))

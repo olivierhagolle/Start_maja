@@ -159,6 +159,28 @@ class TestFileSystem(unittest.TestCase):
         calculated = FileSystem.find(path=self.root, pattern=expected)
         self.assertEqual(expected, p.basename(calculated[0]))
 
+    def test_make_symlink_file(self):
+        origin = os.path.join(self.root, self.file_a1)
+        destination = os.path.join(self.root, "symlink1")
+        self.assertTrue(os.path.exists(origin))
+        self.assertFalse(os.path.exists(destination))
+        FileSystem.symlink(origin, destination)
+        self.assertTrue(os.path.islink(destination))
+        os.remove(destination)
+        self.assertFalse(os.path.exists(destination))
+        self.assertTrue(os.path.exists(origin))
+
+    def test_make_symlink_folder(self):
+        origin = os.path.join(self.root, self.subdir_prefix + "0")
+        destination = os.path.join(self.root, "symlink1")
+        self.assertTrue(os.path.exists(origin))
+        self.assertFalse(os.path.exists(destination))
+        FileSystem.symlink(origin, destination)
+        self.assertTrue(os.path.islink(destination))
+        os.remove(destination)
+        self.assertFalse(os.path.exists(destination))
+        self.assertTrue(os.path.exists(origin))
+
 
 if __name__ == '__main__':
     unittest.main()
