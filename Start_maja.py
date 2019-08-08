@@ -501,6 +501,9 @@ class StartMaja(object):
 
 
 if __name__ == "__main__":
+    import sys
+    assert sys.version_info >= (2, 7)
+
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("-g", "--gipp", help="Full path to the GIPP folder being used",
