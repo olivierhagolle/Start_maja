@@ -11,77 +11,71 @@ Created on:     Fri Jan 11 16:57:37 2019
 """
 
 import os
-from os.path import basename as bname
 import logging
 
+
 class Workplan(object):
-    productsL1 = []
-    productsL2 = []
-    cams = []
-    dtm = None
-    tile = None
-    conf = None
-    mode = None
-    
-    def __init__(self, date, L1, L2, CAMS, DTM, tile, conf, checkL2=False):
-        self.date = date
-        self.L1 = L1
-        self.L2 = L2
-        self.cams = CAMS
-        self.dtm = DTM
-        self.tile = tile
-        self.conf = conf
-        self.checkL2 = checkL2
-        pass
-    
+
+    def __init__(self, wdir, outdir, l1, **kwargs):
+        supported_params = {
+            param
+            for param in ("cams", "meteo")
+            if kwargs.get(param, None) is not None
+        }
+        # Check if the directories exist:
+        assert os.path.isdir(wdir)
+        assert os.path.isdir(outdir)
+
+        self.wdir = wdir
+        self.outdir = outdir
+        self.l1 = l1
+        self.aux_files = [kwargs[key] for key in supported_params]
+
     def __str__(self):
-        from Common import DateConverter as dc
-        return str("%8s | %5s | %8s | %70s | %15s" % (dc.datetimeToStringShort(self.date), self.tile, self.mode, bname(self.L1[0]), "from previous"))
-    
-    def execute(self):
+        return str("%8s | %5s | %8s | %70s | %15s" % (self.l1.get_date(),
+                                                      self.l1.get_tile(),
+                                                      self.mode, self.l1.base, "from previous"))
+
+    # TODO Write this for each mode (and update params)
+    def execute(self, dtm, gipp, conf):
         """
         Run the workplan with its given parameters
         """
         raise NotImplementedError
 
-    @staticmethod
-    def symlink(src, dst):
+    def get_dirname(self):
         """
-        Create symlink from src to dst and raise Exception if it didnt work
+        Create a hash of the product name in order to have a unique folder name
+        :return: The product name as hex-hash
         """
-        if(os.path.exists(dst) and os.path.islink(dst)):
-            logging.debug("File already existing: %s" % dst)
-            return
-        
-        try:
-            os.symlink(src, dst)
-        except:
-            raise OSError("Cannot create symlink for %s at %s. Does your plaform support symlinks?" % (src, dst))
-            
-    
-    def createInputDir(self, wdir, products, cams, dtm, gipps):
+        import hashlib
+        return hashlib.md5(self.l1.base.encode("utf-8")).hexdigest()
+
+    def create_working_dir(self):
         """
         Set up all files of the input directory, which are:
             Product (1C and eventually 2A)
             GIPPs
             DTM
             (CAMS) if existing
+        :return:
         """
-        
-        from Common.FileSystem import createDirectory
-        
-        input_dir = os.path.join(wdir, "StartMaja")
-        createDirectory(input_dir)
-        
+        from Common.FileSystem import create_directory, symlink
+
+        input_dir = os.path.join(self.wdir, "Start_maja_" + self.get_dirname())
+        create_directory(input_dir)
+        # TODO Link stuff
         for prod, i in products:
-            self.symlink(prod, os.path.join(input_dir, os.path.basename(prod)))
+            symlink(prod, os.path.join(input_dir, os.path.basename(prod)))
         for f in cams:
-            self.symlink(f, os.path.join(input_dir, os.path.basename(f)))
+            symlink(f, os.path.join(input_dir, os.path.basename(f)))
         for f in dtm:
-            self.symlink(f, os.path.join(input_dir, os.path.basename(f)))
+            symlink(f, os.path.join(input_dir, os.path.basename(f)))
         for gipp in os.listdir(gipps):
-            self.symlink(os.path.join(gipps, gipp), os.path.join(input_dir, os.path.basename(gipp)))
+            symlink(os.path.join(gipps, gipp), os.path.join(input_dir, os.path.basename(gipp)))
         return input_dir
+
+    # TODO revise this if needed:
 
     @staticmethod
     def runExternalApplication(name, args):
@@ -168,6 +162,7 @@ class ModeNominal(Workplan):
         Run the workplan with its given parameters
         """
         raise NotImplementedError
+
 
 if __name__ == "__main__":
     pass
