@@ -153,7 +153,7 @@ class TestAuxFile(unittest.TestCase):
     def test_cams_creation(self):
         from Common import FileSystem
 
-        dbl = FileSystem.find("DBL.DIR", self.subdir_prefix)
+        dbl = FileSystem.find("DBL.DIR", self.subdir_prefix)[0]
         c = CAMSFile(dbl)
         self.assertIsNotNone(c)
         base = os.path.basename(dbl).split(".")[0]
@@ -163,13 +163,13 @@ class TestAuxFile(unittest.TestCase):
 
     def test_wrong_cams_creation(self):
         from Common import FileSystem
-        dbl = FileSystem.find("DBL.DIR", self.mnt[0])
+        dbl = FileSystem.find("DBL.DIR", self.mnt[0])[0]
         self.assertIsNone(CAMSFile(dbl))
 
     def test_cams_date(self):
         from Common import FileSystem
 
-        dbl = FileSystem.find("DBL.DIR", self.subdir_prefix)
+        dbl = FileSystem.find("DBL.DIR", self.subdir_prefix)[0]
         c = CAMSFile(dbl)
         base = os.path.basename(dbl).split(".")[0]
         date = datetime.strptime(base.split("_")[-2], "%Y%m%dT%H%M%S")
@@ -178,7 +178,7 @@ class TestAuxFile(unittest.TestCase):
     def test_mnt_creation(self):
         from Common import FileSystem
         for m in self.mnt:
-            dbl = FileSystem.find("DBL.DIR", m)
+            dbl = FileSystem.find("DBL.DIR", m)[0]
             d = DTMFile(dbl)
             self.assertIsNotNone(d)
             base = os.path.basename(dbl).split(".")[0]
@@ -187,7 +187,7 @@ class TestAuxFile(unittest.TestCase):
 
     def test_wrong_mnt_creation(self):
         from Common import FileSystem
-        dbl = FileSystem.find("DBL.DIR", self.subdir_prefix)
+        dbl = FileSystem.find("DBL.DIR", self.subdir_prefix)[0]
         self.assertIsNone(DTMFile(dbl))
 
 

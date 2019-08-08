@@ -18,11 +18,11 @@ class EarthExplorer(object):
     Class to store an auxiliary EarthExplorer file
     """
 
-    regex = r"^[\w-]+.DBL.DIR$"
+    regex = r"^[\w-]+.\w+"
 
     # TODO Add platform detection
 
-    def __new__(cls, dbl):
+    def __new__(cls, dbl, regex=None):
         """
         Instantiate a new EarthExplorer file
         :param dbl: A folder name
@@ -32,7 +32,8 @@ class EarthExplorer(object):
 
         if not os.path.isdir(dbl):
             return None
-        if not re.search(cls.regex, os.path.basename(dbl)):
+        reg = cls.regex if regex is None else regex
+        if not re.search(reg, os.path.basename(dbl)):
             return None
         cls.dbl = dbl
         cls.base = os.path.basename(dbl).split(".")[0]
@@ -40,6 +41,17 @@ class EarthExplorer(object):
         cls.hdr = FileSystem.get_file(root=os.path.join(dbl, "../"), filename=cls.base + ".HDR")
         assert os.path.isfile(cls.hdr)
         return object.__new__(cls)
+
+    def __str__(self):
+        return "\n".join(["DBL: " + self.dbl,
+                          "HDR: " + self.hdr])
+
+    def __repr__(self):
+        return self.__str__()
+
+    @classmethod
+    def get_specifiable_regex(cls):
+        return cls.regex[:-3]
 
     def link(self, dest):
         """
@@ -85,3 +97,19 @@ class GIPPFile(EarthExplorer):
             r"GIP_" \
             r"(L2ALBD|L2DIFT|L2DIRT|L2TOCR|L2WATV|L2COMM|L2SITE|L2SMAC|CKEXTL|CKQLTL)_" \
             r"\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+    regex_albd = r"\w+_(TEST|PROD)_GIP_L2ALBD_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex_dift = r"\w+_(TEST|PROD)_GIP_L2DIFT_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex_dirt = r"\w+_(TEST|PROD)_GIP_L2DIRT_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex_tocr = r"\w+_(TEST|PROD)_GIP_L2TOCR_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex_watv = r"\w+_(TEST|PROD)_GIP_L2WATV_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex_comm = r"\w+_(TEST|PROD)_GIP_L2COMM_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex_site = r"\w+_(TEST|PROD)_GIP_L2SITE_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex_smac = r"\w+_(TEST|PROD)_GIP_L2SMAC_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex_extl = r"\w+_(TEST|PROD)_GIP_CKEXTL_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex_qltl = r"\w+_(TEST|PROD)_GIP_CKQLTL_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+    all_regexes = [regex_albd, regex_dift, regex_dirt,
+                   regex_tocr, regex_watv, regex_comm,
+                   regex_site, regex_smac, regex_extl,
+                   regex_qltl]
