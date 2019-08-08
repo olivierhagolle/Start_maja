@@ -81,7 +81,17 @@ def find(pattern, path):
                 result.append(os.path.join(root, name))
     if not result:
         raise ValueError("Cannot find %s in %s" % (parameter, path))
-    return result[0]
+    return result
+
+
+def find_single(pattern, path):
+    """
+    Find a file or dir in a directory-tree.
+    :param pattern: The filename to be searched for
+    :param path: The path to the root directory
+    :return: The file/directory if found. AssertionError if not.
+    """
+    return find(pattern, path)[0]
 
 
 def get_file(**kwargs):

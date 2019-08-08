@@ -147,17 +147,17 @@ class TestFileSystem(unittest.TestCase):
     def test_find_get_sub_folder(self):
         expected = "subdir0"
         calculated = FileSystem.find(path=self.root, pattern=expected)
-        self.assertEqual(expected, p.basename(calculated))
+        self.assertEqual(expected, p.basename(calculated[0]))
 
     def test_find_get_file(self):
         expected = "a.jpg"
         calculated = FileSystem.find(path=self.root, pattern=expected)
-        self.assertEqual(expected, p.basename(calculated))
+        self.assertEqual(expected, p.basename(calculated[0]))
     
     def test_find_get_subsubfolder(self):
         expected = "subdir1"
         calculated = FileSystem.find(path=self.root, pattern=expected)
-        self.assertEqual(expected, p.basename(calculated))
+        self.assertEqual(expected, p.basename(calculated[0]))
 
 
 if __name__ == '__main__':
