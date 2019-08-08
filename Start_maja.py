@@ -125,6 +125,9 @@ class StartMaja(object):
 
         if self.start > self.end:
             raise ValueError("Start date has to be before the end date!")
+
+        # TODO Filter products by start and end date
+        # TODO Sort products by date
         # Subtract 1, which means excluding the actual product:
         self.nbackward = nbackward - 1
 
@@ -271,7 +274,7 @@ class StartMaja(object):
                 cams_filtered.append(cams)
         return cams_filtered
 
-    def create_workplans(self, prods_l1, prods_l2, platform, tile, CAMS, DTM, start_date, conf, end_date, n_backward):
+    def create_workplans(self):
         """
         Create a workplan for each Level-1 product found between the given date period
         For the first product available, check on top if an L2 product from the date
@@ -280,16 +283,9 @@ class StartMaja(object):
         a BACKWARD processing.
         If both of those conditions are not met, a simple INIT is run and the rest
         in NOMINAL
-        :param prods_l1: All L1 products found
-        :param prods_l2: All L2 products found
-        :param platform: The platform of the L1 and L2 products
-        :param start_date: Beginning of the desired processing period
-        :param end_date: End of the desired processing period
-        :param n_backward: Minimum number of products to be used for a BACKWARD mode
         :return: List of workplans to be executed
         """
-        from Common import DateConverter as dc
-        from Chain import Workplan as wp
+        from Chain import Workplan
         
         # Create list of L2 and L1 products with their respective date:
         dates_l2 = sorted([(dc.getDateFromProduct(prod, platform), prod) for prod in prods_l2], key=lambda tup: tup[0])
