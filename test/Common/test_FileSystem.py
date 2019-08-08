@@ -172,7 +172,7 @@ class TestFileSystem(unittest.TestCase):
 
     def test_make_symlink_folder(self):
         origin = os.path.join(self.root, self.subdir_prefix + "0")
-        destination = os.path.join(self.root, "symlink1")
+        destination = os.path.join(self.root, "symlink2")
         self.assertTrue(os.path.exists(origin))
         self.assertFalse(os.path.exists(destination))
         FileSystem.symlink(origin, destination)
