@@ -100,3 +100,13 @@ class MajaProduct(object):
 
     def get_date(self):
         raise NotImplementedError
+
+    def __lt__(self, other):
+        return self.get_date() < other.get_date()
+
+    def __eq__(self, other):
+        return self.get_date() == other.get_date() and \
+               self.get_level() == other.get_level() and \
+               self.get_metadata_file() == other.get_metadata_file() and \
+               self.get_tile() == other.get_tile() and \
+               self.get_platform() == other.get_platform()
