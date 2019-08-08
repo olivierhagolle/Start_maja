@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from Unittest import LoggedTestCase
-from Unittest import testFunction
+import unittest
 from Common import DateConverter
 
-class testDateConverter(LoggedTestCase.LoggedTestCase):
 
-    @testFunction.test_function
+class TestDateConverter(unittest.TestCase):
+
     def testDateConversionShort(self):
        orig = "20180522"
        origAsDT = DateConverter.stringToDatetime(orig)
@@ -14,7 +13,6 @@ class testDateConverter(LoggedTestCase.LoggedTestCase):
        self.assertEqual(DateConverter.datetimeToString(origAsDT),
                         "2018-05-22T00:00:00.000Z")
        
-    @testFunction.test_function
     def testDateConversionLong(self):
        orig = "2018-05-22T00:00:00.000Z"
        origAsDT = DateConverter.stringToDatetime(orig)
@@ -22,7 +20,6 @@ class testDateConverter(LoggedTestCase.LoggedTestCase):
        self.assertEqual(DateConverter.datetimeToString(origAsDT),
                         orig)
        
-    @testFunction.test_function
     def test_PlatformDates(self):
         from Common import DateConverter as dc
         s2 = [(["S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE", 0], 0),
@@ -46,3 +43,8 @@ class testDateConverter(LoggedTestCase.LoggedTestCase):
         for (prod, platform), date in zip(vns, datesVns):
             d = dc.datetimeToStringShort(dc.getDateFromProduct(prod, platform))
             self.assertEqual(date, d)
+
+
+if __name__ == '__main__':
+    unittest.main()
+

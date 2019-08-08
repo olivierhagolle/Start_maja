@@ -10,14 +10,14 @@ Project:        Start_maja, CNES
 Created on:     Tue Dec  5 10:26:05 2018
 """
 
-from Unittest import LoggedTestCase
-from Unittest import testFunction
+import unittest
+from Common import TestFunctions
 from Chain.Product import MajaProduct
 import os
 from os import path as p
 
 
-class TestProduct(LoggedTestCase.LoggedTestCase):
+class TestProduct(unittest.TestCase):
     root = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE"
 
     subdir_prefix = "subdir"
@@ -33,30 +33,29 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
         :return:
         """
         os.makedirs(self.root)
-        testFunction.touch(p.join(self.root, self.file_a1))
-        testFunction.touch(p.join(self.root, self.file_a2))
-        testFunction.touch(p.join(self.root, self.file_b1))
-        testFunction.touch(p.join(self.root, self.file_c1))
+        TestFunctions.touch(p.join(self.root, self.file_a1))
+        TestFunctions.touch(p.join(self.root, self.file_a2))
+        TestFunctions.touch(p.join(self.root, self.file_b1))
+        TestFunctions.touch(p.join(self.root, self.file_c1))
         for i in range(2):
             subdir = p.join(self.root, self.subdir_prefix + str(i))
             os.makedirs(subdir)
-            testFunction.touch(p.join(subdir, self.file_a1))
-            testFunction.touch(p.join(subdir, self.file_a2))
-            testFunction.touch(p.join(subdir, self.file_b1))
-            testFunction.touch(p.join(subdir, self.file_c1))
+            TestFunctions.touch(p.join(subdir, self.file_a1))
+            TestFunctions.touch(p.join(subdir, self.file_a2))
+            TestFunctions.touch(p.join(subdir, self.file_b1))
+            TestFunctions.touch(p.join(subdir, self.file_c1))
             for j in range(2):
                 ssubdir = p.join(subdir, self.subdir_prefix + str(j))
                 os.makedirs(ssubdir)
-                testFunction.touch(p.join(ssubdir, self.file_a1))
-                testFunction.touch(p.join(ssubdir, self.file_a2))
-                testFunction.touch(p.join(ssubdir, self.file_b1))
-                testFunction.touch(p.join(ssubdir, self.file_c1))
+                TestFunctions.touch(p.join(ssubdir, self.file_a1))
+                TestFunctions.touch(p.join(ssubdir, self.file_a2))
+                TestFunctions.touch(p.join(ssubdir, self.file_b1))
+                TestFunctions.touch(p.join(ssubdir, self.file_c1))
 
     def tearDown(self):
         import shutil
         shutil.rmtree(self.root)
 
-    @testFunction.test_function
     def test_get_product_file_depth1(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/a"
@@ -68,7 +67,6 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
 
-    @testFunction.test_function
     def test_get_product_file_depth2(self):
         product = MajaProduct(self.root).factory()
         expected = r"S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/subdir0/a"
@@ -80,7 +78,6 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
 
-    @testFunction.test_function
     def test_get_product_file_depth3(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/subdir0/subdir1/c.xml"
@@ -92,7 +89,6 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
 
-    @testFunction.test_function
     def test_get_product_file_full(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/b.jpg"
@@ -104,7 +100,6 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
 
-    @testFunction.test_function
     def test_get_product_file_from_folder_above(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/b.jpg"
@@ -116,7 +111,6 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
 
-    @testFunction.test_function
     def test_get_product_folder(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/subdir0"
@@ -128,7 +122,6 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
 
-    @testFunction.test_function
     def test_get_product_sub_folder(self):
         product = MajaProduct(self.root).factory()
         expected = "S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE/subdir0"
@@ -139,3 +132,7 @@ class TestProduct(LoggedTestCase.LoggedTestCase):
         for exp, calc in zip(dirnames_c[-2:], dirnames_e[-2:]):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename[:-1], p.basename(calculated[:-1]))
+
+
+if __name__ == '__main__':
+    unittest.main()

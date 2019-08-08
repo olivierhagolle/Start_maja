@@ -10,8 +10,8 @@ Project:        Start_maja, CNES
 Created on:     Tue Dec  5 10:26:05 2018
 """
 
-from Unittest import LoggedTestCase
-from Unittest import testFunction
+import unittest
+from Common import TestFunctions
 from Chain.AuxFile import CAMSFile, DTMFile, GIPPFile
 import os
 from datetime import datetime
@@ -33,7 +33,7 @@ def create_dummy_cams(root, date, platform="GEN"):
     dbl_name = os.path.join(root, basename + ".DBL.DIR")
     hdr_name = os.path.join(root, basename + ".HDR")
     os.makedirs(dbl_name)
-    testFunction.touch(hdr_name)
+    TestFunctions.touch(hdr_name)
 
 
 def create_dummy_mnt(root, tile, platform="GEN"):
@@ -51,11 +51,11 @@ def create_dummy_mnt(root, tile, platform="GEN"):
     hdr_name = os.path.join(mnt_name, basename + ".HDR")
     os.makedirs(mnt_name)
     os.makedirs(dbl_name)
-    testFunction.touch(hdr_name)
+    TestFunctions.touch(hdr_name)
     return mnt_name
 
 
-class TestAuxFile(LoggedTestCase.LoggedTestCase):
+class TestAuxFile(unittest.TestCase):
     root = os.getcwd()
 
     subdir_prefix = os.path.join(root, "CAMS")
@@ -92,7 +92,6 @@ class TestAuxFile(LoggedTestCase.LoggedTestCase):
         for m in cls.mnt:
             shutil.rmtree(m)
 
-    @testFunction.test_function
     def test_cams_reg(self):
         import re
         cams = ["S2__PROD_EXO_CAMS_20171008T030000_20180628T174612.HDR",
@@ -101,7 +100,6 @@ class TestAuxFile(LoggedTestCase.LoggedTestCase):
         for f in cams:
             self.assertTrue(re.search(CAMSFile.regex, f))
 
-    @testFunction.test_function
     def test_dtm_reg(self):
         import re
         dtms = ["S2__TEST_AUX_REFDE2_T29RPQ_0001",
@@ -109,7 +107,6 @@ class TestAuxFile(LoggedTestCase.LoggedTestCase):
         for dtm in dtms:
             self.assertTrue(re.search(DTMFile.regex, dtm))
 
-    @testFunction.test_function
     def test_gipp_reg(self):
         import re
         gipp_vns = ["VE_TEST_GIP_L2ALBD_L_ALLSITES_00010_20000101_99991231.HDR",
@@ -192,3 +189,7 @@ class TestAuxFile(LoggedTestCase.LoggedTestCase):
         from Common import FileSystem
         dbl = FileSystem.find("DBL.DIR", self.subdir_prefix)
         self.assertIsNone(DTMFile(dbl))
+
+
+if __name__ == '__main__':
+    unittest.main()

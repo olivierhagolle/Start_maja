@@ -10,14 +10,12 @@ Project:        StartMaja, CNES
 Created on:     Wed Sep 12 09:12:51 2018
 """
 
-from Unittest import LoggedTestCase
-from Unittest import testFunction
+import unittest
 from prepare_mnt import DTMCreation
 
 
-class TestDTMCreation(LoggedTestCase.LoggedTestCase):
+class TestDTMCreation(unittest.TestCase):
 
-    @testFunction.test_function
     def testFileNotExisting(self):
         product = "a/b/c/notavalidproduct"
         with self.assertRaises(OSError):
@@ -25,7 +23,6 @@ class TestDTMCreation(LoggedTestCase.LoggedTestCase):
             import os
             DTMCreation.DTMCreator(product, None, None, os.getcwd(), os.getcwd())
 
-    @testFunction.test_function
     def testExistingLocdalFileS2Native(self):
         import os
         product = "/home/akynos/MAJA/inputs/L1/29RPQ/S2A_MSIL1C_20180706T110621_N0206_R137_T29RPQ_20180706T132942.SAFE/"
@@ -42,7 +39,6 @@ class TestDTMCreation(LoggedTestCase.LoggedTestCase):
             self.logger.warning("WARNING: Did not find existing product")
             self.assertEqual(1,1)
         
-    @testFunction.test_function
     def testExistingLocalFileS2Muscate(self):
         import os
         product = "/home/akynos/MAJA/inputs/L1/31TCH_MUSCATE/SENTINEL2B_20171008-105012-463_L1C_T31TCH_C_V1-0"
@@ -59,7 +55,6 @@ class TestDTMCreation(LoggedTestCase.LoggedTestCase):
             self.logger.warning("WARNING: Did not find existing product")
             self.assertEqual(1,1)
         
-    @testFunction.test_function
     def testGetSiteInfoNative(self):
         product = "/home/akynos/MAJA/inputs/L1/29RPQ/S2A_MSIL1C_20180706T110621_N0206_R137_T29RPQ_20180706T132942.SAFE/"
         srtm = "/home/akynos/MAJA/DTM/Creation/SRTM"
@@ -80,7 +75,6 @@ class TestDTMCreation(LoggedTestCase.LoggedTestCase):
         self.assertEqual(site.ty_max, 0)
         self.assertEqual(site.ty_min, 0)
 
-    @testFunction.test_function
     def testGetSiteInfoMuscate(self):
         product = "/home/akynos/MAJA/inputs/L1/31TCH/SENTINEL2B_20171008-105012-463_L1C_T31TCH_C_V1-0"
         srtm = "/home/akynos/MAJA/DTM/Creation/SRTM"
@@ -101,7 +95,6 @@ class TestDTMCreation(LoggedTestCase.LoggedTestCase):
         self.assertEqual(site.ty_max, 0)
         self.assertEqual(site.ty_min, 0)
     
-    @testFunction.test_function
     def testGetSiteInfoKML(self):
         import os
         from Common import FileSystem
@@ -139,3 +132,7 @@ class TestDTMCreation(LoggedTestCase.LoggedTestCase):
         self.assertTrue(os.path.exists(os.path.join(testOut, "S2__TEST_AUX_REFDE2_T29RPQ_0001", "S2__TEST_AUX_REFDE2_T29RPQ_0001.DBL.DIR", "S2__TEST_AUX_REFDE2_T29RPQ_0001_SLP_R1.TIF")))
         self.assertTrue(os.path.exists(os.path.join(testOut, "S2__TEST_AUX_REFDE2_T29RPQ_0001", "S2__TEST_AUX_REFDE2_T29RPQ_0001.DBL.DIR", "S2__TEST_AUX_REFDE2_T29RPQ_0001_SLP_R2.TIF")))
         self.assertEqual(FileSystem.removeDirectory(testOut), 0)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from Unittest import LoggedTestCase
-from Unittest import testFunction
-
+import unittest
+from Common import TestFunctions
 from Common import FileSystem
 import os
 from os import path as p
 
 
-class TestFileSystem(LoggedTestCase.LoggedTestCase):
+class TestFileSystem(unittest.TestCase):
 
     root = "test_filesystem_dir"
 
@@ -24,30 +23,29 @@ class TestFileSystem(LoggedTestCase.LoggedTestCase):
         :return:
         """
         os.makedirs(self.root)
-        testFunction.touch(p.join(self.root, self.file_a1))
-        testFunction.touch(p.join(self.root, self.file_a2))
-        testFunction.touch(p.join(self.root, self.file_b1))
-        testFunction.touch(p.join(self.root, self.file_c1))
+        TestFunctions.touch(p.join(self.root, self.file_a1))
+        TestFunctions.touch(p.join(self.root, self.file_a2))
+        TestFunctions.touch(p.join(self.root, self.file_b1))
+        TestFunctions.touch(p.join(self.root, self.file_c1))
         for i in range(2):
             subdir = p.join(self.root, self.subdir_prefix + str(i))
             os.makedirs(subdir)
-            testFunction.touch(p.join(subdir, self.file_a1))
-            testFunction.touch(p.join(subdir, self.file_a2))
-            testFunction.touch(p.join(subdir, self.file_b1))
-            testFunction.touch(p.join(subdir, self.file_c1))
+            TestFunctions.touch(p.join(subdir, self.file_a1))
+            TestFunctions.touch(p.join(subdir, self.file_a2))
+            TestFunctions.touch(p.join(subdir, self.file_b1))
+            TestFunctions.touch(p.join(subdir, self.file_c1))
             for j in range(2):
                 ssubdir = p.join(subdir, self.subdir_prefix + str(j))
                 os.makedirs(ssubdir)
-                testFunction.touch(p.join(ssubdir, self.file_a1))
-                testFunction.touch(p.join(ssubdir, self.file_a2))
-                testFunction.touch(p.join(ssubdir, self.file_b1))
-                testFunction.touch(p.join(ssubdir, self.file_c1))
+                TestFunctions.touch(p.join(ssubdir, self.file_a1))
+                TestFunctions.touch(p.join(ssubdir, self.file_a2))
+                TestFunctions.touch(p.join(ssubdir, self.file_b1))
+                TestFunctions.touch(p.join(ssubdir, self.file_c1))
 
     def tearDown(self):
         import shutil
         shutil.rmtree(self.root)
 
-    @testFunction.test_function
     def test_create_remove_dir(self):
         path = os.path.join(os.getcwd(), "test_create_remove_dir")
         # This throws a log message
@@ -57,17 +55,15 @@ class TestFileSystem(LoggedTestCase.LoggedTestCase):
         self.assertFalse(os.path.isdir(path))
         self.assertFalse(os.path.exists(path))
 
-    @testFunction.test_function
     def test_create_remove_file(self):
         path = os.path.join(os.getcwd(), "test_create_remove_file")
         self.assertFalse(os.path.exists(path))
-        testFunction.touch(path)
+        TestFunctions.touch(path)
         self.assertTrue(os.path.exists(path))
         self.assertTrue(os.path.isfile(path))
         FileSystem.remove_file(path)
         self.assertFalse(os.path.exists(path))
-
-    @testFunction.test_function
+    
     def test_get_file_depth1(self):
         expected = "test_filesystem_dir/a"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -77,8 +73,7 @@ class TestFileSystem(LoggedTestCase.LoggedTestCase):
         for exp, calc in zip(dirnames_c[-1:], dirnames_e[-1:]):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
-
-    @testFunction.test_function
+    
     def test_get_file_depth2(self):
         expected = r"test_filesystem_dir/subdir0/a"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -89,7 +84,6 @@ class TestFileSystem(LoggedTestCase.LoggedTestCase):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
 
-    @testFunction.test_function
     def test_get_file_depth3(self):
         expected = "test_filesystem_dir/subdir0/subdir1/c.xml"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -100,7 +94,6 @@ class TestFileSystem(LoggedTestCase.LoggedTestCase):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
 
-    @testFunction.test_function
     def test_get_file_ending(self):
         expected = "test_filesystem_dir/c.xml"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -110,8 +103,7 @@ class TestFileSystem(LoggedTestCase.LoggedTestCase):
         for exp, calc in zip(dirnames_c[-1:], dirnames_e[-1:]):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
-
-    @testFunction.test_function
+    
     def test_get_file_full(self):
         expected = "test_filesystem_dir/b.jpg"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -121,8 +113,7 @@ class TestFileSystem(LoggedTestCase.LoggedTestCase):
         for exp, calc in zip(dirnames_c[-1:], dirnames_e[-1:]):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
-
-    @testFunction.test_function
+    
     def test_get_file_from_folder_above(self):
         expected = "test_filesystem_dir/b.jpg"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -132,8 +123,7 @@ class TestFileSystem(LoggedTestCase.LoggedTestCase):
         for exp, calc in zip(dirnames_c[-1:], dirnames_e[-1:]):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
-
-    @testFunction.test_function
+    
     def test_get_folder(self):
         expected = "test_filesystem_dir/subdir0"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -144,7 +134,6 @@ class TestFileSystem(LoggedTestCase.LoggedTestCase):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename, p.basename(calculated))
 
-    @testFunction.test_function
     def test_get_sub_folder(self):
         expected = "test_filesystem_dir/subdir0"
         dirnames_e = p.normpath(expected).split(os.sep)
@@ -155,21 +144,21 @@ class TestFileSystem(LoggedTestCase.LoggedTestCase):
             self.assertEqual(exp[:-1], calc[:-1])
         self.assertEqual(filename[:-1], p.basename(calculated[:-1]))
 
-    @testFunction.test_function
     def test_find_get_sub_folder(self):
         expected = "subdir0"
         calculated = FileSystem.find(path=self.root, pattern=expected)
         self.assertEqual(expected, p.basename(calculated))
 
-    @testFunction.test_function
     def test_find_get_file(self):
         expected = "a.jpg"
         calculated = FileSystem.find(path=self.root, pattern=expected)
         self.assertEqual(expected, p.basename(calculated))
-
-    @testFunction.test_function
+    
     def test_find_get_subsubfolder(self):
         expected = "subdir1"
         calculated = FileSystem.find(path=self.root, pattern=expected)
         self.assertEqual(expected, p.basename(calculated))
 
+
+if __name__ == '__main__':
+    unittest.main()

@@ -10,8 +10,8 @@ Project:        Start_maja, CNES
 Created on:     Tue Dec  5 10:26:05 2018
 """
 
-from Unittest import LoggedTestCase
-from Unittest import testFunction
+import unittest
+from Common import TestFunctions
 from Start_maja import StartMaja
 import os
 from datetime import datetime
@@ -55,7 +55,7 @@ def create_dummy_product(root, product_level, **kwargs):
         product_path = os.path.join(root, product_name)
         metadata_path = os.path.join(product_path, "MTD_MSIL1C.xml")
         os.makedirs(product_path)
-        testFunction.touch(metadata_path)
+        TestFunctions.touch(metadata_path)
     elif product_level in ["L2A", "L3A"]:
         date_str = date.strftime("%Y%m%d-%H%M%S-") + str(orbit_ms)
         product_name = "_".join([platform,
@@ -67,9 +67,10 @@ def create_dummy_product(root, product_level, **kwargs):
         product_path = os.path.join(root, product_name)
         metadata_path = os.path.join(product_path, product_name + "_MTD_ALL.xml")
         os.makedirs(product_path)
-        testFunction.touch(metadata_path)
+        TestFunctions.touch(metadata_path)
     print(product_path)
     return product_path, date
+
 
 def create_dummy_mnt(root, tile, platform="GEN"):
     """
@@ -86,9 +87,8 @@ def create_dummy_mnt(root, tile, platform="GEN"):
     hdr_name = os.path.join(mnt_name, basename + ".HDR")
     os.makedirs(mnt_name)
     os.makedirs(dbl_name)
-    testFunction.touch(hdr_name)
+    TestFunctions.touch(hdr_name)
     return mnt_name
-
 
 
 def modify_folders_file(root, new_file, **kwargs):
@@ -131,10 +131,10 @@ def create_dummy_cams(root, date, platform="GEN"):
     dbl_name = os.path.join(root, basename + ".DBL.DIR")
     hdr_name = os.path.join(root, basename + ".HDR")
     os.makedirs(dbl_name)
-    testFunction.touch(hdr_name)
+    TestFunctions.touch(hdr_name)
 
 
-class TestStartMaja(LoggedTestCase.LoggedTestCase):
+class TestStartMaja(unittest.TestCase):
 
     root = os.getcwd()
     n_not_used = 2
@@ -200,7 +200,6 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
         shutil.rmtree(cls.mnt)
         shutil.rmtree(cls.cams)
 
-    @testFunction.test_function
     def test_dates_and_products(self):
         start_maja = StartMaja(self.folders_file,
                                self.tile,
@@ -215,7 +214,6 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
         self.assertEqual(start_maja.start, self.start_product)
         self.assertEqual(start_maja.end, self.end_product)
 
-    @testFunction.test_function
     def test_parasite_l2a_product(self):
         create_dummy_product(self.product_root, "L2A",
                              platform="LANDSAT8",
@@ -231,7 +229,6 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
                       self.nbackward,
                       self.verbose)
 
-    @testFunction.test_function
     def test_non_existing_l1c_folder(self):
         folders_path = os.path.join(os.getcwd(), "test_error_folder_file.txt")
         modify_folders_file(self.folders_file, new_file=folders_path,
@@ -249,7 +246,6 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
         os.remove(folders_path)
         self.assertFalse(os.path.exists(folders_path))
 
-    @testFunction.test_function
     def test_non_existing_l2a_folder(self):
         folders_path = os.path.join(os.getcwd(), "test_error_folder_file.txt")
         modify_folders_file(self.folders_file, new_file=folders_path,
@@ -267,7 +263,6 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
         os.remove(folders_path)
         self.assertFalse(os.path.exists(folders_path))
 
-    @testFunction.test_function
     def test_custom_start_end_dates(self):
         start = datetime(2017, 1, 1)
         end = datetime(2019, 1, 1)
@@ -282,3 +277,7 @@ class TestStartMaja(LoggedTestCase.LoggedTestCase):
 
         self.assertEqual(s.start, start)
         self.assertEqual(s.end, end)
+
+
+if __name__ == '__main__':
+    unittest.main()

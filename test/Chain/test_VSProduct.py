@@ -10,13 +10,14 @@ Project:        Start_maja, CNES
 Created on:     Tue Dec  5 10:26:05 2018
 """
 
-from Unittest import LoggedTestCase
-from Unittest import testFunction
+import unittest
+from Common import TestFunctions
 from Chain.Product import MajaProduct
 from Chain.VSProduct import VenusMuscate, VenusNatif
 from os import path
 
-class TestVSProduct(LoggedTestCase.LoggedTestCase):
+
+class TestVSProduct(unittest.TestCase):
 
     prod_vs_nat = ["VE_VM01_VSC_L2VALD_ISRAW906_20180317.DBL.DIR",
                    "VE_OPER_VSC_L1VALD_UNH_20180329.DBL.DIR"]
@@ -47,11 +48,11 @@ class TestVSProduct(LoggedTestCase.LoggedTestCase):
         for root in cls.prod_vs_nat:
             os.makedirs(root)
             metadata = root.split(".")[0] + ".HDR"
-            testFunction.touch(metadata)
+            TestFunctions.touch(metadata)
         for root in cls.prod_vs_mus:
             os.makedirs(root)
             metadata = path.join(root, root + "_MTD_ALL.xml")
-            testFunction.touch(metadata)
+            TestFunctions.touch(metadata)
 
     @classmethod
     def tearDownClass(cls):
@@ -64,7 +65,6 @@ class TestVSProduct(LoggedTestCase.LoggedTestCase):
         for root in cls.prod_vs_mus:
             shutil.rmtree(root)
 
-    @testFunction.test_function
     def test_reg_vs_muscate(self):
         tiles = ["KHUMBU", "KHUMBU", "KHUMBU"]
         levels = ["l1c", "l2a", "l3a"]
@@ -85,7 +85,6 @@ class TestVSProduct(LoggedTestCase.LoggedTestCase):
             p = MajaProduct(prod).factory()
             self.assertNotIsInstance(p, VenusMuscate)
 
-    @testFunction.test_function
     def test_reg_vs_natif(self):
         tiles = ["ISRAW906", "UNH"]
         dates = ["20180317T120000", "20180329T120000"]
@@ -104,3 +103,7 @@ class TestVSProduct(LoggedTestCase.LoggedTestCase):
         for prod in self.prod_vs_mus + self.prods_other:
             p = MajaProduct(prod).factory()
             self.assertNotIsInstance(p, VenusNatif)
+
+
+if __name__ == '__main__':
+    unittest.main()

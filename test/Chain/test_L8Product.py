@@ -10,14 +10,14 @@ Project:        Start_maja, CNES
 Created on:     Tue Dec  5 10:26:05 2018
 """
 
-from Unittest import LoggedTestCase
-from Unittest import testFunction
+import unittest
+from Common import TestFunctions
 from Chain.Product import MajaProduct
 from Chain.L8Product import Landsat8Natif, Landsat8Muscate, Landsat8LC1, Landsat8LC2
 from os import path
 
 
-class TestL8Product(LoggedTestCase.LoggedTestCase):
+class TestL8Product(unittest.TestCase):
 
     prod_l8_mus = ["LANDSAT8-OLITIRS-XSTHPAN_20170501-103532-111_L1C_T31TCH_C_V1-0",
                    "LANDSAT8_20170501-103532-111_L2A_T31TCH_C_V1-0"]
@@ -48,15 +48,15 @@ class TestL8Product(LoggedTestCase.LoggedTestCase):
         for root in cls.prod_l8_lc1 + cls.prod_l8_lc2:
             os.makedirs(root)
             metadata = path.join(root, root.split(".")[0] + "_MTL.txt")
-            testFunction.touch(metadata)
+            TestFunctions.touch(metadata)
         for root in cls.prod_l8_mus:
             os.makedirs(root)
             metadata = path.join(root, root + "_MTD_ALL.xml")
-            testFunction.touch(metadata)
+            TestFunctions.touch(metadata)
         for root in cls.prod_l8_nat:
             os.makedirs(root)
             metadata = root.split(".")[0] + ".HDR"
-            testFunction.touch(metadata)
+            TestFunctions.touch(metadata)
 
     @classmethod
     def tearDownClass(cls):
@@ -69,7 +69,6 @@ class TestL8Product(LoggedTestCase.LoggedTestCase):
         for root in cls.prod_l8_lc1 + cls.prod_l8_lc2 + cls.prod_l8_mus:
             shutil.rmtree(root)
 
-    @testFunction.test_function
     def test_reg_l8_muscate(self):
         tiles = ["31TCH", "31TCH"]
         levels = ["l1c", "l2a"]
@@ -90,7 +89,6 @@ class TestL8Product(LoggedTestCase.LoggedTestCase):
             p = MajaProduct(prod).factory()
             self.assertNotIsInstance(p, Landsat8Muscate)
 
-    @testFunction.test_function
     def test_reg_l8_natif(self):
         tiles = ["198030"]
         dates = ["20130626T120000"]
@@ -110,7 +108,6 @@ class TestL8Product(LoggedTestCase.LoggedTestCase):
             p = MajaProduct(prod).factory()
             self.assertNotIsInstance(p, Landsat8Natif)
 
-    @testFunction.test_function
     def test_reg_l8_lc1(self):
         tiles = ["039022"]
         dates = ["20130107T120000"]
@@ -131,7 +128,6 @@ class TestL8Product(LoggedTestCase.LoggedTestCase):
             p = MajaProduct(prod).factory()
             self.assertNotIsInstance(p, Landsat8LC1)
 
-    @testFunction.test_function
     def test_reg_l8_lc2(self):
         tiles = ["199029"]
         dates = ["20170527T120000"]
@@ -151,3 +147,7 @@ class TestL8Product(LoggedTestCase.LoggedTestCase):
         for prod in self.prod_l8_lc1 + self.prod_l8_nat + self.prod_l8_mus + self.prods_other:
             p = MajaProduct(prod).factory()
             self.assertNotIsInstance(p, Landsat8LC2)
+
+
+if __name__ == '__main__':
+    unittest.main()

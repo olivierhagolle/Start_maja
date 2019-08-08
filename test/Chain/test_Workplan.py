@@ -9,3 +9,8 @@ Author:         Peter KETTIG <peter.kettig@cnes.fr>
 Project:        Start_maja, CNES
 Created on:     Tue Dec  5 10:26:05 2018
 """
+
+import unittest
+
+if __name__ == '__main__':
+    unittest.main()

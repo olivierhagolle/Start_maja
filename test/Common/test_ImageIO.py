@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from Unittest import LoggedTestCase
-from Unittest import testFunction
+import unittest
 from Common import ImageIO
 import numpy as np
 import os
 
-class testFileIO(LoggedTestCase.LoggedTestCase):
 
-    @testFunction.test_function
+class TestFileIO(unittest.TestCase):
+
     def testWriteGeoTiff(self):
         coordinates = (652594.9112913811, 10.00887639510383, 0,
                        5072876.717295351, 0, -9.974893672262251)
@@ -53,8 +52,7 @@ class testFileIO(LoggedTestCase.LoggedTestCase):
         #Check if file removed
         self.assertFalse(os.path.exists(path))
         
-    @testFunction.test_function
-    def testFaultyGeotransform(self):    
+    def testFaultyGeotransform(self):
         coordinates = (652594.9112913811, 10.00887639510383, 0,
                        5072876.717295351, 0) #Missing one value
         projection = ''
@@ -70,3 +68,7 @@ class testFileIO(LoggedTestCase.LoggedTestCase):
         #Check projection wrong:
         with self.assertRaises(ValueError):
             self.assertEqual(ImageIO.writeGTiff(dstImage, path, projection, coordinates), 0)
+
+
+if __name__ == '__main__':
+    unittest.main()

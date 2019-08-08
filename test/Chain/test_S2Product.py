@@ -10,14 +10,14 @@ Project:        Start_maja, CNES
 Created on:     Tue Dec  5 10:26:05 2018
 """
 
-from Unittest import LoggedTestCase
-from Unittest import testFunction
+import unittest
+from Common import TestFunctions
 from Chain.Product import MajaProduct
 from Chain.S2Product import Sentinel2Natif, Sentinel2Muscate, Sentinel2SSC
 from os import path
 
 
-class TestS2Product(LoggedTestCase.LoggedTestCase):
+class TestS2Product(unittest.TestCase):
     prod_s2_nat = ["S2A_MSIL1C_20170412T110621_N0204_R137_T29RPQ_20170412T111708.SAFE",
                    "S2B_MSIL1C_20180316T103021_N0206_R108_T32TMR_20180316T123927.SAFE"]
     prod_s2_prd = ["S2A_OPER_PRD_MSIL1C_PDMC_20161109T171237_R135_V20160924T074932_20160924T081448.SAFE"]
@@ -47,15 +47,15 @@ class TestS2Product(LoggedTestCase.LoggedTestCase):
         for root in cls.prod_s2_ssc:
             os.makedirs(root)
             metadata = root.split(".")[0] + ".HDR"
-            testFunction.touch(metadata)
+            TestFunctions.touch(metadata)
         for root in cls.prod_s2_mus:
             os.makedirs(root)
             metadata = path.join(root, root + "_MTD_ALL.xml")
-            testFunction.touch(metadata)
+            TestFunctions.touch(metadata)
         for root in cls.prod_s2_nat:
             os.makedirs(root)
             metadata = path.join(root, "MTD_MSIL1C.xml")
-            testFunction.touch(metadata)
+            TestFunctions.touch(metadata)
 
     @classmethod
     def tearDownClass(cls):
@@ -68,7 +68,6 @@ class TestS2Product(LoggedTestCase.LoggedTestCase):
         for root in cls.prod_s2_mus + cls.prod_s2_nat:
             shutil.rmtree(root)
 
-    @testFunction.test_function
     def test_reg_s2_muscate(self):
         tiles = ["31TCH", "31TCH", "31UFR"]
         levels = ["l1c", "l2a", "l3a"]
@@ -88,7 +87,6 @@ class TestS2Product(LoggedTestCase.LoggedTestCase):
             p = MajaProduct(prod).factory()
             self.assertNotIsInstance(p, Sentinel2Muscate)
 
-    @testFunction.test_function
     def test_reg_s2_natif(self):
         tiles = ["29RPQ", "32TMR"]
         dates = ["20170412T110621", "20180316T103021"]
@@ -108,7 +106,6 @@ class TestS2Product(LoggedTestCase.LoggedTestCase):
             p = MajaProduct(prod).factory()
             self.assertNotIsInstance(p, Sentinel2Natif)
 
-    @testFunction.test_function
     def test_reg_s2_ssc(self):
         tiles = ["36JTT", "21MXT"]
         dates = ["20160914T120000", "20180925T120000"]
@@ -129,7 +126,6 @@ class TestS2Product(LoggedTestCase.LoggedTestCase):
             p = MajaProduct(prod).factory()
             self.assertNotIsInstance(p, Sentinel2SSC)
 
-    @testFunction.test_function
     def test_reg_s2_prd(self):
         tiles = [None]
         dates = ["20161109T171237"]
