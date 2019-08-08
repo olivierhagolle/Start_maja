@@ -17,6 +17,7 @@ import logging
 from os import path as p
 from Chain import Product
 from Common import FileSystem
+from Chain import AuxFile
 
 
 class StartMaja(object):
@@ -49,7 +50,7 @@ class StartMaja(object):
         self.gipp = p.realpath(gipp)
         if not p.isdir(self.gipp):
             raise OSError("Cannot find GIPP folder: %s" % self.gipp)
-        for regGIPP in self.regGIPP:
+        for regGIPP in AuxFile.GIPPFile.all_regexes:
             if not [f for f in os.listdir(gipp) if re.search(regGIPP, f)]:
                 raise OSError("Missing GIPP file: %s" % regGIPP)
         logging.debug("Found GIPP folder: %s" % gipp)
@@ -61,14 +62,14 @@ class StartMaja(object):
 
         self.site = site
         if self.site:
-            site_l1 = FileSystem.find(self.site, self.rep_l1)
-            site_l2 = FileSystem.find(self.site, self.rep_l2)
-            self.path_input_l1 = FileSystem.find(self.tile, site_l1)
-            self.path_input_l2 = FileSystem.find(self.tile, site_l2)
+            site_l1 = FileSystem.find_single(self.site, self.rep_l1)
+            site_l2 = FileSystem.find_single(self.site, self.rep_l2)
+            self.path_input_l1 = FileSystem.find_single(self.tile, site_l1)
+            self.path_input_l2 = FileSystem.find_single(self.tile, site_l2)
             self.__site_info = "site %s and tile %s" % (self.site, self.tile)
         else:
-            self.path_input_l1 = FileSystem.find(self.tile, self.rep_l1)
-            self.path_input_l2 = FileSystem.find(self.tile, self.rep_l2)
+            self.path_input_l1 = FileSystem.find_single(self.tile, self.rep_l1)
+            self.path_input_l2 = FileSystem.find_single(self.tile, self.rep_l2)
             self.__site_info = "tile %s" % self.tile
             logging.debug("No site-folder specified. Searching for product directly by Tile-ID")
 
@@ -128,17 +129,17 @@ class StartMaja(object):
 
         logging.debug("Searching for DTM")
         try:
-            self.dtm_path = self.get_dtm()
+            self.dtm = self.get_dtm()
         except OSError as e:
             logging.debug("Cannot find DTM!")
             logging.debug(e)
         else:
-            logging.debug("Found DTM: %s" % self.dtm_path[1])
+            logging.debug("Found DTM: %s" % self.dtm.hdr)
 
         self.cams_files = []
         if self.rep_cams:
             logging.debug("Searching for CAMS")
-            self.cams_files = self.get_cams_files(self.rep_cams)
+            self.cams_files = self.get_cams_files()
             logging.debug("...found %s CAMS files" % len(self.cams_files))
         return
 
@@ -236,33 +237,25 @@ class StartMaja(object):
         :return: The full path to the hdr and dbl.dir
         """
         from Common import FileSystem
-        dbl = FileSystem.find(path=self.rep_mnt, pattern=self.regDTM + self.tile + "*DBL.DIR")
-        hdr_name = os.path.basename(dbl).split(".")[0]
-        hdr = FileSystem.get_file(root=p.dirname(dbl), filename=hdr_name + "*HDR")
-        return dbl, hdr
+        regex = AuxFile.DTMFile.get_specifiable_regex() + r"T?" + self.tile + r"\w+.DBL.DIR"
+        mnt_folders = FileSystem.find(regex, self.rep_mnt)
+        mnts = [AuxFile.DTMFile(mnt) for mnt in mnt_folders]
+        mnts = [mnt for mnt in mnts if mnt is not None]
+        return mnts[0]
 
-    def get_cams_files(self, cams_dir):
+    def get_cams_files(self):
         """
         Find all associated CAMS- HDR and DBL files
         A CAMS folder has the following naming structure:
             MMM_TEST_EXO_CAMS_YYYYMMDDThhmmss_YYYYMMDDThhmmss
             with MMM = mission (see regex tests)
-        Inside the folder, a single .HDR file and an associated .DBL.DIR/.DBL file
-        has to be found. OSError is thrown otherwise.
-        :param cams_dir: The directory containing the CAMS files.
+        For each CAMS a single .HDR file and an associated .DBL.DIR/.DBL file
+        has to be found. Otherwise it gets discarded
         """
-        hdr_files, dbl_files = [], []
-        if not cams_dir:
-            return []
-        for f in os.listdir(cams_dir):
-            if re.search(self.regCAMS + ".HDR", p.basename(f)):
-                hdr_files.append(p.join(cams_dir, f))
-            if re.search(self.regCAMS + ".DBL", p.basename(f)):
-                dbl_files.append(p.join(cams_dir, f))
-        if len(hdr_files) > len(dbl_files):
-            raise OSError("One or more CAMS HDR files imcomplete: #HDR=%s, #DBL=%s"
-                          % (len(hdr_files), len(dbl_files)))
-        cams = hdr_files + dbl_files
+        from Common import FileSystem
+        cams_folders = FileSystem.find(AuxFile.CAMSFile.regex, self.rep_cams)
+        cams = [AuxFile.CAMSFile(c) for c in cams_folders]
+        cams = [c for c in cams if c is not None]
         return cams
     
     @staticmethod
@@ -501,7 +494,6 @@ class StartMaja(object):
 
 
 if __name__ == "__main__":
-    import sys
     assert sys.version_info >= (2, 7)
 
     import argparse
