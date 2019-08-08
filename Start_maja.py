@@ -102,6 +102,7 @@ class StartMaja(object):
 
         if len(platform) != 1:
             raise IOError("Cannot mix multiple platforms: %s" % platform)
+        self.platform = platform[0]
 
         # Parse products
         if start:
@@ -257,117 +258,19 @@ class StartMaja(object):
         cams = [AuxFile.CAMSFile(c) for c in cams_folders]
         cams = [c for c in cams if c is not None]
         return cams
-    
+
     @staticmethod
-    def filter_cams(cams_files, start_date, end_date):
+    def filter_cams_by_date(cams_files, start_date, end_date):
         """
         Filter out all CAMS files if they are between the given start_date and end_date
         """
-        from Common import DateConverter as dc
         cams_filtered = []
         for cams in cams_files:
-            date = dc.getCAMSDate(cams)
+            date = cams.get_date()
             if date <= start_date or date >= end_date:
                 cams_filtered.append(cams)
         return cams_filtered
-    
-    @staticmethod
-    def get_specifier(site, tile):
-        """
-        Determine whether the products are ordered by site and tile or only by tile
-        """
-        if not site:
-            specifier = tile
-        else:
-            specifier = site
-        return specifier
-    
-    @staticmethod
-    def get_platform_products(input_dir, tile, reg):
-        """
-        Get the available products for a given platform regex
-        """
-        prods = []
-        if not p.isdir(input_dir):
-            return prods
-        for prod in os.listdir(input_dir):
-            for i, pattern in enumerate(reg):
-                if re.search(re.compile(pattern.replace("XXXXX", tile)), prod):
-                    prods.append((p.join(input_dir, prod), i))
-        return prods
-    
-    def get_all_products(self, site, tile, rep_l1, rep_l2, input_dirs):
-        """
-        Get all available L1 and L2 products for the tile and site
-        """
-        prev_l1, prev_l2 = [], []
-        platform_id = -1
-        specifier = self.get_specifier(site, tile)
-        input_rep_l1 = p.join(rep_l1, specifier)
-        input_rep_l2 = p.join(rep_l2, specifier)
-        input_dir_l1, input_dir_l2 = self.set_input_directories(input_rep_l1, input_rep_l2, input_dirs)
-        for i, platform in enumerate([self.regS2, self.regL8, self.regVns]):
-            rep_l1_filtered = self.get_platform_products(input_dir_l1, tile, platform)
-            rep_l2_filtered = self.get_platform_products(input_dir_l2, tile, platform)
-            if rep_l1_filtered and not prev_l1:
-                platform_id = i
-                prev_l1 = rep_l1_filtered
-                prev_l2 = rep_l2_filtered
-            elif rep_l1_filtered and prev_l1 or rep_l2_filtered and prev_l2:
-                raise OSError("Products for multiple platforms found: %s, %s" % (prev_l1, prev_l2))
-        if not prev_l1:
-            raise OSError("Cannot find L1 products for site %s or tile %s in %s"
-                          % (site, tile, rep_l1))
-        if not prev_l2:
-            logging.debug("No L2 products found.")
-            
-        return prev_l1, prev_l2, platform_id
-    
-    @staticmethod
-    def filter_products_by_date(prods_l1, prods_l2, platform, start_date, end_date, nbackward):
-        """
-        Filter out all products if they are between the given start_date and end_date
-        """
-        from Common import DateConverter as dc
-        prods_l1_filtered, prods_l2_filtered = [], []
-        print(prods_l1)
-        print(prods_l2)
-        # Get the first available L1 product for the current start date
-        process_l1 = [dc.getDateFromProduct(d, platform) for d in prods_l1 if dc.getDateFromProduct(d, platform) >= start_date]
-        if not process_l1:
-            raise ValueError("No products found after start date %s" % dc.datetimeToString(start_date))
-        start_l1 = sorted(process_l1)[0]
-        # Get products before this date
-        prev_l1 = [d for d in prods_l1 if dc.getDateFromProduct(d, platform) < start_l1]
-        prev_l2 = [d for d in prods_l2 if dc.getDateFromProduct(d, platform) < start_l1]
-        if prev_l2:
-            mode = ["NOMINAL"]
-        elif prev_l1:
-            mode = ["BACKWARD"]
-            if len(prev_l1) < nbackward:
-                logging.warning("Less than %s L1 products found for the %s mode" % (nbackward, mode[0]))
-        elif not prev_l1:
-            mode = ["INIT"]
-            logging.warning("Missing previous L2 products. Will begin with INIT mode")
-        else:
-            raise ValueError("Unknown configuration encountered with products %s %s", prev_l1, prev_l2)
-        print(mode)
-        exit(1)
-        for prod in prods_l1:
-            d = dc.getDateFromProduct(prod, platform)
-            if start_date <= d <= end_date:
-                prods_l1_filtered.append(prod)
-        for prod in prods_l2:
-            d = dc.getDateFromProduct(prod, platform)
-            if start_date <= d <= end_date:
-                prods_l2_filtered.append(prod)
-        if len(prods_l1_filtered) == 0:
-            raise ValueError("No L1 products between %s and %s" %
-                             (dc.datetimeToStringShort(start_date),
-                              dc.datetimeToStringShort(end_date)))
-        
-        return prods_l1_filtered, prods_l2_filtered
-    
+
     def create_workplans(self, prods_l1, prods_l2, platform, tile, CAMS, DTM, start_date, conf, end_date, n_backward):
         """
         Create a workplan for each Level-1 product found between the given date period
