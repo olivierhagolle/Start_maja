@@ -15,6 +15,8 @@ import sys
 import re
 import logging
 from os import path as p
+from datetime import timedelta
+
 from Chain import Product
 from Common import FileSystem
 from Chain import AuxFile
@@ -28,7 +30,7 @@ class StartMaja(object):
     date_regex = r"\d{4}-\d{2}-\d{2}"  # YYYY-MM-DD
     current_dir = p.dirname(p.realpath(__file__))
 
-    def __init__(self, folder, tile, site, gipp, start, end, nbackward, verbose):
+    def __init__(self, folder, tile, site, gipp, start, end, nbackward, overwrite, verbose):
         """
         Init the instance using the old start_maja parameters
         """
@@ -81,7 +83,7 @@ class StartMaja(object):
         if not p.isdir(self.path_input_l2):
             logging.warning("L2 folder for %s not existing: %s" % (self.__site_info, self.path_input_l1))
 
-        self.avail_input_l1 = self.get_available_products(self.path_input_l1, level="L1C", tile=self.tile)
+        self.avail_input_l1 = sorted(self.get_available_products(self.path_input_l1, level="L1C", tile=self.tile))
 
         if not self.avail_input_l1:
             raise IOError("No L1C products detected for %s in %s" % (self.__site_info, self.path_input_l1))
@@ -89,7 +91,7 @@ class StartMaja(object):
             logging.info("%s L1C product(s) detected for %s in %s" % (len(self.avail_input_l1),
                                                                       self.__site_info,
                                                                       self.path_input_l1))
-        self.avail_input_l2 = self.get_available_products(self.path_input_l2, level="L2A", tile=self.tile)
+        self.avail_input_l2 = sorted(self.get_available_products(self.path_input_l2, level="L2A", tile=self.tile))
 
         if not self.avail_input_l2:
             logging.warning("No L2A products detected for %s in %s" % (self.__site_info, self.path_input_l2))
@@ -126,10 +128,10 @@ class StartMaja(object):
         if self.start > self.end:
             raise ValueError("Start date has to be before the end date!")
 
-        # TODO Filter products by start and end date
-        # TODO Sort products by date
         # Subtract 1, which means excluding the actual product:
         self.nbackward = nbackward - 1
+
+        self.overwrite = ParameterConverter.str2bool(overwrite)
 
         logging.debug("Searching for DTM")
         try:
@@ -274,7 +276,7 @@ class StartMaja(object):
                 cams_filtered.append(cams)
         return cams_filtered
 
-    def create_workplans(self):
+    def create_workplans(self, max_product_difference=timedelta(hours=6), max_l2_diff=timedelta(days=14)):
         """
         Create a workplan for each Level-1 product found between the given date period
         For the first product available, check on top if an L2 product from the date
@@ -283,72 +285,62 @@ class StartMaja(object):
         a BACKWARD processing.
         If both of those conditions are not met, a simple INIT is run and the rest
         in NOMINAL
+        :param max_product_difference: Maximum time difference that the same L1 and L2 products date can be apart.
+        This is necessary due to the fact that the acquisition date can vary in between platforms.
+        :param max_l2_diff: Maximum time difference a separate L2 product can be apart from an L1 following it.
         :return: List of workplans to be executed
         """
         from Chain import Workplan
-        
-        # Create list of L2 and L1 products with their respective date:
-        dates_l2 = sorted([(dc.getDateFromProduct(prod, platform), prod) for prod in prods_l2], key=lambda tup: tup[0])
-        dates_l1 = sorted([(dc.getDateFromProduct(prod, platform), prod) for prod in prods_l1], key=lambda tup: tup[0])
-        
-        # Filter out all L1 products before the start_date:
-        dates_l1filtered = [(date, prod) for date, prod in dates_l1 if date > start_date]
-        if len(dates_l1) - len(dates_l1filtered) > 0:
-            logging.info("Discarding %s products older than the start date %s" %
-                         (len(dates_l1) - len(dates_l1filtered), dc.datetimeToStringShort(start_date)))
-        
+
+        # Get actually usable L1 products:
+        used_prod_l1 = [prod for prod in self.avail_input_l1
+                        if self.start <= prod.get_date() <= self.end]
+
+        if not used_prod_l1:
+            raise ValueError("No products available for the given start and end dates: %s -> %s"
+                             % (self.start, self.end))
+
+        # Get L1 products that already have an L2 product available using a timedelta (as times can be differing):
+        has_l2 = [l1 for l1, l2 in zip(used_prod_l1, self.avail_input_l2)
+                  if l1.get_date() - l2.get_date() < max_product_difference]
+
+        # Setup workplans:
         workplans = []
-        # First product: Check if L2 existing, if not check if BACKWARD possible:
-        date_l1 = dc.getDateFromProduct(dates_l1filtered[0][1], platform)
-        if date_l1 > end_date:
-            raise ValueError("No workplan can be created for the chosen period %s to %s" %
-                             (dc.datetimeToStringShort(start_date), dc.datetimeToStringShort(end_date)))
-        prod_l2 = dc.findPreviousL2Product(dates_l2, date_l1)
-        past_l1 = dc.findNewerProducts(dates_l1filtered, date_l1)
-        if prod_l2:
-            workplans.append(wp.ModeNominal(date=dates_l1filtered[0][0],
-                                            L1=dates_l1filtered[0][1],
-                                            L2=prod_l2[0][1],
-                                            CAMS=CAMS,
-                                            DTM=DTM,
-                                            tile=tile,
-                                            conf=conf
-                                            ))
-        elif len(past_l1) >= n_backward:
-            logging.warning("No previous L2 product found. Beginning in BACKWARD mode")
-            workplans.append(wp.ModeBackward(date=dates_l1filtered[0][0],
-                                             L1=[dates_l1filtered[0][1]] + [prod for date, prod in past_l1[:n_backward]],
-                                             L2=None,
-                                             CAMS=CAMS,
-                                             DTM=DTM,
-                                             tile=tile,
-                                             conf=conf
-                                             ))
-        else:
-            print("Test1", dates_l1filtered[0])
-            # If both fail, go for an INIT mode and log a warning:
-            logging.warning("Less than %s _l1 products found. Beginning in INIT mode" % n_backward)
-            workplans.append(wp.ModeInit(date=dates_l1filtered[0][0],
-                                         L1=dates_l1filtered[0][1],
-                                         L2=None,
-                                         CAMS=CAMS,
-                                         DTM=DTM,
-                                         tile=tile,
-                                         conf=conf
-                                         ))
+
+        # TODO Write workplans
+        # Process the first product separately:
+        if used_prod_l1[0] not in has_l2 or self.overwrite:
+            # Check if there is a recent L2 available for a nominal workplan
+            min_time = used_prod_l1[0].get_date() - max_l2_diff
+            max_time = used_prod_l1[0]
+            has_closest_l2_prod = [prod for prod in self.avail_input_l2 if min_time <= prod.get_date() <= max_time]
+            if has_closest_l2_prod:
+                # Proceed with NOMINAL
+                pass
+            else:
+                if len(self.avail_input_l1) >= self.nbackward:
+                    # Proceed with BACKWARD
+                    pass
+                else:
+                    # Proceed with INIT
+                    logging.info("Not enough L1 products available for a BACKWARD mode. Beginning with INIT...")
+                    pass
+                pass
+
         # For the rest: Setup NOMINAL
-        for date, prod in dates_l1filtered[1:]:
-            if date > end_date:
+        for prod in used_prod_l1[1:]:
+            if prod in has_l2 and self.overwrite:
+                logging.info("Skipping L1 product %s because it was already processed!")
                 continue
-            workplans.append(wp.ModeNominal(date=date,
-                                            L1=prod,
-                                            L2=None,
-                                            CAMS=CAMS,
-                                            DTM=DTM,
-                                            tile=tile,
-                                            conf=conf,
-                                            checkL2=True
-                                            ))
+            workplans.append(Workplan.ModeNominal(date=date,
+                                                  L1=prod,
+                                                  L2=None,
+                                                  CAMS=CAMS,
+                                                  DTM=DTM,
+                                                  tile=tile,
+                                                  conf=conf,
+                                                  checkL2=True
+                                                  ))
         
         # This should never happen:
         if not workplans:
@@ -416,8 +408,13 @@ if __name__ == "__main__":
                         type=str, default="false")
     parser.add_argument("--nbackward", help="Number of products used to run in backward mode. Default is 8.",
                         type=int, default=int(8))
+    parser.add_argument("--overwrite", help="Overwrite existing L2 products. Default is false.",
+                        type=str, default="False")
+    # TODO Add optional platform parameter in order to distinguish between S2/L8/Vns for each site/tile
 
     args = parser.parse_args()
     
-    s = StartMaja(args.folder, args.tile, args.site, args.gipp, args.start, args.end, args.nbackward, args.verbose)
+    s = StartMaja(args.folder, args.tile, args.site, args.gipp,
+                  args.start, args.end, args.nbackward,
+                  args.overwrite, args.verbose)
     # s.run()
