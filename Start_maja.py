@@ -52,10 +52,11 @@ class StartMaja(object):
         self.gipp = p.realpath(gipp)
         if not p.isdir(self.gipp):
             raise OSError("Cannot find GIPP folder: %s" % self.gipp)
+        # TODO Refine the GIPP detection
         for regGIPP in AuxFile.GIPPFile.all_regexes:
             if not [f for f in os.listdir(gipp) if re.search(regGIPP, f)]:
                 raise OSError("Missing GIPP file: %s" % regGIPP)
-        logging.debug("Found GIPP folder: %s" % gipp)
+        logging.debug("Found GIPP folder: %s" % self.gipp)
         
         if tile[0] == "T" and re.search(Product.MajaProduct.reg_tile, tile):
             self.tile = tile[1:]  # Remove the T from e.g. T32ABC
@@ -65,13 +66,26 @@ class StartMaja(object):
         self.site = site
         if self.site:
             site_l1 = FileSystem.find_single(self.site, self.rep_l1)
-            site_l2 = FileSystem.find_single(self.site, self.rep_l2)
             self.path_input_l1 = FileSystem.find_single(self.tile, site_l1)
-            self.path_input_l2 = FileSystem.find_single(self.tile, site_l2)
+            try:
+                site_l2 = FileSystem.find_single(self.site, self.rep_l2)
+            except ValueError:
+                site_l2 = os.path.join(self.rep_l2, self.site)
+                FileSystem.create_directory(site_l2)
+
+            try:
+                self.path_input_l2 = FileSystem.find_single(self.tile, site_l2)
+            except ValueError:
+                self.path_input_l2 = os.path.join(self.rep_l2, self.site, self.tile)
+                FileSystem.create_directory(self.path_input_l2)
             self.__site_info = "site %s and tile %s" % (self.site, self.tile)
         else:
             self.path_input_l1 = FileSystem.find_single(self.tile, self.rep_l1)
-            self.path_input_l2 = FileSystem.find_single(self.tile, self.rep_l2)
+            try:
+                self.path_input_l2 = FileSystem.find_single(self.tile, self.rep_l2)
+            except ValueError:
+                self.path_input_l2 = os.path.join(self.rep_l2, self.tile)
+                FileSystem.create_directory(self.path_input_l2)
             self.__site_info = "tile %s" % self.tile
             logging.debug("No site-folder specified. Searching for product directly by Tile-ID")
 
@@ -128,10 +142,13 @@ class StartMaja(object):
         if self.start > self.end:
             raise ValueError("Start date has to be before the end date!")
 
-        # Subtract 1, which means excluding the actual product:
-        self.nbackward = nbackward - 1
+        self.nbackward = nbackward
 
+        # TODO See main for parameter todos
+        self.max_product_difference = timedelta(hours=1)
+        self.max_l2_diff = timedelta(days=14)
         self.overwrite = ParameterConverter.str2bool(overwrite)
+        self.maja_log_level = "PROGRESS"
 
         logging.debug("Searching for DTM")
         try:
@@ -193,6 +210,7 @@ class StartMaja(object):
         :param cfg_file: The path to the file
         :return: The parsed paths for each of the directories. None for the optional ones if not given.
         """
+        from Common.FileSystem import create_directory
         try:
             import configparser as cfg
         except ImportError:
@@ -203,15 +221,21 @@ class StartMaja(object):
         config.read(cfg_file)
     
         # get cfg parameters
-        rep_work = self.__read_config_param(config, "PATH", "repWork")
+        rep_work = config.get("PATH", "repWork")
+        if not p.isdir(rep_work):
+            create_directory(rep_work)
         rep_l1 = self.__read_config_param(config, "PATH", "repL1")
-        rep_l2 = self.__read_config_param(config, "PATH", "repL2")
-        rep_mnt = self.__read_config_param(config, "PATH", "repMNT")
+        rep_l2 = config.get("PATH", "repL2")
+        if not p.isdir(rep_l2):
+            create_directory(rep_l2)
+        rep_mnt = config.get("PATH", "repMNT")
+        if not p.isdir(rep_mnt):
+            create_directory(rep_mnt)
         exe_maja = self.__read_config_param(config, "PATH", "exeMaja")
 
         # CAMS is optional:
         try:
-            rep_cams = self.__read_config_param(config, "PATH", "repCAMS")
+            rep_cams = config.get("PATH", "repCAMS")
         except cfg.NoOptionError:
             logging.warning("repCAMS is missing. Processing without CAMS")
             rep_cams = None
@@ -227,8 +251,8 @@ class StartMaja(object):
         :param tile: The tileID
         :return: A list of MajaProducts available in the given directory
         """
-        avail_folders = [f for f in os.listdir(root) if p.isdir(p.join(root, f))]
-        avail_products = [Product.MajaProduct(f).factory() for f in avail_folders]
+        avail_folders = [p.join(root, f) for f in os.listdir(root)]
+        avail_products = [Product.MajaProduct(f).factory() for f in avail_folders if p.isdir(f)]
         # Remove the ones that didn't work:
         avail_products = [prod for prod in avail_products if prod is not None]
         return [prod for prod in avail_products if prod.get_level() == level.lower() and prod.get_tile() == tile]
@@ -265,14 +289,19 @@ class StartMaja(object):
         return cams
 
     @staticmethod
-    def filter_cams_by_date(cams_files, start_date, end_date):
+    def filter_cams_by_product(cams_files, prod_date, delta_t=timedelta(hours=12)):
         """
         Filter out all CAMS files if they are between the given start_date and end_date
+        :param cams_files: The list of cams objects
+        :param prod_date: The product date
+        :param delta_t: The maximum time difference a CAMS file can be apart from the product date.
+        :return: The cams files available in the given time interval
         """
         cams_filtered = []
+        t_min, t_max = prod_date - delta_t, prod_date + delta_t
         for cams in cams_files:
             date = cams.get_date()
-            if date <= start_date or date >= end_date:
+            if t_min <= date <= t_max:
                 cams_filtered.append(cams)
         return cams_filtered
 
@@ -316,14 +345,37 @@ class StartMaja(object):
             has_closest_l2_prod = [prod for prod in self.avail_input_l2 if min_time <= prod.get_date() <= max_time]
             if has_closest_l2_prod:
                 # Proceed with NOMINAL
+                workplans.append(Workplan.Nominal(wdir=self.rep_work,
+                                                  outdir=self.rep_l2,
+                                                  l1=used_prod_l1[0],
+                                                  l2_date=used_prod_l1[0].get_date(),
+                                                  log_level=self.maja_log_level,
+                                                  cams=self.filter_cams_by_product(self.cams_files,
+                                                                                   used_prod_l1[0].get_date())
+                                                  ))
                 pass
             else:
                 if len(self.avail_input_l1) >= self.nbackward:
                     # Proceed with BACKWARD
+                    workplans.append(Workplan.Backward(wdir=self.rep_work,
+                                                       outdir=self.rep_l2,
+                                                       l1=used_prod_l1[0],
+                                                       l1_list=self.avail_input_l1[1:self.nbackward],
+                                                       log_level=self.maja_log_level,
+                                                       cams=self.filter_cams_by_product(self.cams_files,
+                                                                                        used_prod_l1[0].get_date())
+                                                       ))
                     pass
                 else:
                     # Proceed with INIT
                     logging.info("Not enough L1 products available for a BACKWARD mode. Beginning with INIT...")
+                    workplans.append(Workplan.Init(wdir=self.rep_work,
+                                                   outdir=self.rep_l2,
+                                                   l1=used_prod_l1[0],
+                                                   log_level=self.maja_log_level,
+                                                   cams=self.filter_cams_by_product(self.cams_files,
+                                                                                    used_prod_l1[0].get_date())
+                                                   ))
                     pass
                 pass
 
@@ -332,15 +384,13 @@ class StartMaja(object):
             if prod in has_l2 and self.overwrite:
                 logging.info("Skipping L1 product %s because it was already processed!")
                 continue
-            workplans.append(Workplan.ModeNominal(date=date,
-                                                  L1=prod,
-                                                  L2=None,
-                                                  CAMS=CAMS,
-                                                  DTM=DTM,
-                                                  tile=tile,
-                                                  conf=conf,
-                                                  checkL2=True
-                                                  ))
+            workplans.append(Workplan.Nominal(wdir=self.rep_work,
+                                              outdir=self.rep_l2,
+                                              l1=prod,
+                                              l2_date=prod.get_date(),
+                                              log_level=self.maja_log_level,
+                                              cams=self.filter_cams_by_product(self.cams_files, prod.get_date())
+                                              ))
         
         # This should never happen:
         if not workplans:
@@ -360,25 +410,16 @@ class StartMaja(object):
             -   Create the output directory
             -   Run MAJA
         """
-        from Common import FileSystem
-        availProdsL1, availProdsL2, platform = self.get_all_products(self.site, self.tile, rep_l1, rep_l2, self.input_dirs)
-        availCAMS = self.get_cams_files(repCAMS)
-        cams = self.filter_cams(availCAMS,self.start, self.end)
-        workplans = self.create_workplans(prods_l1=availProdsL1, prods_l2=availProdsL2, platform=platform, CAMS=cams,
-                                          DTM=self.dtm, tile=self.tile, conf=self.userconf, start_date=self.start,
-                                          end_date=self.end, n_backward=self.nbackward)
+        workplans = self.create_workplans(self.max_product_difference, self.max_l2_diff)
         logging.info("%s workplan(s) successfully created:" % len(workplans))
         # Print without the logging-formatting:
-        print(str("%8s | %5s | %8s | %70s | %15s" % ("DATE", "TILE", "MODE", "L1-PRODUCT", "INFO/L2-PRODUCT")))
+        print(str("%19s | %5s | %8s | %70s | %15s" % ("DATE", "TILE", "MODE", "L1-PRODUCT", "ADDITIONAL INFO")))
         for wp in workplans:
             print(wp)
-#            input_dir = self.createInputDir(rep_work, wp.productsL1 + wp.productsL2, cams, self.dtm, self.gipp)
-#            specifier = self.getSpecifier(self.site, self.tile)
-#            output_dir = p.join(rep_l2, specifier)
-#            if(not p.exists(output_dir)):
-#                FileSystem.createDirectory(output_dir)
-#            wp.execute(exeMaja, input_dir, output_dir, self.tile, self.userconf, self.verbose)
-#            FileSystem.removeDirectory(input_dir)
+        # TODO Make this line skippable as param
+        input("Press Enter to continue...")
+        for wp in workplans:
+            wp.execute(self.maja, self.dtm, self.gipp, self.userconf)
         logging.info("=============Start_Maja v%s finished=============" % self.version)
 
         pass
@@ -411,10 +452,11 @@ if __name__ == "__main__":
     parser.add_argument("--overwrite", help="Overwrite existing L2 products. Default is false.",
                         type=str, default="False")
     # TODO Add optional platform parameter in order to distinguish between S2/L8/Vns for each site/tile
-
+    # TODO Add "copy" parameter that copies files instead of symlink'n them.
+    # TODO Add log level parameter for maja
     args = parser.parse_args()
     
     s = StartMaja(args.folder, args.tile, args.site, args.gipp,
                   args.start, args.end, args.nbackward,
                   args.overwrite, args.verbose)
-    # s.run()
+    s.run()

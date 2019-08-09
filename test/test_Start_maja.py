@@ -11,10 +11,11 @@ Created on:     Tue Dec  5 10:26:05 2018
 """
 
 import unittest
-from Common import TestFunctions
 from Start_maja import StartMaja
+import sys
 import os
 from datetime import datetime
+sys.path.append(StartMaja.current_dir)  # Replaces __init__.py
 
 
 def create_dummy_product(root, product_level, **kwargs):
@@ -28,6 +29,7 @@ def create_dummy_product(root, product_level, **kwargs):
     import random
     import string
     from datetime import timedelta
+    from Common import TestFunctions
 
     assert os.path.isdir(root)
     letters = string.ascii_uppercase
@@ -81,6 +83,8 @@ def create_dummy_mnt(root, tile, platform="GEN"):
     :return: Returns the directory containing the dummy mnt
     """
     import random
+    from Common import TestFunctions
+
     basename = "_".join([platform, "TEST", "AUX", "REFDE2", tile, str(random.randint(0, 1000)).zfill(4)])
     mnt_name = os.path.join(root, basename)
     dbl_name = os.path.join(mnt_name, basename + ".DBL.DIR")
@@ -123,6 +127,7 @@ def create_dummy_cams(root, date, platform="GEN"):
     :param platform: The platform name, e.g. "S2" or "L8"
     :return: Creates the directory containing the cams folder
     """
+    from Common import TestFunctions
     end_date = datetime(2099, 1, 1, 23, 59, 59)
 
     basename = "_".join([platform, "TEST", "EXO", "CAMS",
@@ -149,6 +154,7 @@ class TestStartMaja(unittest.TestCase):
     start = None
     end = None
     nbackward = 8
+    overwrite = "True"
     verbose = "True"
     template_folders_file = os.path.join(os.getcwd(), "test", "test_folders.txt")
 
@@ -208,6 +214,7 @@ class TestStartMaja(unittest.TestCase):
                                self.start,
                                self.end,
                                self.nbackward,
+                               self.overwrite,
                                self.verbose)
         self.assertEqual(len(start_maja.avail_input_l1), self.n_dummies + 2)
         self.assertEqual(len(start_maja.avail_input_l2), self.n_dummies)
@@ -215,10 +222,10 @@ class TestStartMaja(unittest.TestCase):
         self.assertEqual(start_maja.end, self.end_product)
 
     def test_parasite_l2a_product(self):
-        create_dummy_product(self.product_root, "L2A",
-                             platform="LANDSAT8",
-                             tile="T31TCH",
-                             date=self.end_product)
+        product, _ = create_dummy_product(self.product_root, "L2A",
+                                          platform="LANDSAT8",
+                                          tile="T31TCH",
+                                          date=self.end_product)
         with self.assertRaises(IOError):
             StartMaja(self.folders_file,
                       self.tile,
@@ -227,7 +234,11 @@ class TestStartMaja(unittest.TestCase):
                       self.start,
                       self.end,
                       self.nbackward,
+                      self.overwrite,
                       self.verbose)
+        import shutil
+        shutil.rmtree(product)
+        self.assertFalse(os.path.exists(product))
 
     def test_non_existing_l1c_folder(self):
         folders_path = os.path.join(os.getcwd(), "test_error_folder_file.txt")
@@ -241,6 +252,7 @@ class TestStartMaja(unittest.TestCase):
                       self.start,
                       self.end,
                       self.nbackward,
+                      self.overwrite,
                       self.verbose)
 
         os.remove(folders_path)
@@ -258,6 +270,7 @@ class TestStartMaja(unittest.TestCase):
                       self.start,
                       self.end,
                       self.nbackward,
+                      self.overwrite,
                       self.verbose)
 
         os.remove(folders_path)
@@ -273,6 +286,7 @@ class TestStartMaja(unittest.TestCase):
                       start.strftime("%Y-%m-%d"),
                       end.strftime("%Y-%m-%d"),
                       self.nbackward,
+                      self.overwrite,
                       self.verbose)
 
         self.assertEqual(s.start, start)
@@ -286,10 +300,11 @@ class TestStartMaja(unittest.TestCase):
                       self.start,
                       self.end,
                       self.nbackward,
+                      self.overwrite,
                       self.verbose)
 
-        self.assertEqual(s.avail_input_l1[0], self.youngest)
-        self.assertEqual(s.avail_input_l1[-1], self.oldest)
+        self.assertEqual(s.avail_input_l1[-1].fpath, self.oldest)
+        self.assertEqual(s.avail_input_l1[0].fpath, self.youngest)
 
 
 if __name__ == '__main__':
