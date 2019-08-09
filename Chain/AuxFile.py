@@ -28,19 +28,22 @@ class EarthExplorer(object):
         :param dbl: A folder name
         :return:
         """
-        from Common import FileSystem
 
         if not os.path.isdir(dbl):
             return None
         reg = cls.regex if regex is None else regex
         if not re.search(reg, os.path.basename(dbl)):
             return None
-        cls.dbl = dbl
-        cls.base = os.path.basename(dbl).split(".")[0]
-        # Find associated HDR
-        cls.hdr = FileSystem.get_file(root=os.path.join(dbl, "../"), filename=cls.base + ".HDR")
-        assert os.path.isfile(cls.hdr)
         return object.__new__(cls)
+
+    def __init__(self, dbl, regex=None):
+        from Common import FileSystem
+        self.regex = self.regex if regex is None else regex
+        self.dbl = dbl
+        self.base = os.path.basename(dbl).split(".")[0]
+        # Find associated HDR
+        self.hdr = FileSystem.get_file(root=os.path.join(dbl, "../"), filename=self.base + ".HDR")
+        assert os.path.isfile(self.hdr)
 
     def __str__(self):
         return "\n".join(["DBL: " + self.dbl,
@@ -59,8 +62,9 @@ class EarthExplorer(object):
         :param dest: The destination folder
         :return:
         """
-        os.symlink(self.hdr, dest)
-        os.symlink(self.dbl, dest)
+        from Common import FileSystem
+        FileSystem.symlink(self.hdr, os.path.join(dest, os.path.basename(self.hdr)))
+        FileSystem.symlink(self.dbl, os.path.join(dest, os.path.basename(self.dbl)))
 
 
 class CAMSFile(EarthExplorer):
