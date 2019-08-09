@@ -18,7 +18,7 @@ def create_directory(path):
         if not os.path.isdir(path):
             raise IOError("Cannot create the output directory. There is a file with the same name: %s" % path)
         else:
-            logging.info("Directory already existing: %s" % path)
+            logging.debug("Directory already existing: %s" % path)
     else:
         try:
             os.makedirs(path)
