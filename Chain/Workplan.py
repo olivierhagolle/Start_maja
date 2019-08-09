@@ -15,11 +15,15 @@ import logging
 
 
 class Workplan(object):
+    """
+    Stores all information about a single execution of Maja
+    """
+    mode = "INIT"
 
-    def __init__(self, wdir, outdir, l1, **kwargs):
+    def __init__(self, wdir, outdir, l1, log_level="INFO", **kwargs):
         supported_params = {
             param
-            for param in ("cams", "meteo")
+            for param in ("cams", "meteo", )
             if kwargs.get(param, None) is not None
         }
         # Check if the directories exist:
@@ -29,56 +33,84 @@ class Workplan(object):
         self.wdir = wdir
         self.outdir = outdir
         self.l1 = l1
-        self.aux_files = [kwargs[key] for key in supported_params]
+        self.tile = self.l1.get_tile()
+        self.date = self.l1.get_date()
+        self.log_level = log_level if log_level.upper() in ['INFO', 'PROGRESS', 'WARNING', 'DEBUG', 'ERROR'] else "INFO"
+        self.aux_files = []
+        for key in supported_params:
+            self.aux_files += kwargs[key]
 
     def __str__(self):
-        return str("%8s | %5s | %8s | %70s | %15s" % (self.l1.get_date(),
-                                                      self.l1.get_tile(),
-                                                      self.mode, self.l1.base, "from previous"))
+        raise NotImplementedError
 
-    # TODO Write this for each mode (and update params)
-    def execute(self, dtm, gipp, conf):
+    def execute(self, maja, dtm, gipp, conf):
         """
         Run the workplan with its given parameters
+        :param maja: The path to the maja executable
+        :param dtm: The DTM object
+        :param gipp: The GIPP object
+        :param conf: The full path to the userconf folder
+        :return:
         """
         raise NotImplementedError
 
-    def get_dirname(self):
+    @staticmethod
+    def get_dirname(name):
         """
         Create a hash of the product name in order to have a unique folder name
+        :param name: The product basename
         :return: The product name as hex-hash
         """
         import hashlib
-        return hashlib.md5(self.l1.base.encode("utf-8")).hexdigest()
+        return hashlib.md5(name.encode("utf-8")).hexdigest()
 
-    def create_working_dir(self):
+    def create_working_dir(self, dtm, gipps):
         """
-        Set up all files of the input directory, which are:
-            Product (1C and eventually 2A)
+        Create a temporary working directory for a single start maja execution
+        Then, link all files of the input directory, which are:
+            Product(s) (1C/2A)
             GIPPs
             DTM
             (CAMS) if existing
-        :return:
+        :param dtm: The DTM object
+        :param gipps: The GIPP object
+        :return: The full path to the created input directory
         """
         from Common.FileSystem import create_directory, symlink
 
-        input_dir = os.path.join(self.wdir, "Start_maja_" + self.get_dirname())
+        input_dir = os.path.join(self.wdir, "Start_maja_" + self.get_dirname(self.l1.base))
         create_directory(input_dir)
-        # TODO Link stuff
-        for prod, i in products:
-            symlink(prod, os.path.join(input_dir, os.path.basename(prod)))
-        for f in cams:
-            symlink(f, os.path.join(input_dir, os.path.basename(f)))
-        for f in dtm:
-            symlink(f, os.path.join(input_dir, os.path.basename(f)))
+        if not os.path.isdir(input_dir):
+            raise OSError("Cannot create temp directory %s" % input_dir)
+        symlink(self.l1.fpath, os.path.join(input_dir, self.l1.base))
+        for f in self.aux_files:
+            f.link(input_dir)
+        dtm.link(input_dir)
+        # TODO Refine GIPP linking (i.e. link only "real" gipp files)
         for gipp in os.listdir(gipps):
-            symlink(os.path.join(gipps, gipp), os.path.join(input_dir, os.path.basename(gipp)))
+            symlink(os.path.join(gipps, gipp), os.path.join(input_dir, gipp))
         return input_dir
 
-    # TODO revise this if needed:
+    @staticmethod
+    def __proc_read_stdout(proc):
+        """
+        Read the stdout of a subprocess while also processing its return code if available
+        :param proc: The subprocess
+        :return: The return code of the app
+        """
+
+        while True:
+            # Read line from stdout, break if EOF reached, append line to output
+            line = proc.stdout.readline().decode('utf-8')
+            # Poll(): Used to get the return code at the end of the execution
+            if (line == "") and proc.poll() is not None:
+                break
+            if logging.getLogger().level == logging.DEBUG:
+                print(line[:-1])
+        return proc.returncode
 
     @staticmethod
-    def runExternalApplication(name, args):
+    def run_external_app(name, args):
         """
         Run an external application using the subprocess module
         :param name: the Name of the application
@@ -87,81 +119,147 @@ class Workplan(object):
         """
         from timeit import default_timer as timer
         import subprocess
-        fullArgs = [name] + args
-        logging.info(" ".join(a for a in fullArgs))
-        fullArgs = fullArgs #Prepend other programs here
+        full_args = [name] + args
+        logging.info("Executing cmd: " + " ".join(a for a in full_args))
         start = timer()
-        proc = subprocess.Popen(fullArgs, shell=False, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        while (True):
-            # Read line from stdout, break if EOF reached, append line to output
-            line = proc.stdout.readline().decode('utf-8')
-            #Poll(): Used to get the return code at the end of the execution
-            if (line == "") and proc.poll() is not None:
-                break
-            logging.debug(line[:-1])
+        try:
+            with subprocess.Popen(full_args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
+                return_code = Workplan.__proc_read_stdout(proc)
+        except AttributeError:
+            # For Python 2.7, popen has no context manager:
+            proc = subprocess.Popen(full_args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            return_code = Workplan.__proc_read_stdout(proc)
         end = timer()
-        returnCode = proc.returncode
-        #If this is not the testRun, raise an Error:
-        if(returnCode != 0):
-            raise subprocess.CalledProcessError(returnCode, name)
-        #Show total execution time for the App:
+        if return_code != 0:
+            raise subprocess.CalledProcessError(return_code, name)
+        # Show total execution time for the App:
         logging.info("{0} took: {1}s".format(os.path.basename(name), end - start))
-        return returnCode
+        return return_code
 
-    def launchMAJA(self, maja_exe, input_dir, out_dir, mode, tile, conf, verbose):
+    def launch_maja(self, maja, wdir, outdir, conf):
         """
-        Run the MAJA processor for the given input_dir, mode and tile 
+        Run the MAJA processor for the given input_dir, mode and tile
+        :param maja: The full path to the maja executable
+        :param wdir: The working dir containing all inputs
+        :param outdir: The output L2-directory
+        :param conf: The full path to the userconf folder
+        :return: The return code of Maja
         """
-        args = [
-                "-i",
-                input_dir,
-                "-o",
-                out_dir,
-                "-m",
-                "L2" + mode,
-                "-ucs",
+        args = ["--input",
+                wdir,
+                "--output",
+                outdir,
+                "--mode",
+                "L2" + self.mode,
+                "--conf",
                 conf,
                 "--TileId",
-                tile]
-        
-        if(verbose):
-            args += ["-l", "DEBUG"]
-        return self.runExternalApplication(maja_exe, args)
+                self.tile,
+                "--loglevel",
+                self.log_level]
+        return self.run_external_app(maja, args)
 
-class ModeInit(Workplan):
+
+class Init(Workplan):
     mode = "INIT"
-    
-    def execute(self):
+
+    def execute(self, maja, dtm, gipp, conf):
         """
         Run the workplan with its given parameters
+        :param maja: The path to the maja executable
+        :param dtm: The DTM object
+        :param gipp: The GIPP object
+        :param conf: The full path to the userconf folder
+        :return: The return code of the Maja app
         """
-        raise NotImplementedError
+        from Common.FileSystem import remove_directory
+        input_dir = self.create_working_dir(dtm, gipp)
+        return_code = self.launch_maja(maja, wdir=input_dir, outdir=self.outdir, conf=conf)
+        remove_directory(input_dir)
+        return return_code
         
     def __str__(self):
-        from Common import DateConverter as dc
-        return str("%8s | %5s | %8s | %70s | %15s" % (dc.datetimeToStringShort(self.date), self.tile, self.mode, bname(self.L1[0]), "No previous L2"))
-    
-class ModeBackward(Workplan):
+        return str("%19s | %5s | %8s | %70s | %15s" % (self.date, self.tile,
+                                                       self.mode, self.l1.base,
+                                                       "Init mode - No previous L2"))
+
+
+class Backward(Workplan):
     mode = "BACKWARD"
-    
-    def execute(self):
+
+    def __init__(self, wdir, outdir, l1, l1_list, log_level="INFO", **kwargs):
+        self.l1_list = l1_list
+        super(Backward, self).__init__(wdir, outdir, l1, log_level, **kwargs)
+
+    def execute(self, maja, dtm, gipp, conf):
         """
         Run the workplan with its given parameters
+        :param maja: The path to the maja executable
+        :param dtm: The DTM object
+        :param gipp: The GIPP object
+        :param conf: The full path to the userconf folder
+        :return: The return code of the Maja app
         """
-        raise NotImplementedError
-        
+        from Common.FileSystem import symlink, remove_directory
+        input_dir = self.create_working_dir(dtm, gipp)
+        # Link additional L1 products:
+        for prod in self.l1_list:
+            symlink(prod.fpath, os.path.join(input_dir, prod.base))
+        return_code = self.launch_maja(maja, wdir=input_dir, outdir=self.outdir, conf=conf)
+        remove_directory(input_dir)
+        return return_code
+
     def __str__(self):
-        from Common import DateConverter as dc
-        return str("%8s | %5s | %8s | %70s | %15s" % (dc.datetimeToStringShort(self.date), self.tile, self.mode, bname(self.L1[0][0]), "%s products" % len(self.L1)))
-    
-class ModeNominal(Workplan):
+        return str("%19s | %5s | %8s | %70s | %15s" % (self.date, self.tile,
+                                                       self.mode, self.l1.base,
+                                                       "Backward of %s products" % str(len(self.l1_list) + 1)))
+
+
+class Nominal(Workplan):
     mode = "NOMINAL"
-    
-    def execute(self):
+
+    def __init__(self, wdir, outdir, l1, l2_date, log_level="INFO", **kwargs):
+        import datetime
+        assert isinstance(l2_date, datetime.datetime)
+        self.l2_date = l2_date
+        self.l2 = None
+        super(Nominal, self).__init__(wdir, outdir, l1, log_level, **kwargs)
+
+    def execute(self, maja, dtm, gipp, conf):
         """
         Run the workplan with its given parameters
+        :param maja: The path to the maja executable
+        :param dtm: The DTM object
+        :param gipp: The GIPP object
+        :param conf: The full path to the userconf folder
+        :return: The return code of the Maja app
         """
-        raise NotImplementedError
+        from Common.FileSystem import symlink, remove_directory
+        from Start_maja import StartMaja
+        input_dir = self.create_working_dir(dtm, gipp)
+        # Find the previous L2 product
+        avail_input_l2 = StartMaja.get_available_products(self.outdir, "l2a", self.tile)
+        # Get only products which are close to the desired l2 date and before the l1 date:
+        l2_prods = [prod for prod in avail_input_l2
+                    if prod.get_date() - self.l2_date < StartMaja.max_product_difference and
+                    prod.get_date() < self.date]
+        if not l2_prods:
+            raise ValueError("Cannot find previous L2 product for date %s in %s: %s"
+                             % (self.date, self.outdir, avail_input_l2))
+        if len(l2_prods) > 1:
+            logging.warning("More than one L2 product found for date %s: %s" % (self.date, l2_prods))
+        # Take the first product:
+        self.l2 = l2_prods[0]
+        # Link additional L1 products:
+        symlink(self.l2.fpath, os.path.join(input_dir, self.l2.base))
+        return_code = self.launch_maja(maja, wdir=input_dir, outdir=self.outdir, conf=conf)
+        remove_directory(input_dir)
+        return return_code
+
+    def __str__(self):
+        return str("%19s | %5s | %8s | %70s | %15s" % (self.date, self.tile,
+                                                       self.mode, self.l1.base,
+                                                       "L2 from %s" % self.l2_date))
 
 
 if __name__ == "__main__":
