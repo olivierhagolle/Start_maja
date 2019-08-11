@@ -279,7 +279,6 @@ class L2Generator(ProductGenerator):
     def generate(self, **kwargs):
         import random
         from Common import TestFunctions, FileSystem
-        print("Platform", self.platform)
         platform_specifier = random.choice(self.platform_options["L2A"][self.platform])
         ms = kwargs.get("ms", random.randint(0, 999))
         version = kwargs.get("version", random.randint(0, 9))
