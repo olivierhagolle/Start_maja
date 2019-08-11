@@ -144,3 +144,47 @@ def symlink(src, dst):
         os.symlink(src, dst)
     except OSError:
         raise OSError("Cannot create symlink for %s at %s. Does your plaform support symlinks?" % (src, dst))
+
+
+def download_file(url, filepath):
+    """
+    Download a single file using wget
+    :param filepath: The file name to be written to
+    :param url: The url to download
+    :return:
+    """
+    # TODO Unittest
+    import os
+    assert not os.path.exists(filepath)
+    os.system(" ".join(["wget", "-nv", "-O", filepath, url]))
+
+
+def unzip(archive, dest):
+    """
+    Unzip a file to the given destination
+    :param archive: The archive name
+    :param dest: The destination dir
+    :return:
+    """
+    # TODO Unittest
+    import zipfile
+    assert os.path.isfile(archive)
+
+    with zipfile.ZipFile(archive, 'r') as zip_ref:
+        zip_ref.extractall(dest)
+
+
+def find_in_file(filename, pattern):
+    """
+    Find a pattern inside a file
+    :param filename: The filename
+    :param pattern: The pattern to be searched for
+    :return: The pattern (if found). None if not.
+    """
+    # TODO Unittest
+    import re
+    assert os.path.isfile(filename)
+    with open(filename, "r") as f:
+        content = "".join(f.read().splitlines())
+        lut_url = re.search(pattern, content)
+    return lut_url.group()
