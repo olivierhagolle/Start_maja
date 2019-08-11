@@ -30,7 +30,7 @@ class StartMaja(object):
     date_regex = r"\d{4}-\d{2}-\d{2}"  # YYYY-MM-DD
     current_dir = p.dirname(p.realpath(__file__))
 
-    def __init__(self, folder, tile, site, gipp, start, end, nbackward, overwrite, verbose):
+    def __init__(self, folder, tile, site, start, end, nbackward, overwrite, verbose):
         """
         Init the instance using the old start_maja parameters
         """
@@ -46,16 +46,13 @@ class StartMaja(object):
         logging.debug("Checking config file: %s" % folder)
         if not p.isfile(self.folder):
             raise OSError("Cannot find folder definition file: %s" % self.folder)
-        self.rep_work, self.rep_l1, self.rep_l2, self.rep_mnt, self.maja, self.rep_cams = self.parse_config(self.folder)
+        self.rep_work, self.gipp, self.rep_l1, self.rep_l2,\
+            self.rep_mnt, self.maja, self.rep_cams = self.parse_config(self.folder)
         logging.debug("Config file parsed without errors.")
         logging.debug("Checking GIPP files")
-        self.gipp = p.realpath(gipp)
         if not p.isdir(self.gipp):
             raise OSError("Cannot find GIPP folder: %s" % self.gipp)
         # TODO Refine the GIPP detection
-        for regGIPP in AuxFile.GIPPFile.all_regexes:
-            if not [f for f in os.listdir(gipp) if re.search(regGIPP, f)]:
-                raise OSError("Missing GIPP file: %s" % regGIPP)
         logging.debug("Found GIPP folder: %s" % self.gipp)
         
         if tile[0] == "T" and re.search(Product.MajaProduct.reg_tile, tile):
@@ -65,24 +62,25 @@ class StartMaja(object):
 
         self.site = site
         if self.site:
-            site_l1 = FileSystem.find_single(self.site, self.rep_l1)
-            self.path_input_l1 = FileSystem.find_single(self.tile, site_l1)
+            site_l1 = FileSystem.find_single(r"^%s$" % self.site, self.rep_l1)
+            logging.warning(self.tile)
+            self.path_input_l1 = FileSystem.find_single(r"^T?%s$" % self.tile, site_l1)
             try:
-                site_l2 = FileSystem.find_single(self.site, self.rep_l2)
+                site_l2 = FileSystem.find_single(r"^%s$" % self.site, self.rep_l2)
             except ValueError:
                 site_l2 = os.path.join(self.rep_l2, self.site)
                 FileSystem.create_directory(site_l2)
 
             try:
-                self.path_input_l2 = FileSystem.find_single(self.tile, site_l2)
+                self.path_input_l2 = FileSystem.find_single(r"^T?%s$" % self.tile, site_l2)
             except ValueError:
                 self.path_input_l2 = os.path.join(self.rep_l2, self.site, self.tile)
                 FileSystem.create_directory(self.path_input_l2)
             self.__site_info = "site %s and tile %s" % (self.site, self.tile)
         else:
-            self.path_input_l1 = FileSystem.find_single(self.tile, self.rep_l1)
+            self.path_input_l1 = FileSystem.find_single(r"^T?%s$" % self.tile, self.rep_l1)
             try:
-                self.path_input_l2 = FileSystem.find_single(self.tile, self.rep_l2)
+                self.path_input_l2 = FileSystem.find_single(r"^T?%s$" % self.tile, self.rep_l2)
             except ValueError:
                 self.path_input_l2 = os.path.join(self.rep_l2, self.tile)
                 FileSystem.create_directory(self.path_input_l2)
@@ -90,7 +88,7 @@ class StartMaja(object):
             logging.debug("No site-folder specified. Searching for product directly by Tile-ID")
 
         # TODO wrap this in functions
-
+        print(self.path_input_l1)
         if not p.isdir(self.path_input_l1):
             raise OSError("L1 folder for %s not existing: %s" % (self.__site_info, self.path_input_l1))
 
@@ -115,7 +113,9 @@ class StartMaja(object):
                                                                       self.path_input_l2))
 
         platform = list(set([prod.get_platform() for prod in self.avail_input_l1 + self.avail_input_l2]))
-
+        for prod in self.avail_input_l1 + self.avail_input_l2:
+            if prod.get_platform() != 'sentinel2':
+                print(prod)
         if len(platform) != 1:
             raise IOError("Cannot mix multiple platforms: %s" % platform)
         self.platform = platform[0]
@@ -224,6 +224,9 @@ class StartMaja(object):
         rep_work = config.get("PATH", "repWork")
         if not p.isdir(rep_work):
             create_directory(rep_work)
+        rep_gipp = config.get("PATH", "repGipp")
+        if not p.isdir(rep_gipp):
+            create_directory(rep_gipp)
         rep_l1 = self.__read_config_param(config, "PATH", "repL1")
         rep_l2 = config.get("PATH", "repL2")
         if not p.isdir(rep_l2):
@@ -240,7 +243,7 @@ class StartMaja(object):
             logging.warning("repCAMS is missing. Processing without CAMS")
             rep_cams = None
         
-        return rep_work, rep_l1, rep_l2, rep_mnt, exe_maja, rep_cams
+        return rep_work, rep_gipp, rep_l1, rep_l2, rep_mnt, exe_maja, rep_cams
 
     @staticmethod
     def get_available_products(root, level, tile):
@@ -430,8 +433,6 @@ if __name__ == "__main__":
 
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("-g", "--gipp", help="Full path to the GIPP folder being used",
-                        type=str, required=True)
     parser.add_argument("-t", "--tile", help="Tile number",
                         type=str, required=True)
     parser.add_argument("-s", "--site", help="Site name. If not specified,"
@@ -456,7 +457,7 @@ if __name__ == "__main__":
     # TODO Add log level parameter for maja
     args = parser.parse_args()
     
-    s = StartMaja(args.folder, args.tile, args.site, args.gipp,
+    s = StartMaja(args.folder, args.tile, args.site,
                   args.start, args.end, args.nbackward,
                   args.overwrite, args.verbose)
     s.run()

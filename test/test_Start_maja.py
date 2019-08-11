@@ -15,7 +15,7 @@ from Start_maja import StartMaja
 import sys
 import os
 from datetime import datetime
-sys.path.append(StartMaja.current_dir)  # Replaces __init__.py
+sys.path.append(os.path.join(StartMaja.current_dir, "Common"))  # Replaces __init__.py
 
 
 def modify_folders_file(root, new_file, **kwargs):
@@ -45,15 +45,13 @@ def modify_folders_file(root, new_file, **kwargs):
 class TestStartMaja(unittest.TestCase):
 
     root = os.getcwd()
-    n_not_used = 2
-    n_dummies = 2
+    n_not_used = 5
+    n_dummies = 5
     start_product = datetime(2014, 12, 31, 10, 50)
     end_product = datetime(2099, 12, 31)
 
-    dates = []
     tile = "T31TCH"
     site = None
-    gipp = os.path.join(os.getcwd(), "nominal")
     start = None
     end = None
     nbackward = 8
@@ -63,40 +61,40 @@ class TestStartMaja(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        import DummyFiles
         cls.product_root = os.path.join(cls.root, cls.tile)
         os.makedirs(cls.product_root)
-        cls.youngest, date = create_dummy_product(cls.product_root, "L1C",
-                                                  tile=cls.tile,
-                                                  date=cls.start_product)
-        cls.dates.append(date)
-        cls.oldest, date = create_dummy_product(cls.product_root, "L1C",
-                                                tile=cls.tile,
-                                                date=cls.end_product)
-        cls.dates.append(date)
+        DummyFiles.L1Generator(cls.product_root,
+                               tile=cls.tile,
+                               date=cls.start_product,
+                               platform="S2").generate()
+        DummyFiles.L1Generator(cls.product_root,
+                               tile=cls.tile,
+                               date=cls.end_product,
+                               platform="S2").generate()
+        for d in set([DummyFiles.random_date() for _ in range(cls.n_dummies)]):
+            DummyFiles.L1Generator(cls.product_root, tile=cls.tile, date=d, platform="S2").generate()
+            DummyFiles.L2Generator(cls.product_root, tile=cls.tile, date=d, platform="S2").generate()
 
-        for i in range(cls.n_dummies):
-            product, date = create_dummy_product(cls.product_root, "L1C", tile=cls.tile)
-            cls.dates.append(date)
-            product, date = create_dummy_product(cls.product_root, "L2A", tile=cls.tile)
-            cls.dates.append(date)
+        for d in set([DummyFiles.random_date() for _ in range(cls.n_not_used)]):
+            DummyFiles.L1Generator(cls.product_root, date=d, platform="S2").generate()
+            DummyFiles.L2Generator(cls.product_root, date=d, platform="S2").generate()
 
-        for i in range(cls.n_not_used):
-            product, date = create_dummy_product(cls.product_root, "L1C")
-            cls.dates.append(date)
-            product, date = create_dummy_product(cls.product_root, "L2A")
-            cls.dates.append(date)
         cls.folders_file = os.path.join(cls.root, "test_working_folders_file.txt")
         modify_folders_file(cls.template_folders_file, new_file=cls.folders_file,
                             repWork=os.getcwd(),
+                            repGIPP=os.getcwd(),
                             repL1=os.getcwd(),
                             repL2=os.getcwd(),
                             repMNT=os.getcwd())
-        cls.mnt = create_dummy_mnt(root=cls.root, tile=cls.tile)
-
+        cls.mnt = DummyFiles.MNTGenerator(root=cls.root, tile=cls.tile, platform="S2")
+        cls.mnt.generate()
         cls.cams = os.path.join(cls.root, "CAMS")
         os.makedirs(cls.cams)
-        for date in cls.dates:
-            create_dummy_cams(cls.cams, date)
+        DummyFiles.CAMSGenerator(cls.cams, cls.start_product).generate()
+        DummyFiles.CAMSGenerator(cls.cams, cls.end_product).generate()
+        for _ in range(cls.n_not_used):
+            DummyFiles.CAMSGenerator(cls.cams).generate()
 
         assert os.path.isfile(cls.folders_file)
 
@@ -106,42 +104,42 @@ class TestStartMaja(unittest.TestCase):
         # In case there's duplicates, remove them:
         shutil.rmtree(cls.product_root)
         os.remove(cls.folders_file)
-        shutil.rmtree(cls.mnt)
         shutil.rmtree(cls.cams)
+        shutil.rmtree(cls.mnt.dbl[0])
+        os.remove(cls.mnt.hdr[0])
 
     def test_dates_and_products(self):
         start_maja = StartMaja(self.folders_file,
                                self.tile,
                                self.site,
-                               self.gipp,
                                self.start,
                                self.end,
                                self.nbackward,
                                self.overwrite,
                                self.verbose)
-        self.assertEqual(len(start_maja.avail_input_l1), self.n_dummies + 2)
-        self.assertEqual(len(start_maja.avail_input_l2), self.n_dummies)
+        self.assertGreaterEqual(self.n_dummies + 2, len(start_maja.avail_input_l1))
+        self.assertGreaterEqual(self.n_dummies, len(start_maja.avail_input_l2))
         self.assertEqual(start_maja.start, self.start_product)
         self.assertEqual(start_maja.end, self.end_product)
 
     def test_parasite_l2a_product(self):
-        product, _ = create_dummy_product(self.product_root, "L2A",
-                                          platform="LANDSAT8",
-                                          tile="T31TCH",
-                                          date=self.end_product)
+        import DummyFiles
+        prod = DummyFiles.L2Generator(self.product_root,
+                                      platform="L8",
+                                      tile="T31TCH")
+        prod.generate()
         with self.assertRaises(IOError):
             StartMaja(self.folders_file,
                       self.tile,
                       self.site,
-                      self.gipp,
                       self.start,
                       self.end,
                       self.nbackward,
                       self.overwrite,
                       self.verbose)
         import shutil
-        shutil.rmtree(product)
-        self.assertFalse(os.path.exists(product))
+        shutil.rmtree(prod.prod)
+        self.assertFalse(os.path.exists(prod.prod))
 
     def test_non_existing_l1c_folder(self):
         folders_path = os.path.join(os.getcwd(), "test_error_folder_file.txt")
@@ -151,7 +149,6 @@ class TestStartMaja(unittest.TestCase):
             StartMaja(folders_path,
                       self.tile,
                       self.site,
-                      self.gipp,
                       self.start,
                       self.end,
                       self.nbackward,
@@ -169,7 +166,6 @@ class TestStartMaja(unittest.TestCase):
             StartMaja(folders_path,
                       self.tile,
                       self.site,
-                      self.gipp,
                       self.start,
                       self.end,
                       self.nbackward,
@@ -185,7 +181,6 @@ class TestStartMaja(unittest.TestCase):
         s = StartMaja(self.folders_file,
                       self.tile,
                       self.site,
-                      self.gipp,
                       start.strftime("%Y-%m-%d"),
                       end.strftime("%Y-%m-%d"),
                       self.nbackward,
@@ -194,20 +189,6 @@ class TestStartMaja(unittest.TestCase):
 
         self.assertEqual(s.start, start)
         self.assertEqual(s.end, end)
-
-    def test_product_sorting(self):
-        s = StartMaja(self.folders_file,
-                      self.tile,
-                      self.site,
-                      self.gipp,
-                      self.start,
-                      self.end,
-                      self.nbackward,
-                      self.overwrite,
-                      self.verbose)
-
-        self.assertEqual(s.avail_input_l1[-1].fpath, self.oldest)
-        self.assertEqual(s.avail_input_l1[0].fpath, self.youngest)
 
 
 if __name__ == '__main__':
