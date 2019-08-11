@@ -102,6 +102,17 @@ class GIPPFile(EarthExplorer):
             r"(L2ALBD|L2DIFT|L2DIRT|L2TOCR|L2WATV|L2COMM|L2SITE|L2SMAC|CKEXTL|CKQLTL)_" \
             r"\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
 
+    def get_mission(self):
+        """
+        Return the "Mission" field for a single GIPP file.
+        :return:
+        """
+        ns = {"xmlns": "http://eop-cfi.esa.int/CFI"}
+        from xml.etree import ElementTree
+        root = ElementTree.parse(self.hdr).getroot()
+        xpath = "./xmlns:Fixed_Header/xmlns:Mission"
+        return root.find(xpath, namespace=ns).text
+
 
 class GippALBD(EarthExplorer):
     regex = r"\w+_(TEST|PROD)_GIP_L2ALBD_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
@@ -141,3 +152,39 @@ class GippEXTL(EarthExplorer):
 
 class GippQLTL(EarthExplorer):
     regex = r"\w+_(TEST|PROD)_GIP_L2QLTL_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+
+class GippSet(object):
+    """
+    Stores a set of Gipp Files
+    """
+    def __init__(self, filepath):
+        """
+        Set the path to the root gipp folder
+        :param filepath: The full path to the root gipp folder
+        """
+        from os import path as p
+        self.fpath = p.realpath(filepath)
+
+    def factory(self):
+        pass
+
+    def get_platform(self):
+        raise NotImplementedError
+
+    def get_type(self):
+        raise NotImplementedError
+
+    def get_file(self, **kwargs):
+        from Common.FileSystem import get_file
+        return get_file(root=self.fpath, **kwargs)
+
+    def get_date(self):
+        raise NotImplementedError
+
+
+class GippMuscate(GippSet):
+    """
+    Store a set of 'muscate' gipps
+    """
+    pass
