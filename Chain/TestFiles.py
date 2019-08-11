@@ -66,6 +66,18 @@ class DummyEarthExplorer(DummyGenerator):
         else:
             raise ValueError("Unknown platform found: %s" % platform)
 
+    def get_mission(self):
+        """
+        Return a random Mission name
+        :return:
+        """
+        mission_choices = {"tm": {"S2": "SENTINEL-2"},
+                           "muscate": {"S2": "SENTINEL2", "L8": "LANDSAT8", "VE": "VENUS"},
+                           "natif": {"S2": "SENTINEL-2", "L8": "LANDSAT_8", "VE": "VENuS"}
+                           }
+        mtype = random.choice(["muscate", "natif"])
+        return mission_choices[mtype][self.platform]
+
     def create_dummy_hdr(self, file_path, mission=None):
         """
         Create a dummy HDR file with only the "Mission" field in it.
@@ -94,15 +106,18 @@ class MNTGenerator(DummyEarthExplorer):
     """
     Class to create a single dummy MNT.
     """
-    def generate(self):
-
-        basename = "_".join([self.platform, "TEST", "AUX", "REFDE2", self.tile, str(random.randint(0, 1000)).zfill(4)])
+    def generate(self, **kwargs):
+        mission_param = kwargs.get("mission", self.get_mission())
+        mission_specifier = "_" if self.platform == "S2" else ""
+        basename = "_".join([self.platform + mission_specifier,
+                             "TEST", "AUX", "REFDE2", self.tile,
+                             str(random.randint(0, 1000)).zfill(4)])
         mnt_name = os.path.join(self.root, basename)
         dbl_name = os.path.join(mnt_name, basename + ".DBL.DIR")
         hdr_name = os.path.join(mnt_name, basename + ".HDR")
         os.makedirs(mnt_name)
         os.makedirs(dbl_name)
-        self.create_dummy_hdr(hdr_name)
+        self.create_dummy_hdr(hdr_name, mission=mission_param + mission_specifier)
         return mnt_name
 
 
@@ -113,14 +128,16 @@ class CAMSGenerator(DummyEarthExplorer):
     def generate(self, **kwargs):
         from datetime import datetime
         end_date = datetime(2099, 1, 1, 23, 59, 59)
-
-        basename = "_".join([self.platform, "TEST", "EXO", "CAMS",
+        mission_param = kwargs.get("mission", self.get_mission())
+        mission_specifier = "_" if self.platform == "S2" else ""
+        basename = "_".join([self.platform + mission_specifier,
+                             "TEST", "EXO", "CAMS",
                              self.date.strftime("%Y%m%dT%H%M%S"),
                              end_date.strftime("%Y%m%dT%H%M%S")])
         dbl_name = os.path.join(self.root, basename + ".DBL.DIR")
         hdr_name = os.path.join(self.root, basename + ".HDR")
         os.makedirs(dbl_name)
-        self.create_dummy_hdr(hdr_name)
+        self.create_dummy_hdr(hdr_name, mission=mission_param + mission_specifier)
 
 
 class GippGenerator(DummyEarthExplorer):
@@ -154,7 +171,7 @@ class GippGenerator(DummyEarthExplorer):
                           "muscate": {"S2": "SENTINEL2", "L8": "LANDSAT8", "VE": "VENUS"},
                           "natif": {"S2": "SENTINEL-2", "L8": "LANDSAT_8", "VE": "VENuS"}
                           }
-        mission_param = kwargs["mission"]
+        mission_param = kwargs.get("mission", self.get_mission())
         mission = mission_choice[mission_param][self.platform]
         satellites = [self.platform] if self.platform != "S2" else ["S2A", "S2B"]
         with_cams = kwargs.get("cams", True)
