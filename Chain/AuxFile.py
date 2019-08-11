@@ -102,18 +102,42 @@ class GIPPFile(EarthExplorer):
             r"(L2ALBD|L2DIFT|L2DIRT|L2TOCR|L2WATV|L2COMM|L2SITE|L2SMAC|CKEXTL|CKQLTL)_" \
             r"\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
 
-    regex_albd = r"\w+_(TEST|PROD)_GIP_L2ALBD_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
-    regex_dift = r"\w+_(TEST|PROD)_GIP_L2DIFT_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
-    regex_dirt = r"\w+_(TEST|PROD)_GIP_L2DIRT_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
-    regex_tocr = r"\w+_(TEST|PROD)_GIP_L2TOCR_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
-    regex_watv = r"\w+_(TEST|PROD)_GIP_L2WATV_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
-    regex_comm = r"\w+_(TEST|PROD)_GIP_L2COMM_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
-    regex_site = r"\w+_(TEST|PROD)_GIP_L2SITE_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
-    regex_smac = r"\w+_(TEST|PROD)_GIP_L2SMAC_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
-    regex_extl = r"\w+_(TEST|PROD)_GIP_CKEXTL_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
-    regex_qltl = r"\w+_(TEST|PROD)_GIP_CKQLTL_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
 
-    all_regexes = [regex_albd, regex_dift, regex_dirt,
-                   regex_tocr, regex_watv, regex_comm,
-                   regex_site, regex_smac, regex_extl,
-                   regex_qltl]
+class GippALBD(EarthExplorer):
+    regex = r"\w+_(TEST|PROD)_GIP_L2ALBD_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+
+class GippDIFT(EarthExplorer):
+    regex = r"\w+_(TEST|PROD)_GIP_L2DIFT_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+
+class GippDIRT(EarthExplorer):
+    regex = r"\w+_(TEST|PROD)_GIP_L2DIRT_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+
+class GippTOCR(EarthExplorer):
+    regex = r"\w+_(TEST|PROD)_GIP_L2TOCR_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+
+class GippWATV(EarthExplorer):
+    regex = r"\w+_(TEST|PROD)_GIP_L2WATV_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+
+class GippCOMM(EarthExplorer):
+    regex = r"\w+_(TEST|PROD)_GIP_L2COMM_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+
+class GippSITE(EarthExplorer):
+    regex = r"\w+_(TEST|PROD)_GIP_L2SITE_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+
+class GippSMAC(EarthExplorer):
+    regex = r"\w+_(TEST|PROD)_GIP_L2SMAC_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+
+class GippEXTL(EarthExplorer):
+    regex = r"\w+_(TEST|PROD)_GIP_L2EXTL_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+
+
+class GippQLTL(EarthExplorer):
+    regex = r"\w+_(TEST|PROD)_GIP_L2QLTL_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
