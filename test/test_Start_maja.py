@@ -158,23 +158,6 @@ class TestStartMaja(unittest.TestCase):
         os.remove(folders_path)
         self.assertFalse(os.path.exists(folders_path))
 
-    def test_non_existing_l2a_folder(self):
-        folders_path = os.path.join(os.getcwd(), "test_error_folder_file.txt")
-        modify_folders_file(self.folders_file, new_file=folders_path,
-                            repL2="/a/b/c")
-        with self.assertRaises(OSError):
-            StartMaja(folders_path,
-                      self.tile,
-                      self.site,
-                      self.start,
-                      self.end,
-                      self.nbackward,
-                      self.overwrite,
-                      self.verbose)
-
-        os.remove(folders_path)
-        self.assertFalse(os.path.exists(folders_path))
-
     def test_custom_start_end_dates(self):
         start = datetime(2017, 1, 1)
         end = datetime(2019, 1, 1)
