@@ -28,11 +28,9 @@ def random_tile(platform="S2"):
 
 
 def random_platform(product_level=None):
-    if not product_level:
-        product_level = random.choice(["L1C", "L2A"])
-    platform_options = {"L1C": ["S2A", "S2B", "LANDSAT8", "VENUS"],
-                        "L2A": ["SENTINEL2B", "SENTINEL2A", "LANDSAT8-OLITIRS", "VENUS-XS"]}
-    return random.choice(platform_options[product_level])
+    if product_level == "L1C":
+        return "S2"
+    return random.choice(["S2", "VE", "L8"])
 
 
 def random_date():
@@ -72,6 +70,11 @@ class DummyEarthExplorer(DummyGenerator):
     """
     Base class for all EarthExplorer-like files
     """
+    def __init__(self, root, date=random_date(), tile=None, platform=random_platform()):
+        super(DummyEarthExplorer, self).__init__(root, date, tile, platform)
+        self.hdr = []
+        self.dbl = []
+
     def get_mission(self):
         """
         Return a random Mission name
@@ -118,13 +121,10 @@ class MNTGenerator(DummyEarthExplorer):
         basename = "_".join([self.platform + mission_specifier,
                              "TEST", "AUX", "REFDE2", self.tile,
                              str(random.randint(0, 1000)).zfill(4)])
-        mnt_name = os.path.join(self.root, basename)
-        dbl_name = os.path.join(mnt_name, basename + ".DBL.DIR")
-        hdr_name = os.path.join(mnt_name, basename + ".HDR")
-        os.makedirs(mnt_name)
-        os.makedirs(dbl_name)
-        self.create_dummy_hdr(hdr_name, mission=mission_param + mission_specifier)
-        return mnt_name
+        self.dbl.append(os.path.join(self.root, basename + ".DBL.DIR"))
+        self.hdr.append(os.path.join(self.root, basename + ".HDR"))
+        os.makedirs(self.dbl[-1])
+        self.create_dummy_hdr(self.hdr[-1], mission=mission_param + mission_specifier)
 
 
 class CAMSGenerator(DummyEarthExplorer):
@@ -140,10 +140,10 @@ class CAMSGenerator(DummyEarthExplorer):
                              "TEST", "EXO", "CAMS",
                              self.date.strftime("%Y%m%dT%H%M%S"),
                              end_date.strftime("%Y%m%dT%H%M%S")])
-        dbl_name = os.path.join(self.root, basename + ".DBL.DIR")
-        hdr_name = os.path.join(self.root, basename + ".HDR")
-        os.makedirs(dbl_name)
-        self.create_dummy_hdr(hdr_name, mission=mission_param + mission_specifier)
+        self.dbl.append(os.path.join(self.root, basename + ".DBL.DIR"))
+        self.hdr.append(os.path.join(self.root, basename + ".HDR"))
+        os.makedirs(self.dbl[-1])
+        self.create_dummy_hdr(self.hdr[-1], mission=mission_param + mission_specifier)
 
 
 class GippGenerator(DummyEarthExplorer):
@@ -164,10 +164,11 @@ class GippGenerator(DummyEarthExplorer):
         if name in ["EXTL", "QLTL"]:
             prefix = "CK"
         basename = "_".join([sat, "TEST", "GIP", prefix + name, "L",
-                             "{s:x^8}".format(s=model, x="_"),
+                             "{s:_^8}".format(s=model),
                              version, start_date.strftime("%Y%m%dT%H%M%S"),
                              self.date.strftime("%Y%m%dT%H%M%S")])
         hdr_name = os.path.join(self.root, basename + file_type)
+        self.hdr.append(hdr_name)
         self.create_dummy_hdr(hdr_name, mission=mission + mission_specifier)
         return basename
 
@@ -177,7 +178,9 @@ class GippGenerator(DummyEarthExplorer):
                           "muscate": {"S2": "SENTINEL2", "L8": "LANDSAT8", "VE": "VENUS"},
                           "natif": {"S2": "SENTINEL-2", "L8": "LANDSAT_8", "VE": "VENuS"}
                           }
-        mission_param = kwargs.get("mission", self.get_mission())
+        mission_param = kwargs.get("mission", random.choice(["muscate", "natif"]))
+        if mission_param == "tm":
+            self.platform = "S2"
         mission = mission_choice[mission_param][self.platform]
         satellites = [self.platform] if self.platform != "S2" else ["S2A", "S2B"]
         with_cams = kwargs.get("cams", True)
@@ -189,33 +192,45 @@ class GippGenerator(DummyEarthExplorer):
         hdr_types = ["ALBD", "DIFT", "DIRT", "TOCR", "WATV"]
         eef_types = ["COMM", "SITE", "SMAC", "EXTL", "QLTL"]
         tm_types = ["COMM", "EXTL", "QLTL"]
-        version = str(random.randint(0, 99999)).zfill(5)
+        version = random.randint(0, 9999)
+        version_str = str(version).zfill(5)
         start_date = datetime(2014, 12, 30)
         for sat in satellites:
-            for name in hdr_types:
-                self._create_hdr(sat, name, start_date, version, allsites, mission, ".EEF")
             for name in eef_types:
+                self._create_hdr(sat, name, start_date, version_str, allsites, mission, ".EEF")
+            for name in hdr_types:
                 for model in models:
-                    basename = self._create_hdr(sat, name, start_date, version, model, mission, ".HDR")
+                    basename = self._create_hdr(sat, name, start_date, version_str, model, mission, ".HDR")
                     dbl_name = os.path.join(self.root, basename + ".DBL.DIR")
+                    self.dbl.append(dbl_name)
                     os.makedirs(dbl_name)
             # For TM: Add an additional set of COMM, EXTL and QLTL files with muscate mission:
             for name in tm_types:
                 if mission_param != "tm":
                     continue
-                mission = "SENTINEL2"
-                self._create_hdr(sat, name, start_date, version, allsites, mission, ".EEF")
+                tm_mission = "SENTINEL2"
+                tm_version_str = str(version + 10000).zfill(5)
+                self._create_hdr(sat, name, start_date, tm_version_str, allsites, tm_mission, ".EEF")
 
 
-class L1Generator(DummyGenerator):
+class ProductGenerator(DummyGenerator):
+    platform_options = {"L1C": ["S2A", "S2B"],
+                        "L2A": ["SENTINEL2B", "SENTINEL2A", "LANDSAT8-OLITIRS", "VENUS-XS"]}
+
+    def generate(self, **kwargs):
+        raise NotImplementedError
+
+
+class L1Generator(ProductGenerator):
     """
     Class to create a dummy L1C product
     """
     def __init__(self, root, date=random_date(), tile=None, platform=random_platform(product_level="L1C")):
-        super(DummyGenerator, self).__init__(root, date, tile, platform)
+        super(L1Generator, self).__init__(root, date, tile, platform)
 
     def generate(self, **kwargs):
         from Common import TestFunctions
+        self.platform = self.platform_options["L1C"]
         orbit = kwargs.get("orbit", random.randint(0, 999))
         version_orbit = kwargs.get("version", random.randint(0, 9))
         date_str = self.date.strftime("%Y%m%dT%H%M%S")
@@ -232,15 +247,16 @@ class L1Generator(DummyGenerator):
         TestFunctions.touch(metadata_path)
 
 
-class L2Generator(DummyGenerator):
+class L2Generator(ProductGenerator):
     """
     Class to create a dummy L2A product
     """
     def __init__(self, root, date=random_date(), tile=None, platform=random_platform(product_level="L2A")):
-        super(DummyGenerator, self).__init__(root, date, tile, platform)
+        super(L2Generator, self).__init__(root, date, tile, platform)
 
     def generate(self, **kwargs):
         from Common import TestFunctions
+        self.platform = self.platform_options["L2A"]
         ms = kwargs.get("ms", random.randint(0, 999))
         version = kwargs.get("version", random.randint(0, 9))
         date_str = self.date.strftime("%Y%m%d-%H%M%S-") + str(ms)
