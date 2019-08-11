@@ -28,7 +28,12 @@ class VenusNatif(MajaProduct):
         return "l1c"
 
     def get_tile(self):
-        return self.base.split("_")[4]
+        import re
+        site = self.base.split("_")[4]
+        tile = re.search(self.reg_tile, site)
+        if tile:
+            return tile.group()[1:]
+        return site
 
     def get_metadata_file(self):
         metadata_filename = "*" + self.get_tile() + "*" + self.get_date().strftime("%Y%m%d") + "*HDR"
@@ -59,7 +64,12 @@ class VenusMuscate(MajaProduct):
         raise ValueError("Unknown product level for %s" % self.base)
 
     def get_tile(self):
-        return self.base.split("_")[3]
+        import re
+        site = self.base.split("_")[3]
+        tile = re.search(self.reg_tile, site)
+        if tile:
+            return tile.group()[1:]
+        return site
 
     def get_metadata_file(self):
         return self.get_file(filename="*MTD_ALL.xml")
