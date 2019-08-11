@@ -217,6 +217,11 @@ class ProductGenerator(DummyGenerator):
     platform_options = {"L1C": ["S2A", "S2B"],
                         "L2A": ["SENTINEL2B", "SENTINEL2A", "LANDSAT8-OLITIRS", "VENUS-XS"]}
 
+    def __init__(self, root, date=random_date(), tile=None, platform=random_platform()):
+        super(ProductGenerator, self).__init__(root, date, tile, platform)
+        self.prod = None
+        self.mtd = None
+
     def generate(self, **kwargs):
         raise NotImplementedError
 
@@ -230,7 +235,7 @@ class L1Generator(ProductGenerator):
 
     def generate(self, **kwargs):
         from Common import TestFunctions
-        self.platform = self.platform_options["L1C"]
+        self.platform = random.choice(self.platform_options["L1C"])
         orbit = kwargs.get("orbit", random.randint(0, 999))
         version_orbit = kwargs.get("version", random.randint(0, 9))
         date_str = self.date.strftime("%Y%m%dT%H%M%S")
@@ -242,7 +247,9 @@ class L1Generator(ProductGenerator):
                                  self.tile,
                                  date_str + ".SAFE"])
         product_path = os.path.join(self.root, product_name)
+        self.prod = product_path
         metadata_path = os.path.join(product_path, "MTD_MSIL1C.xml")
+        self.mtd = metadata_path
         os.makedirs(product_path)
         TestFunctions.touch(metadata_path)
 
@@ -256,7 +263,7 @@ class L2Generator(ProductGenerator):
 
     def generate(self, **kwargs):
         from Common import TestFunctions
-        self.platform = self.platform_options["L2A"]
+        self.platform = random.choice(self.platform_options["L2A"])
         ms = kwargs.get("ms", random.randint(0, 999))
         version = kwargs.get("version", random.randint(0, 9))
         date_str = self.date.strftime("%Y%m%d-%H%M%S-") + str(ms)
@@ -267,6 +274,8 @@ class L2Generator(ProductGenerator):
                                  random.choice("DC"),
                                  "V" + str(version) + "-" + str(version)])
         product_path = os.path.join(self.root, product_name)
+        self.prod = product_path
         metadata_path = os.path.join(product_path, product_name + "_MTD_ALL.xml")
+        self.mtd = metadata_path
         os.makedirs(product_path)
         TestFunctions.touch(metadata_path)

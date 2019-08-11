@@ -159,6 +159,32 @@ class TestDummyFiles(unittest.TestCase):
             os.remove(hdr)
             self.assertFalse(os.path.exists(hdr))
 
+    def test_l1_generation(self):
+        import shutil
+        gen = DummyFiles.L1Generator(self.root)
+        gen.generate()
+        self.assertTrue(gen.platform in ["S2A", "S2B"])
+        self.assertTrue(os.path.exists(gen.mtd))
+        self.assertTrue(os.path.exists(gen.prod))
+        self.assertTrue("MTD_MSIL1C.xml" in os.path.basename(gen.mtd))
+        self.assertTrue("MSIL1C" in gen.prod)
+
+        shutil.rmtree(gen.prod)
+        self.assertFalse(os.path.exists(gen.prod))
+
+    def test_l2_generation(self):
+        import shutil
+        gen = DummyFiles.L2Generator(self.root)
+        gen.generate()
+        self.assertTrue(os.path.exists(gen.mtd))
+        self.assertTrue(os.path.exists(gen.prod))
+        self.assertTrue("_MTD_ALL.xml" in os.path.basename(gen.mtd))
+        self.assertTrue(os.path.dirname(gen.mtd), gen.prod)
+
+        shutil.rmtree(gen.prod)
+        self.assertFalse(os.path.exists(gen.prod))
+
+
 
 if __name__ == '__main__':
     unittest.main()
