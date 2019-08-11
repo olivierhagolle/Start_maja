@@ -56,7 +56,7 @@ class TestStartMaja(unittest.TestCase):
     end = None
     nbackward = 8
     overwrite = "True"
-    verbose = "True"
+    verbose = "False"
     template_folders_file = os.path.join(os.getcwd(), "test", "test_folders.txt")
 
     @classmethod
@@ -125,7 +125,7 @@ class TestStartMaja(unittest.TestCase):
     def test_parasite_l2a_product(self):
         import DummyFiles
         prod = DummyFiles.L2Generator(self.product_root,
-                                      platform="L8",
+                                      platform="VE",
                                       tile="T31TCH")
         prod.generate()
         with self.assertRaises(IOError):

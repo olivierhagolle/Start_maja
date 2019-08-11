@@ -88,7 +88,6 @@ class StartMaja(object):
             logging.debug("No site-folder specified. Searching for product directly by Tile-ID")
 
         # TODO wrap this in functions
-        print(self.path_input_l1)
         if not p.isdir(self.path_input_l1):
             raise OSError("L1 folder for %s not existing: %s" % (self.__site_info, self.path_input_l1))
 
@@ -113,9 +112,6 @@ class StartMaja(object):
                                                                       self.path_input_l2))
 
         platform = list(set([prod.get_platform() for prod in self.avail_input_l1 + self.avail_input_l2]))
-        for prod in self.avail_input_l1 + self.avail_input_l2:
-            if prod.get_platform() != 'sentinel2':
-                print(prod)
         if len(platform) != 1:
             raise IOError("Cannot mix multiple platforms: %s" % platform)
         self.platform = platform[0]
