@@ -5,7 +5,6 @@ Created on Thu Jul  5 17:42:44 2018
 @author: akynos
 """
 
-import random
 import os
 
 
@@ -16,6 +15,8 @@ def random_tile(platform="S2"):
     :return: String compliant with the given platform
     """
     import string
+    import random
+
     letters = string.ascii_uppercase
     tile = "T" + str(random.randint(0, 99)).zfill(2) + ''.join(random.choice(letters) for _ in range(3))
     if platform == "S2":
@@ -28,12 +29,14 @@ def random_tile(platform="S2"):
 
 
 def random_platform(product_level=None):
+    import random
     if product_level == "L1C":
         return "S2"
     return random.choice(["S2", "VE", "L8"])
 
 
 def random_date():
+    import random
     from datetime import datetime, timedelta
     date = datetime(2015, 1, 1) + timedelta(days=random.randint(0, 10000),
                                             hours=random.randint(10, 12),
@@ -46,9 +49,12 @@ class DummyGenerator(object):
     """
     Base class for all dummy generators
     """
-    def __init__(self, root, date=random_date(), tile=None, platform=random_platform()):
+    def __init__(self, root, date=None, tile=None, platform=random_platform()):
         self.root = root
-        self.date = date
+        if not date:
+            self.date = random_date()
+        else:
+            self.date = date
         if platform[:2].upper() == "S2":
             self.platform = "S2"
         elif platform[:2].upper() == "L8":
@@ -70,7 +76,7 @@ class DummyEarthExplorer(DummyGenerator):
     """
     Base class for all EarthExplorer-like files
     """
-    def __init__(self, root, date=random_date(), tile=None, platform=random_platform()):
+    def __init__(self, root, date=None, tile=None, platform=random_platform()):
         super(DummyEarthExplorer, self).__init__(root, date, tile, platform)
         self.hdr = []
         self.dbl = []
@@ -80,6 +86,7 @@ class DummyEarthExplorer(DummyGenerator):
         Return a random Mission name
         :return:
         """
+        import random
         mission_choices = {"tm": {"S2": "SENTINEL-2"},
                            "muscate": {"S2": "SENTINEL2", "L8": "LANDSAT8", "VE": "VENUS"},
                            "natif": {"S2": "SENTINEL-2", "L8": "LANDSAT_8", "VE": "VENuS"}
@@ -116,6 +123,8 @@ class MNTGenerator(DummyEarthExplorer):
     Class to create a single dummy MNT.
     """
     def generate(self, **kwargs):
+        import random
+        from Common import FileSystem
         mission_param = kwargs.get("mission", self.get_mission())
         mission_specifier = "_" if self.platform == "S2" else ""
         basename = "_".join([self.platform + mission_specifier,
@@ -123,7 +132,7 @@ class MNTGenerator(DummyEarthExplorer):
                              str(random.randint(0, 1000)).zfill(4)])
         self.dbl.append(os.path.join(self.root, basename + ".DBL.DIR"))
         self.hdr.append(os.path.join(self.root, basename + ".HDR"))
-        os.makedirs(self.dbl[-1])
+        FileSystem.create_directory(self.dbl[-1])
         self.create_dummy_hdr(self.hdr[-1], mission=mission_param + mission_specifier)
 
 
@@ -133,6 +142,7 @@ class CAMSGenerator(DummyEarthExplorer):
     """
     def generate(self, **kwargs):
         from datetime import datetime
+        from Common import FileSystem
         end_date = datetime(2099, 1, 1, 23, 59, 59)
         mission_param = kwargs.get("mission", self.get_mission())
         mission_specifier = "_" if self.platform == "S2" else ""
@@ -142,7 +152,7 @@ class CAMSGenerator(DummyEarthExplorer):
                              end_date.strftime("%Y%m%dT%H%M%S")])
         self.dbl.append(os.path.join(self.root, basename + ".DBL.DIR"))
         self.hdr.append(os.path.join(self.root, basename + ".HDR"))
-        os.makedirs(self.dbl[-1])
+        FileSystem.create_directory(self.dbl[-1])
         self.create_dummy_hdr(self.hdr[-1], mission=mission_param + mission_specifier)
 
 
@@ -174,6 +184,8 @@ class GippGenerator(DummyEarthExplorer):
 
     def generate(self, **kwargs):
         from datetime import datetime
+        import random
+        from Common import FileSystem
         mission_choice = {"tm": {"S2": "SENTINEL-2"},
                           "muscate": {"S2": "SENTINEL2", "L8": "LANDSAT8", "VE": "VENUS"},
                           "natif": {"S2": "SENTINEL-2", "L8": "LANDSAT_8", "VE": "VENuS"}
@@ -203,7 +215,7 @@ class GippGenerator(DummyEarthExplorer):
                     basename = self._create_hdr(sat, name, start_date, version_str, model, mission, ".HDR")
                     dbl_name = os.path.join(self.root, basename + ".DBL.DIR")
                     self.dbl.append(dbl_name)
-                    os.makedirs(dbl_name)
+                    FileSystem.create_directory(dbl_name)
             # For TM: Add an additional set of COMM, EXTL and QLTL files with muscate mission:
             for name in tm_types:
                 if mission_param != "tm":
@@ -214,10 +226,12 @@ class GippGenerator(DummyEarthExplorer):
 
 
 class ProductGenerator(DummyGenerator):
-    platform_options = {"L1C": ["S2A", "S2B"],
-                        "L2A": ["SENTINEL2B", "SENTINEL2A", "LANDSAT8-OLITIRS", "VENUS-XS"]}
+    platform_options = {"L1C": {"S2": ["S2A", "S2B"]},
+                        "L2A": {"S2": ["SENTINEL2B", "SENTINEL2A"],
+                                "L8": ["LANDSAT8-OLITIRS"],
+                                "VE": ["VENUS-XS"]}}
 
-    def __init__(self, root, date=random_date(), tile=None, platform=random_platform()):
+    def __init__(self, root, date=None, tile=None, platform=random_platform()):
         super(ProductGenerator, self).__init__(root, date, tile, platform)
         self.prod = None
         self.mtd = None
@@ -230,16 +244,17 @@ class L1Generator(ProductGenerator):
     """
     Class to create a dummy L1C product
     """
-    def __init__(self, root, date=random_date(), tile=None, platform=random_platform(product_level="L1C")):
+    def __init__(self, root, date=None, tile=None, platform=random_platform(product_level="L1C")):
         super(L1Generator, self).__init__(root, date, tile, platform)
 
     def generate(self, **kwargs):
-        from Common import TestFunctions
-        self.platform = random.choice(self.platform_options["L1C"])
+        import random
+        from Common import TestFunctions, FileSystem
+        platform_specifier = random.choice(self.platform_options["L1C"][self.platform])
         orbit = kwargs.get("orbit", random.randint(0, 999))
         version_orbit = kwargs.get("version", random.randint(0, 9))
         date_str = self.date.strftime("%Y%m%dT%H%M%S")
-        product_name = "_".join([self.platform,
+        product_name = "_".join([platform_specifier,
                                  "MSIL1C",
                                  date_str,
                                  "N" + str(orbit).zfill(4),
@@ -250,7 +265,7 @@ class L1Generator(ProductGenerator):
         self.prod = product_path
         metadata_path = os.path.join(product_path, "MTD_MSIL1C.xml")
         self.mtd = metadata_path
-        os.makedirs(product_path)
+        FileSystem.create_directory(product_path)
         TestFunctions.touch(metadata_path)
 
 
@@ -262,12 +277,14 @@ class L2Generator(ProductGenerator):
         super(L2Generator, self).__init__(root, date, tile, platform)
 
     def generate(self, **kwargs):
-        from Common import TestFunctions
-        self.platform = random.choice(self.platform_options["L2A"])
+        import random
+        from Common import TestFunctions, FileSystem
+        print("Platform", self.platform)
+        platform_specifier = random.choice(self.platform_options["L2A"][self.platform])
         ms = kwargs.get("ms", random.randint(0, 999))
         version = kwargs.get("version", random.randint(0, 9))
         date_str = self.date.strftime("%Y%m%d-%H%M%S-") + str(ms)
-        product_name = "_".join([self.platform,
+        product_name = "_".join([platform_specifier,
                                  date_str,
                                  "L2A",
                                  self.tile,
@@ -277,5 +294,5 @@ class L2Generator(ProductGenerator):
         self.prod = product_path
         metadata_path = os.path.join(product_path, product_name + "_MTD_ALL.xml")
         self.mtd = metadata_path
-        os.makedirs(product_path)
+        FileSystem.create_directory(product_path)
         TestFunctions.touch(metadata_path)

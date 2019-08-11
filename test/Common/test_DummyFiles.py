@@ -163,7 +163,6 @@ class TestDummyFiles(unittest.TestCase):
         import shutil
         gen = DummyFiles.L1Generator(self.root)
         gen.generate()
-        self.assertTrue(gen.platform in ["S2A", "S2B"])
         self.assertTrue(os.path.exists(gen.mtd))
         self.assertTrue(os.path.exists(gen.prod))
         self.assertTrue("MTD_MSIL1C.xml" in os.path.basename(gen.mtd))
