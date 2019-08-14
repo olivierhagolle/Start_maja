@@ -101,7 +101,7 @@ class GippSet(object):
         self.platform = platform
         self.gtype = gtype
         self.cams = "_CAMS" if cams else ""
-        self.gipp_folder_name = "%s_%s" % (self.platform, self.gtype) + self.cams
+        self.gipp_folder_name = "%s_%s" % (self.platform.upper(), self.gtype.upper()) + self.cams
 
     def download(self):
         """
