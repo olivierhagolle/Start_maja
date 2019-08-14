@@ -59,7 +59,7 @@ def __get_item(path, reg):
     """
     import re
     import os
-    available_dirs = [f for f in os.listdir(path) if re.search(reg, f)]
+    available_dirs = [f for f in os.listdir(path) if re.search(reg.lower(), f.lower())]
     if not available_dirs:
         raise IOError("Cannot find %s in %s" % (reg, path))
     return os.path.abspath(os.path.join(path, available_dirs[0]))
@@ -77,7 +77,7 @@ def find(pattern, path):
     parameter = pattern.replace("*", ".*")
     for root, dirs, files in os.walk(path):
         for name in files + dirs:
-            if re.search(parameter, name):
+            if re.search(parameter.lower(), name.lower()):
                 result.append(os.path.join(root, name))
     if not result:
         raise ValueError("Cannot find %s in %s" % (parameter, path))
