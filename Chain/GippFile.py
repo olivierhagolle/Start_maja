@@ -9,7 +9,7 @@ Author:         Peter KETTIG <peter.kettig@cnes.fr>
 Project:        Start_maja, CNES
 """
 
-from os import path as p
+import os
 from Chain.AuxFile import EarthExplorer
 
 
@@ -86,17 +86,17 @@ class GippSet(object):
         """
         Set the path to the root gipp folder
         :param root: The full path to the root gipp folder
-        :param platform: The platform name
-        :param gtype: The gipp type
+        :param platform: The platform name. Has to be in ["sentinel2", "landsat8", "venus"]
+        :param gtype: The gipp type. Has to be in ["muscate", "natif", "tm"]
         """
         from Common import FileSystem
         assert platform in self.platforms
         assert gtype in self.gtypes
-        self.fpath = p.realpath(root)
+        self.fpath = os.path.realpath(root)
         FileSystem.create_directory(self.fpath)
-        self.gipp_archive = p.join(self.fpath, "archive.zip")
-        self.lut_archive = p.join(self.fpath, "lut_archive.zip")
-        self.temp_folder = p.join(self.fpath, "tempdir")
+        self.gipp_archive = os.path.join(self.fpath, "archive.zip")
+        self.lut_archive = os.path.join(self.fpath, "lut_archive.zip")
+        self.temp_folder = os.path.join(self.fpath, "tempdir")
 
         self.platform = platform
         self.gtype = gtype
@@ -110,15 +110,14 @@ class GippSet(object):
         url to download the LUTs. Then, the latter will be downloaded separately.
         :return:
         """
-        import os
         from Common import FileSystem
-        FileSystem.download_file(self.url, self.archive)
-        FileSystem.unzip(self.archive, self.temp_folder)
-        gipp_maja_git = p.join(self.fpath, "gipp_maja.git")
+        FileSystem.download_file(self.url, self.gipp_archive)
+        FileSystem.unzip(self.gipp_archive, self.temp_folder)
+        gipp_maja_git = os.path.join(self.fpath, "gipp_maja.git")
         platform_folder = FileSystem.get_file(root=gipp_maja_git, filename=self.gipp_folder_name)
         if not platform_folder:
             raise OSError("Cannot find any gipp folder for platform %s" % self.gipp_folder_name)
-        readme = FileSystem.get_file(filename="download.md", root=platform_folder)
+        readme = FileSystem.get_file(filename="readme*", root=platform_folder)
         if not readme:
             raise OSError("Cannot find download-file for LUT-Download in %s" % platform_folder)
         lut_url = FileSystem.find_in_file(readme, self.zenodo_reg)
@@ -133,9 +132,25 @@ class GippSet(object):
         eefs = FileSystem.find("*(EEF|HDR)", self.temp_folder)
         dbls = FileSystem.find("*DBL.DIR", self.temp_folder)
         for gipp_file in eefs + dbls:
-            base = p.basename(gipp_file)
-            os.rename(gipp_file, p.join(self.fpath, base))
+            base = os.path.basename(gipp_file)
+            os.rename(gipp_file, os.path.join(self.fpath, base))
 
         FileSystem.remove_directory(self.temp_folder)
         FileSystem.remove_file(self.lut_archive)
         FileSystem.remove_file(self.gipp_archive)
+
+    def link(self, dest):
+        """
+        Symlink a set of Gipps to a given destination
+        :param dest: The destination directory
+        :return:
+        """
+        from Common import FileSystem
+
+        files = os.listdir(self.fpath)
+        for f in files:
+            FileSystem.symlink(f, os.path.join(dest, os.path.basename(f)))
+
+    def check_completeness(self):
+        # TODO Need to implement this using good ol' regex's.
+        raise NotImplementedError
