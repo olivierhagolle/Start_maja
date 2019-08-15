@@ -154,9 +154,10 @@ def __get_return_code(proc, log_level):
     :param log_level: The log level for the messages displayed.
     :return: The return code of the app
     """
-    for stdout_line in iter(proc.stdout.readline, ""):
+    while proc.poll() is None:
+        line = proc.stdout.readline()  # This blocks until it receives a newline.
         if log_level == logging.DEBUG:
-            print(log_level, stdout_line)
+            print(line)
     proc.stdout.close()
     return proc.wait()
 
