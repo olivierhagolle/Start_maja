@@ -21,14 +21,16 @@ class GIPPFile(EarthExplorer):
             r"(L2ALBD|L2DIFT|L2DIRT|L2TOCR|L2WATV|L2COMM|L2SITE|L2SMAC|CKEXTL|CKQLTL)_" \
             r"\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
 
-    def get_mission(self):
+    @staticmethod
+    def get_mission(hdr):
         """
         Return the "Mission" field for a single GIPP file.
+        :param hdr: The full path to the HDR file
         :return:
         """
         ns = {"xmlns": "http://eop-cfi.esa.int/CFI"}
         from xml.etree import ElementTree
-        root = ElementTree.parse(self.hdr).getroot()
+        root = ElementTree.parse(hdr).getroot()
         xpath = "./xmlns:Fixed_Header/xmlns:Mission"
         return root.find(xpath, namespace=ns).text
 
@@ -81,7 +83,9 @@ class GippSet(object):
     zenodo_reg = r"https?:\/\/zenodo.org\/record\/\d+\/files\/\w+.zip\?download=1"
 
     platforms = ["sentinel2", "landsat8", "venus"]
-    gtypes = ["muscate", "natif", "tm"]
+    plugins = {"sentinel2": ["natif", "muscate", "tm"],
+               "landsat8": ["natif", "muscate"],
+               "venus": ["natif", "muscate"]}
 
     def __init__(self, root, platform, gtype, cams=False, log_level=logging.INFO):
         """
@@ -93,21 +97,24 @@ class GippSet(object):
         :param log_level: The log level for the messages displayed.
         """
         from Common import FileSystem
-        assert platform in self.platforms
-        assert gtype in self.gtypes
         self.fpath = os.path.realpath(root)
+        if platform not in self.platforms:
+            raise ValueError("Unknown platform found: %s" % platform)
+        if gtype not in self.plugins[platform]:
+            raise ValueError("No Plugin of type %s existing for platform %s" % (gtype, platform))
+        self.platform = platform
+        self.gtype = gtype
+        self.cams_suffix = "_CAMS" if cams else ""
+        self.log_level = log_level
+
+        # Create root if not existing:
         FileSystem.create_directory(self.fpath)
+
+        # Create folder names:
         self.gipp_archive = os.path.join(self.fpath, "archive.zip")
         self.lut_archive = os.path.join(self.fpath, "lut_archive.zip")
         self.temp_folder = os.path.join(self.fpath, "tempdir")
-
-        self.platform = platform
-        self.gtype = gtype
-        self.cams = "_CAMS" if cams else ""
-        self.log_level = log_level
-
-        # Create folder names:
-        self.gipp_folder_name = "%s_%s" % (self.platform.upper(), self.gtype.upper()) + self.cams
+        self.gipp_folder_name = "%s_%s" % (self.platform.upper(), self.gtype.upper()) + self.cams_suffix
         self.out_path = os.path.join(self.fpath, self.gipp_folder_name)
 
     def __clean_up(self):
@@ -165,12 +172,35 @@ class GippSet(object):
         :return:
         """
         from Common import FileSystem
-        eefs = FileSystem.find("*.EEF", self.out_path)
+        eefs = FileSystem.find("*.(EEF|HDR)", self.out_path)
         dbls = FileSystem.find("*.DBL.DIR", self.out_path)
         for f in eefs + dbls:
             base = os.path.basename(f)
             FileSystem.symlink(f, os.path.join(dest, base))
 
+    def get_models(self):
+        """
+        Get the list of models present in the gipp-set.
+        :return: List of models in alphabetical order.
+        """
+        from Common import FileSystem
+        hdrs = FileSystem.find("*.HDR", self.out_path)
+        raw_models = [os.path.basename(hdr).split("_")[5].lower() for hdr in hdrs]
+        models = list(set(raw_models))
+        return sorted(models)
+
     def check_completeness(self):
-        # TODO Need to implement this using good ol' regex's.
-        raise NotImplementedError
+        """
+        Check if the Gipp-folder exists already
+        :return: True if existing. False if not.
+        """
+        from Common import FileSystem
+        if not os.path.isdir(self.out_path):
+            return False
+        hdrs = FileSystem.find("*.HDR", self.out_path)
+        eefs = FileSystem.find("*.EEF", self.out_path)
+        if len(hdrs) < 4:
+            return False
+        if len(eefs) < 4:
+            return False
+        return True

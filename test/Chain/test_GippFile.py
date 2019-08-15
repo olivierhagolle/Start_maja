@@ -66,11 +66,12 @@ class TestGippFile(unittest.TestCase):
         for gipp in gipp_vns + gipp_l8 + gipp_s2:
             self.assertTrue(re.search(GIPPFile.regex, gipp))
 
-    def test_download_s2_tm_nocams(self):
+    def atest_download_s2_tm_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "sentinel2", "tm")
+        self.assertFalse(g.check_completeness())
         g.download()
-        self.assertTrue(os.path.isdir(g.out_path))
+        self.assertTrue(g.check_completeness())
         n_l2comm = len(FileSystem.find("*L2COMM*", g.out_path))
         self.assertEqual(n_l2comm, 4)
         n_qltl = len(FileSystem.find("*CKQLTL*", g.out_path))
@@ -83,11 +84,12 @@ class TestGippFile(unittest.TestCase):
         self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def test_download_s2_muscate_nocams(self):
+    def atest_download_s2_muscate_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "sentinel2", "muscate")
+        self.assertFalse(g.check_completeness())
         g.download()
-        self.assertTrue(os.path.isdir(g.out_path))
+        self.assertTrue(g.check_completeness())
         n_l2comm = len(FileSystem.find("*L2COMM*", g.out_path))
         self.assertEqual(n_l2comm, 2)
         n_qltl = len(FileSystem.find("*CKQLTL*", g.out_path))
@@ -100,11 +102,12 @@ class TestGippFile(unittest.TestCase):
         self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def test_download_s2_natif_nocams(self):
+    def atest_download_s2_natif_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "sentinel2", "natif")
+        self.assertFalse(g.check_completeness())
         g.download()
-        self.assertTrue(os.path.isdir(g.out_path))
+        self.assertTrue(g.check_completeness())
         n_l2comm = len(FileSystem.find("*L2COMM*", g.out_path))
         self.assertEqual(n_l2comm, 2)
         n_qltl = len(FileSystem.find("*CKQLTL*", g.out_path))
@@ -117,11 +120,12 @@ class TestGippFile(unittest.TestCase):
         self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def test_download_l8_muscate_nocams(self):
+    def atest_download_l8_muscate_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "landsat8", "muscate")
+        self.assertFalse(g.check_completeness())
         g.download()
-        self.assertTrue(os.path.isdir(g.out_path))
+        self.assertTrue(g.check_completeness())
         n_l2comm = len(FileSystem.find("*L2COMM*", g.out_path))
         self.assertEqual(n_l2comm, 1)
         n_qltl = len(FileSystem.find("*CKQLTL*", g.out_path))
@@ -134,11 +138,12 @@ class TestGippFile(unittest.TestCase):
         self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def test_download_vs_muscate_nocams(self):
+    def atest_download_vs_muscate_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "venus", "muscate")
+        self.assertFalse(g.check_completeness())
         g.download()
-        self.assertTrue(os.path.isdir(g.out_path))
+        self.assertTrue(g.check_completeness())
         n_l2comm = len(FileSystem.find("*L2COMM*", g.out_path))
         self.assertEqual(n_l2comm, 1)
         n_qltl = len(FileSystem.find("*CKQLTL*", g.out_path))
@@ -151,11 +156,12 @@ class TestGippFile(unittest.TestCase):
         self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def test_download_l8_natif_nocams(self):
+    def atest_download_l8_natif_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "landsat8", "natif")
+        self.assertFalse(g.check_completeness())
         g.download()
-        self.assertTrue(os.path.isdir(g.out_path))
+        self.assertTrue(g.check_completeness())
         n_l2comm = len(FileSystem.find("*L2COMM*", g.out_path))
         self.assertEqual(n_l2comm, 1)
         n_qltl = len(FileSystem.find("*CKQLTL*", g.out_path))
@@ -168,11 +174,12 @@ class TestGippFile(unittest.TestCase):
         self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def test_download_vs_natif_nocams(self):
+    def atest_download_vs_natif_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "venus", "natif")
+        self.assertFalse(g.check_completeness())
         g.download()
-        self.assertTrue(os.path.isdir(g.out_path))
+        self.assertTrue(g.check_completeness())
         n_l2comm = len(FileSystem.find("*L2COMM*", g.out_path))
         self.assertEqual(n_l2comm, 1)
         n_qltl = len(FileSystem.find("*CKQLTL*", g.out_path))
@@ -188,8 +195,9 @@ class TestGippFile(unittest.TestCase):
     def test_symlink(self):
         from Common import FileSystem
         g = GippSet(self.root, "sentinel2", "tm")
+        self.assertFalse(g.check_completeness())
         g.download()
-        self.assertTrue(os.path.isdir(g.out_path))
+        self.assertTrue(g.check_completeness())
         symlink_dir = os.path.join(self.root, "symlinks")
         FileSystem.create_directory(symlink_dir)
         with self.assertRaises(ValueError):
@@ -198,7 +206,37 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(len(FileSystem.find("*EEF", symlink_dir)), 15)
         FileSystem.remove_directory(symlink_dir)
         self.assertFalse(os.path.isdir(symlink_dir))
+        FileSystem.remove_directory(g.out_path)
+        self.assertFalse(os.path.isdir(g.out_path))
+        FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
+    def test_get_models_nocams(self):
+        from Common import FileSystem
+        g = GippSet(self.root, "sentinel2", "tm")
+        with self.assertRaises(ValueError):
+            g.get_models()
+        self.assertFalse(g.check_completeness())
+        g.download()
+        self.assertTrue(g.check_completeness())
+        models_expected = ["continen"]
+        self.assertEqual(g.get_models(), models_expected)
+        FileSystem.remove_directory(g.out_path)
+        self.assertFalse(os.path.isdir(g.out_path))
+        FileSystem.remove_file(os.path.join(self.root, "wget-log"))
+
+    def test_get_models_cams(self):
+        from Common import FileSystem
+        g = GippSet(self.root, "sentinel2", "tm", cams=True)
+        with self.assertRaises(ValueError):
+            g.get_models()
+        self.assertFalse(g.check_completeness())
+        g.download()
+        self.assertTrue(g.check_completeness())
+        models_expected = sorted(["continen", "dust", "blackcar", "sulphate", "seasalt", "organicm"])
+        self.assertEqual(g.get_models(), models_expected)
+        FileSystem.remove_directory(g.out_path)
+        self.assertFalse(os.path.isdir(g.out_path))
+        FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
 if __name__ == '__main__':
     unittest.main()
