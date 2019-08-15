@@ -7,8 +7,18 @@ import os
 
 
 class TestDummyFiles(unittest.TestCase):
-    root = os.getcwd()
+    root = os.path.join(os.getcwd(), "DummyFiles")
     platforms = ["S2", "L8", "VE"]
+
+    @classmethod
+    def setUpClass(cls):
+        from Common import FileSystem
+        FileSystem.create_directory(cls.root)
+
+    @classmethod
+    def tearDownClass(cls):
+        from Common import FileSystem
+        FileSystem.remove_directory(cls.root)
 
     def test_mnt_generation(self):
         import shutil
