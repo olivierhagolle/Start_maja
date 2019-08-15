@@ -11,11 +11,11 @@ Created on:     Tue Dec  5 10:26:05 2018
 """
 
 import unittest
-from Chain.GippFile import GIPPFile
+from Chain.GippFile import GIPPFile, GippSet
 import os
 
 
-class TestAuxFile(unittest.TestCase):
+class TestGippFile(unittest.TestCase):
     root = os.getcwd()
 
     subdir_prefix = os.path.join(root, "CAMS")
@@ -65,6 +65,14 @@ class TestAuxFile(unittest.TestCase):
                    "L8_TEST_GIP_L2SMAC_L_ALLSITES_90001_00000000_99999999.EEF"]
         for gipp in gipp_vns + gipp_l8 + gipp_s2:
             self.assertTrue(re.search(GIPPFile.regex, gipp))
+
+    def test_download_s2_tm_nocams(self):
+        g = GippSet(self.root, "sentinel2", "tm")
+        g.download()
+
+    def atest_download_s2_tm_cams(self):
+        g = GippSet(self.root, "sentinel2", "tm", cams=True)
+        g.download()
 
 
 if __name__ == '__main__':

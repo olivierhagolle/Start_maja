@@ -10,6 +10,7 @@ Project:        Start_maja, CNES
 """
 
 import os
+import logging
 from Chain.AuxFile import EarthExplorer
 
 
@@ -77,17 +78,19 @@ class GippSet(object):
     Stores a set of Gipp Files
     """
     url = "http://tully.ups-tlse.fr/olivier/gipp_maja/repository/archive.zip?ref=master"
-    zenodo_reg = r"https://zenodo.org/record/\d+/files/\w+.tgz?download=1"
+    zenodo_reg = r"https?:\/\/zenodo.org\/record\/\d+\/files\/\w+.zip\?download=1"
 
     platforms = ["sentinel2", "landsat8", "venus"]
     gtypes = ["muscate", "natif", "tm"]
 
-    def __init__(self, root, platform, gtype, cams=False):
+    def __init__(self, root, platform, gtype, cams=False, log_level=logging.INFO):
         """
         Set the path to the root gipp folder
         :param root: The full path to the root gipp folder
         :param platform: The platform name. Has to be in ["sentinel2", "landsat8", "venus"]
         :param gtype: The gipp type. Has to be in ["muscate", "natif", "tm"]
+        :param cams: Build GIPP with CAMS models
+        :param log_level: The log level for the messages displayed.
         """
         from Common import FileSystem
         assert platform in self.platforms
@@ -101,7 +104,21 @@ class GippSet(object):
         self.platform = platform
         self.gtype = gtype
         self.cams = "_CAMS" if cams else ""
+        self.log_level = log_level
+
+        # Create folder names:
         self.gipp_folder_name = "%s_%s" % (self.platform.upper(), self.gtype.upper()) + self.cams
+        self.out_path = os.path.join(self.fpath, self.gipp_folder_name)
+
+    def __clean_up(self):
+        """
+        Clean up the download directory.
+        :return:
+        """
+        from Common import FileSystem
+        FileSystem.remove_directory(self.temp_folder)
+        FileSystem.remove_file(self.lut_archive)
+        FileSystem.remove_file(self.gipp_archive)
 
     def download(self):
         """
@@ -110,34 +127,36 @@ class GippSet(object):
         url to download the LUTs. Then, the latter will be downloaded separately.
         :return:
         """
+        import shutil
         from Common import FileSystem
-        FileSystem.download_file(self.url, self.gipp_archive)
+        FileSystem.download_file(self.url, self.gipp_archive, self.log_level)
         FileSystem.unzip(self.gipp_archive, self.temp_folder)
-        gipp_maja_git = os.path.join(self.fpath, "gipp_maja.git")
+        gipp_maja_git = os.path.join(self.temp_folder, "gipp_maja.git")
         platform_folder = FileSystem.get_file(root=gipp_maja_git, filename=self.gipp_folder_name)
         if not platform_folder:
+            self.__clean_up()
             raise OSError("Cannot find any gipp folder for platform %s" % self.gipp_folder_name)
         readme = FileSystem.get_file(filename="readme*", root=platform_folder)
         if not readme:
+            self.__clean_up()
             raise OSError("Cannot find download-file for LUT-Download in %s" % platform_folder)
         lut_url = FileSystem.find_in_file(readme, self.zenodo_reg)
         if not lut_url:
+            self.__clean_up()
             raise OSError("Cannot find url to download LUTs")
-        FileSystem.download_file(lut_url, self.lut_archive)
-        FileSystem.unzip(self.lut_archive, self.temp_folder)
-        lut_folder = FileSystem.get_file(root=self.temp_folder, filename="LUTs")
+        FileSystem.download_file(lut_url, self.lut_archive, self.log_level)
+        FileSystem.unzip(self.lut_archive, platform_folder)
+        lut_folder = FileSystem.get_file(root=platform_folder, filename="LUTs")
         if not lut_folder:
+            self.__clean_up()
             raise OSError("Cannot find 'LUTs' folder in %s" % self.temp_folder)
-
-        eefs = FileSystem.find("*(EEF|HDR)", self.temp_folder)
-        dbls = FileSystem.find("*DBL.DIR", self.temp_folder)
-        for gipp_file in eefs + dbls:
-            base = os.path.basename(gipp_file)
-            os.rename(gipp_file, os.path.join(self.fpath, base))
-
-        FileSystem.remove_directory(self.temp_folder)
-        FileSystem.remove_file(self.lut_archive)
-        FileSystem.remove_file(self.gipp_archive)
+        for f in os.listdir(lut_folder):
+            shutil.move(os.path.join(lut_folder, f), platform_folder)
+        FileSystem.remove_directory(lut_folder)
+        if os.path.isdir(self.out_path):
+            FileSystem.remove_directory(self.out_path)
+        shutil.move(platform_folder, self.out_path)
+        self.__clean_up()
 
     def link(self, dest):
         """
@@ -146,10 +165,11 @@ class GippSet(object):
         :return:
         """
         from Common import FileSystem
-
-        files = os.listdir(self.fpath)
-        for f in files:
-            FileSystem.symlink(f, os.path.join(dest, os.path.basename(f)))
+        eefs = FileSystem.find("*.(EEF|HDR)", self.out_path)
+        dbls = FileSystem.find("*.DBL.DIR", self.out_path)
+        for f in eefs + dbls:
+            base = os.path.basename(f)
+            FileSystem.symlink(f, os.path.join(dest, base))
 
     def check_completeness(self):
         # TODO Need to implement this using good ol' regex's.
