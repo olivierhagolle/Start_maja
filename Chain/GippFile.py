@@ -165,7 +165,7 @@ class GippSet(object):
         :return:
         """
         from Common import FileSystem
-        eefs = FileSystem.find("*.(EEF|HDR)", self.out_path)
+        eefs = FileSystem.find("*.EEF", self.out_path)
         dbls = FileSystem.find("*.DBL.DIR", self.out_path)
         for f in eefs + dbls:
             base = os.path.basename(f)
