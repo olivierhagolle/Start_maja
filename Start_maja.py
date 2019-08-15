@@ -416,7 +416,10 @@ class StartMaja(object):
         for wp in workplans:
             print(wp)
         # TODO Make this line skippable as param
-        input("Press Enter to continue...")
+        if sys.version >= (3, 0):
+            input("Press Enter to continue...")
+        else:
+            raw_input("Press Enter to continue...")
         for wp in workplans:
             wp.execute(self.maja, self.dtm, self.gipp, self.userconf)
         logging.info("=============Start_Maja v%s finished=============" % self.version)
