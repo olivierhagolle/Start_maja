@@ -143,20 +143,67 @@ def symlink(src, dst):
     try:
         os.symlink(src, dst)
     except OSError:
-        raise OSError("Cannot create symlink for %s at %s. Does your plaform support symlinks?" % (src, dst))
+        raise OSError("Cannot create symlink for %s at %s."
+                      "Does your plaform support symlinks?" % (src, dst))
 
 
-def download_file(url, filepath):
+def __get_return_code(proc, log_level):
+    """
+    Read the stdout of a subprocess while also processing its return code if available
+    :param proc: The subprocess
+    :param log_level: The log level for the messages displayed.
+    :return: The return code of the app
+    """
+    for stdout_line in iter(proc.stdout.readline, ""):
+        if log_level == logging.DEBUG:
+            print(log_level, stdout_line)
+    proc.stdout.close()
+    return proc.wait()
+
+
+def run_external_app(name, args, log_level=logging.DEBUG):
+    """
+    Run an external application using the subprocess module
+    :param name: the Name of the application
+    :param args: The list of arguments to run the app with
+    :param log_level: The log level for the messages displayed.
+    :return: The return code of the App
+    """
+    from timeit import default_timer as timer
+    import subprocess
+    full_args = [name] + args
+    cmd = " ".join(a for a in full_args)
+    log.log(log_level, "Executing cmd: " + cmd)
+    start = timer()
+    try:
+        with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE) as proc:
+            return_code = __get_return_code(proc, log_level=log_level)
+    except AttributeError:
+        # For Python 2.7, popen has no context manager:
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        return_code = __get_return_code(proc, log_level=log_level)
+    if return_code:
+        raise subprocess.CalledProcessError(return_code, cmd)
+    end = timer()
+    # Show total execution time for the App:
+    log.log(log_level, "{0} took: {1}s".format(os.path.basename(name), end - start))
+    return return_code
+
+
+def download_file(url, filepath, log_level=logging.DEBUG):
     """
     Download a single file using wget
     :param filepath: The file name to be written to
     :param url: The url to download
+    :param log_level: The log level for the messages displayed.
     :return:
     """
-    # TODO Unittest
-    import os
-    assert not os.path.exists(filepath)
-    os.system(" ".join(["wget", "-nv", "-O", filepath, url]))
+    args = ["--retry-connrefused", "--waitretry=1",
+            "--read-timeout=20", "--timeout=15",
+            "-O", filepath, url]
+    if log_level != logging.DEBUG:
+        args.append("-nv")
+    return run_external_app("wget", args, log_level=log_level)
 
 
 def unzip(archive, dest):
@@ -169,7 +216,6 @@ def unzip(archive, dest):
     # TODO Unittest
     import zipfile
     assert os.path.isfile(archive)
-
     with zipfile.ZipFile(archive, 'r') as zip_ref:
         zip_ref.extractall(dest)
 
@@ -187,4 +233,6 @@ def find_in_file(filename, pattern):
     with open(filename, "r") as f:
         content = "".join(f.read().splitlines())
         lut_url = re.search(pattern, content)
-    return lut_url.group()
+    if lut_url:
+        return lut_url.group()
+    return None

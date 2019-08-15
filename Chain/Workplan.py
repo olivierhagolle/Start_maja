@@ -91,51 +91,6 @@ class Workplan(object):
             symlink(os.path.join(gipps, gipp), os.path.join(input_dir, gipp))
         return input_dir
 
-    @staticmethod
-    def __proc_read_stdout(proc):
-        """
-        Read the stdout of a subprocess while also processing its return code if available
-        :param proc: The subprocess
-        :return: The return code of the app
-        """
-
-        while True:
-            # Read line from stdout, break if EOF reached, append line to output
-            line = proc.stdout.readline().decode('utf-8')
-            # Poll(): Used to get the return code at the end of the execution
-            if (line == "") and proc.poll() is not None:
-                break
-            if logging.getLogger().level == logging.DEBUG:
-                print(line[:-1])
-        return proc.returncode
-
-    @staticmethod
-    def run_external_app(name, args):
-        """
-        Run an external application using the subprocess module
-        :param name: the Name of the application
-        :param args: The list of arguments to run the app with
-        :return: The return code of the App
-        """
-        from timeit import default_timer as timer
-        import subprocess
-        full_args = [name] + args
-        logging.info("Executing cmd: " + " ".join(a for a in full_args))
-        start = timer()
-        try:
-            with subprocess.Popen(full_args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
-                return_code = Workplan.__proc_read_stdout(proc)
-        except AttributeError:
-            # For Python 2.7, popen has no context manager:
-            proc = subprocess.Popen(full_args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            return_code = Workplan.__proc_read_stdout(proc)
-        end = timer()
-        if return_code != 0:
-            raise subprocess.CalledProcessError(return_code, name)
-        # Show total execution time for the App:
-        logging.info("{0} took: {1}s".format(os.path.basename(name), end - start))
-        return return_code
-
     def launch_maja(self, maja, wdir, outdir, conf):
         """
         Run the MAJA processor for the given input_dir, mode and tile
@@ -145,6 +100,7 @@ class Workplan(object):
         :param conf: The full path to the userconf folder
         :return: The return code of Maja
         """
+        from Common import FileSystem
         args = ["--input",
                 wdir,
                 "--output",
@@ -157,7 +113,7 @@ class Workplan(object):
                 self.tile,
                 "--loglevel",
                 self.log_level]
-        return self.run_external_app(maja, args)
+        return FileSystem.run_external_app(maja, args)
 
 
 class Init(Workplan):
