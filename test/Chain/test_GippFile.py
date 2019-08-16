@@ -238,5 +238,6 @@ class TestGippFile(unittest.TestCase):
         self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -106,7 +106,7 @@ class GippSet(object):
         self.gtype = gtype
         self.cams_suffix = "_CAMS" if cams else ""
         self.log_level = log_level
-
+        self.n_sat = 2 if platform == "sentinel2" else 1
         # Create root if not existing:
         FileSystem.create_directory(self.fpath)
 
@@ -195,12 +195,22 @@ class GippSet(object):
         :return: True if existing. False if not.
         """
         from Common import FileSystem
+        n_files_per_model = 5
+        try:
+            n_models = len(self.get_models())
+        except ValueError:
+            return False
         if not os.path.isdir(self.out_path):
             return False
-        hdrs = FileSystem.find("*.HDR", self.out_path)
-        eefs = FileSystem.find("*.EEF", self.out_path)
-        if len(hdrs) < 4:
+        try:
+            hdrs = FileSystem.find("*.HDR", self.out_path)
+            dbls = FileSystem.find("*.DBL.DIR", self.out_path)
+            eefs = FileSystem.find("*.EEF", self.out_path)
+        except ValueError:
             return False
         if len(eefs) < 4:
             return False
+        if len(hdrs) != len(dbls) != n_files_per_model * self.n_sat * n_models:
+            return False
+
         return True
