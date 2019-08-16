@@ -86,9 +86,7 @@ class Workplan(object):
         for f in self.aux_files:
             f.link(input_dir)
         dtm.link(input_dir)
-        # TODO Refine GIPP linking (i.e. link only "real" gipp files)
-        for gipp in os.listdir(gipps):
-            symlink(os.path.join(gipps, gipp), os.path.join(input_dir, gipp))
+        gipps.link(input_dir)
         return input_dir
 
     def launch_maja(self, maja, wdir, outdir, conf):
@@ -112,7 +110,9 @@ class Workplan(object):
                 "--TileId",
                 self.tile,
                 "--loglevel",
-                self.log_level]
+                self.log_level,
+                "--working-dir",
+                wdir]
         return FileSystem.run_external_app(maja, args)
 
 

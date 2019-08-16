@@ -19,7 +19,7 @@ from datetime import timedelta
 
 from Chain import Product
 from Common import FileSystem
-from Chain import AuxFile
+from Chain import AuxFile, GippFile
 
 
 class StartMaja(object):
@@ -29,6 +29,8 @@ class StartMaja(object):
     version = "4.0.0rc1"
     date_regex = r"\d{4}-\d{2}-\d{2}"  # YYYY-MM-DD
     current_dir = p.dirname(p.realpath(__file__))
+    max_product_difference = timedelta(hours=1)
+    max_l2_diff = timedelta(days=14)
 
     def __init__(self, folder, tile, site, start, end, nbackward, overwrite, verbose):
         """
@@ -46,15 +48,11 @@ class StartMaja(object):
         logging.debug("Checking config file: %s" % folder)
         if not p.isfile(self.folder):
             raise OSError("Cannot find folder definition file: %s" % self.folder)
-        self.rep_work, self.gipp, self.rep_l1, self.rep_l2,\
+        self.rep_work, self.gipp_root, self.rep_l1, self.rep_l2,\
             self.rep_mnt, self.maja, self.rep_cams = self.parse_config(self.folder)
         logging.debug("Config file parsed without errors.")
-        logging.debug("Checking GIPP files")
-        if not p.isdir(self.gipp):
-            raise OSError("Cannot find GIPP folder: %s" % self.gipp)
-        # TODO Refine the GIPP detection
-        logging.debug("Found GIPP folder: %s" % self.gipp)
-        
+
+        logging.debug("Setting site and tile")
         if tile[0] == "T" and re.search(Product.MajaProduct.reg_tile, tile):
             self.tile = tile[1:]  # Remove the T from e.g. T32ABC
         else:
@@ -85,7 +83,7 @@ class StartMaja(object):
                 self.path_input_l2 = os.path.join(self.rep_l2, self.tile)
                 FileSystem.create_directory(self.path_input_l2)
             self.__site_info = "tile %s" % self.tile
-            logging.debug("No site-folder specified. Searching for product directly by Tile-ID")
+        logging.debug("Found %s" % self.__site_info)
 
         # TODO wrap this in functions
         if not p.isdir(self.path_input_l1):
@@ -116,7 +114,19 @@ class StartMaja(object):
             raise IOError("Cannot mix multiple platforms: %s" % platform)
         self.platform = platform[0]
 
-        # Parse products
+        ptype = list(set([prod.get_type() for prod in self.avail_input_l1 + self.avail_input_l2]))
+        if len(ptype) != 1:
+            if self.platform == "sentinel2" and len(ptype) == 2:
+                pass
+            else:
+                raise IOError("Cannot mix multiple plugin types: %s" % ptype)
+        # Todo Add param here for overloading this:
+        if ptype[0] == "natif" and self.platform == "sentinel2":
+            self.ptype = "tm"
+        else:
+            self.ptype = ptype[0]
+
+        # Parse product dates
         if start:
             if re.search(self.date_regex, start):
                 self.start = DateConverter.stringToDatetime(start.replace("-", ""))
@@ -140,9 +150,17 @@ class StartMaja(object):
 
         self.nbackward = nbackward
 
+        logging.debug("Checking GIPP files")
+        if not p.isdir(self.gipp_root):
+            raise OSError("Cannot find GIPP folder: %s" % self.gipp_root)
+        logging.debug("Found GIPP folder: %s" % self.gipp_root)
+
+        self.gipp = GippFile.GippSet(self.gipp_root, self.platform, self.ptype)
+        logging.debug("Prepared GIPP for %s %s" % (self.platform, self.ptype))
+
         # TODO See main for parameter todos
-        self.max_product_difference = timedelta(hours=1)
-        self.max_l2_diff = timedelta(days=14)
+        # TODO Add here: Output plugin override, gipp re-download
+
         self.overwrite = ParameterConverter.str2bool(overwrite)
         self.maja_log_level = "PROGRESS"
 
@@ -409,6 +427,9 @@ class StartMaja(object):
             -   Create the output directory
             -   Run MAJA
         """
+        if not self.gipp.check_completeness():
+            logging.debug("Downloading Gipp for %s %s" % (self.platform, self.ptype))
+            self.gipp.download()
         workplans = self.create_workplans(self.max_product_difference, self.max_l2_diff)
         logging.info("%s workplan(s) successfully created:" % len(workplans))
         # Print without the logging-formatting:
@@ -421,6 +442,8 @@ class StartMaja(object):
         else:
             raw_input("Press Enter to continue...")
         for wp in workplans:
+            if wp == workplans[0]:
+                continue
             wp.execute(self.maja, self.dtm, self.gipp, self.userconf)
         logging.info("=============Start_Maja v%s finished=============" % self.version)
 
