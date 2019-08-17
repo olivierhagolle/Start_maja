@@ -28,11 +28,8 @@ class GIPPFile(EarthExplorer):
         :param hdr: The full path to the HDR file
         :return:
         """
-        ns = {"xmlns": "http://eop-cfi.esa.int/CFI"}
-        from xml.etree import ElementTree
-        root = ElementTree.parse(hdr).getroot()
-        xpath = "./xmlns:Fixed_Header/xmlns:Mission"
-        return root.find(xpath, namespace=ns).text
+        from Common import FileSystem
+        return FileSystem.get_single_xpath(hdr, "./Fixed_Header/Mission")
 
 
 class GippALBD(EarthExplorer):

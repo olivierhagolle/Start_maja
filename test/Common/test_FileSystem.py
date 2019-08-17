@@ -194,6 +194,25 @@ class TestFileSystem(unittest.TestCase):
         with self.assertRaises(err):
             FileSystem.run_external_app(cmd, args)
 
+    def test_get_xpath(self):
+        from xml.etree import ElementTree
+        from Common import FileSystem
+        file_path = os.path.join(self.root, "dummy_xml.xml")
+        mission_expected = "DummyMission"
+        xpath = "./Fixed_Header/Mission"
+        root = ElementTree.Element("Earth_Explorer_Header")
+        sub = ElementTree.SubElement(root, "Fixed_Header")
+        ElementTree.SubElement(sub, "Mission").text = mission_expected
+        ElementTree.SubElement(root, "Variable_Header")
+        tree = ElementTree.ElementTree(root)
+        tree.write(file_path)
+        self.assertTrue(os.path.exists(file_path))
+        mission_calculated = FileSystem.get_xpath(file_path, xpath)[0].text
+        mission_calculated_2 = FileSystem.get_single_xpath(file_path, xpath)
+        self.assertEqual(mission_calculated, mission_expected)
+        self.assertEqual(mission_expected, mission_calculated_2)
+        FileSystem.remove_file(file_path)
+
 
 if __name__ == '__main__':
     unittest.main()

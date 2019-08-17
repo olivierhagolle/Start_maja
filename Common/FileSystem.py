@@ -237,3 +237,29 @@ def find_in_file(filename, pattern):
     if lut_url:
         return lut_url.group()
     return None
+
+
+def get_xpath(xml, xpath):
+    """
+    Return all xpath results of from xml-file. Strips of ALL namespaces before parsing.
+    :param xml: The full path to the xml file
+    :param xpath: The xpath to be searched for.
+    :return:
+    """
+    from xml.etree import ElementTree
+    it = ElementTree.iterparse(xml)
+    for _, el in it:
+        if '}' in el.tag:
+            el.tag = el.tag.split('}', 1)[1]  # strip all namespaces
+    root = it.root
+    return root.findall(xpath)
+
+
+def get_single_xpath(xml, xpath):
+    """
+    Get a single xpath element
+    :param xml: The full path to the xml file
+    :param xpath: The xpath to be searched for.
+    :return:
+    """
+    return get_xpath(xml, xpath)[0].text
