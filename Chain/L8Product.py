@@ -11,6 +11,7 @@ Created on:     Sun Feb  3 17:15:00 2019
 """
 
 import re
+import os
 from datetime import datetime, timedelta
 from Chain.Product import MajaProduct
 
@@ -39,6 +40,11 @@ class Landsat8Natif(MajaProduct):
     def get_metadata_file(self):
         metadata_filename = "*" + self.get_tile() + "*" + self.get_date().strftime("%Y%m%d") + "*HDR"
         return self.get_file(folders="..", filename=metadata_filename)
+
+    def is_valid(self):
+        if os.path.exists(self.get_metadata_file()):
+            return True
+        return False
 
     def get_date(self):
         str_date = self.base.split(".")[0].split("_")[-1]
@@ -78,6 +84,22 @@ class Landsat8Muscate(MajaProduct):
         str_date_no_ms = str_date[:str_date.rfind("-")]
         return datetime.strptime(str_date_no_ms, "%Y%m%d-%H%M%S")
 
+    def is_valid(self):
+        from Common import FileSystem
+        if self.get_level() == "l1c" and os.path.exists(self.get_metadata_file()):
+            return True
+        if self.get_level() == "l2a":
+            try:
+                jpi = FileSystem.find_single("*JPI_ALL.xml", self.fpath)
+            except ValueError:
+                return False
+            validity_xpath = "./Processing_Flags_And_Modes_List/Processing_Flags_And_Modes/Value"
+            processing_flags = FileSystem.get_xpath(jpi, validity_xpath)
+            validity_flags = [flg.text for flg in processing_flags]
+            if "L2VALD" in validity_flags:
+                return True
+        return False
+
 
 class Landsat8LC1(MajaProduct):
     """
@@ -103,6 +125,11 @@ class Landsat8LC1(MajaProduct):
         # Add a timedelta of 12hrs in order to compensate for the missing H/M/S:
         return datetime.strptime(year_doy, "%Y%j") + timedelta(hours=12)
 
+    def is_valid(self):
+        if os.path.exists(self.get_metadata_file()):
+            return True
+        return False
+
 
 class Landsat8LC2(MajaProduct):
     """
@@ -127,3 +154,8 @@ class Landsat8LC2(MajaProduct):
         str_date = self.base.split("_")[3]
         # Add a timedelta of 12hrs in order to compensate for the missing H/M/S:
         return datetime.strptime(str_date, "%Y%m%d") + timedelta(hours=12)
+
+    def is_valid(self):
+        if os.path.exists(self.get_metadata_file()):
+            return True
+        return False
