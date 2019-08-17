@@ -54,6 +54,10 @@ class EarthExplorer(object):
 
     @classmethod
     def get_specifiable_regex(cls):
+        """
+        Return regex without '\w+' at the end in order to make it costumizable.
+        :return: The class regex without \w+
+        """
         return cls.regex[:-3]
 
     def link(self, dest):
