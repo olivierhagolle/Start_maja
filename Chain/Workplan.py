@@ -99,7 +99,9 @@ class Workplan(object):
         :return: The return code of Maja
         """
         from Common import FileSystem
-        args = ["--input",
+        args = ["--working-dir",
+                wdir,
+                "--input",
                 wdir,
                 "--output",
                 outdir,
@@ -110,9 +112,7 @@ class Workplan(object):
                 "--TileId",
                 self.tile,
                 "--loglevel",
-                self.log_level,
-                "--working-dir",
-                wdir]
+                self.log_level]
         return FileSystem.run_external_app(maja, args)
 
 
@@ -198,7 +198,7 @@ class Nominal(Workplan):
         # Get only products which are close to the desired l2 date and before the l1 date:
         l2_prods = [prod for prod in avail_input_l2
                     if prod.get_date() - self.l2_date < StartMaja.max_product_difference and
-                    prod.get_date() < self.date]
+                    prod.get_date() < self.date and prod.is_valid()]
         if not l2_prods:
             raise ValueError("Cannot find previous L2 product for date %s in %s: %s"
                              % (self.date, self.outdir, avail_input_l2))
