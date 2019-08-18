@@ -363,7 +363,7 @@ class StartMaja(object):
             if has_closest_l2_prod:
                 # Proceed with NOMINAL
                 workplans.append(Workplan.Nominal(wdir=self.rep_work,
-                                                  outdir=self.rep_l2,
+                                                  outdir=self.path_input_l2,
                                                   l1=used_prod_l1[0],
                                                   l2_date=used_prod_l1[0].get_date(),
                                                   log_level=self.maja_log_level,
@@ -375,7 +375,7 @@ class StartMaja(object):
                 if len(self.avail_input_l1) >= self.nbackward:
                     # Proceed with BACKWARD
                     workplans.append(Workplan.Backward(wdir=self.rep_work,
-                                                       outdir=self.rep_l2,
+                                                       outdir=self.path_input_l2,
                                                        l1=used_prod_l1[0],
                                                        l1_list=self.avail_input_l1[1:self.nbackward],
                                                        log_level=self.maja_log_level,
@@ -387,7 +387,7 @@ class StartMaja(object):
                     # Proceed with INIT
                     logging.info("Not enough L1 products available for a BACKWARD mode. Beginning with INIT...")
                     workplans.append(Workplan.Init(wdir=self.rep_work,
-                                                   outdir=self.rep_l2,
+                                                   outdir=self.path_input_l2,
                                                    l1=used_prod_l1[0],
                                                    log_level=self.maja_log_level,
                                                    cams=self.filter_cams_by_product(self.cams_files,
@@ -402,7 +402,7 @@ class StartMaja(object):
                 logging.info("Skipping L1 product %s because it was already processed!")
                 continue
             workplans.append(Workplan.Nominal(wdir=self.rep_work,
-                                              outdir=self.rep_l2,
+                                              outdir=self.path_input_l2,
                                               l1=prod,
                                               l2_date=prod.get_date(),
                                               log_level=self.maja_log_level,
@@ -442,7 +442,9 @@ class StartMaja(object):
         else:
             raw_input("Press Enter to continue...")
         for wp in workplans:
-            if wp == workplans[0]:
+            # TODO Add some more logging info here.
+            # Also.. remove this:
+            if wp in workplans[:2]:
                 continue
             wp.execute(self.maja, self.dtm, self.gipp, self.userconf)
         logging.info("=============Start_Maja v%s finished=============" % self.version)
