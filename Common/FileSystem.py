@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import os
 import shutil
-
 import logging
 
 log = logging.getLogger(__name__)
@@ -157,7 +157,7 @@ def __get_return_code(proc, log_level):
     while proc.poll() is None:
         line = proc.stdout.readline()  # This blocks until it receives a newline.
         if log_level == logging.DEBUG:
-            print(line)
+            print(line, end="")
     proc.stdout.close()
     return proc.wait()
 
