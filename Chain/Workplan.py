@@ -99,7 +99,7 @@ class Workplan(object):
         :return: The return code of Maja
         """
         from Common import FileSystem
-        args = ["--working-dir",
+        args = ["-w",
                 wdir,
                 "--input",
                 wdir,
