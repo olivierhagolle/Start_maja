@@ -10,13 +10,15 @@ Project:        StartMaja, CNES
 Created on:     Tue Sep 11 15:31:00 2018
 """
 
-import sys, os
-assert sys.version_info >= (2,7)
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')) #Import relative modules
+import sys
+import os
+assert sys.version_info >= (2, 7)
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))  # Import relative modules
 from Common import FileSystem
 from prepare_mnt import conversion_format_maja as conversion
 
-class DTMCreator():
+
+class DTMCreator:
     """
     Class to create the DTM based on the SRTMs, Water-masks and Metadata of a
     L1 product file downloaded. The output DTM contains an HDR File and a Folder
@@ -35,7 +37,7 @@ class DTMCreator():
     modeUndefined = -1
     modeMTD = 0
     modeGranule = 1
-    mode = -1 # Processing mode: 0 = MTD; 1 = GRANULE; -1= Undefined
+    mode = -1  # Processing mode: 0 = MTD; 1 = GRANULE; -1= Undefined
     
     def __init__(self, dirProduct, kml, granuleID, dirSRTM, dirWater, waterOnly=False, mntType="SRTM", coarseRes=240):
         """
@@ -56,19 +58,28 @@ class DTMCreator():
         """
         
         import re
-        import os     
+        import os
+        from osgeo import gdal
+        # Script runs fine with gdal >= 2.1.x
+        if int(gdal.VersionInfo()) <= 2010000:
+            raise ImportError("Please update your GDAL version to >2.1")
+        # Bug with v2.3.0 results in errors within the script:
+        if int(gdal.VersionInfo()) == 2030000:
+            raise ImportError("DTMCreation can not run on GDAL 2.3.0. Please select another version")
+
         files = [f for f in os.listdir(dirSRTM) if re.search(self.filenameSRTM, f)]
-        if(files):
+        if files:
             print("Found SRTM zip-archives...")
         else:
-            files = [f for f in os.listdir(dirWater) if re.search(self.filenameSRTM.replace("zip","tif"), f)]
-            if(files):
-                raise ValueError("Need to provide unextracted zip-archives of SRTM: {0}".format(" ".join(f for f in files)))
+            files = [f for f in os.listdir(dirWater) if re.search(self.filenameSRTM.replace("zip", "tif"), f)]
+            if files:
+                raise ValueError("Need to provide unextracted zip-archives of SRTM:"
+                                 "{0}".format(" ".join(f for f in files)))
             else:
                 raise OSError("Cannot find SRTM-archives in directory: {0}".format(dirWater))
                 
         files = [f for f in os.listdir(dirWater) if re.search(self.filenameWater, f)]
-        if(files):
+        if files:
             print("Found Water zip-archives...")
             self.WaterZipped = True
         else:
@@ -81,13 +92,13 @@ class DTMCreator():
         self.mntType = mntType
         self.coarseRes = coarseRes
         
-        #Decide where to retrieve the site data from
-        if(dirProduct):
+        # Decide where to retrieve the site data from
+        if dirProduct:
             self.mission, self.mtd, self.dtype = self.findMetadataFile(dirProduct)
-            if(not self.mtd):
+            if not self.mtd:
                 raise ValueError("Cannot find Metadata for product: {0}".format(dirProduct))
             self.mode = self.modeMTD
-        elif(kml and granuleID):
+        elif kml and granuleID:
             print("Processing with GranuleID")
             self.mode = self.modeGranule
             self.kml = kml
@@ -245,6 +256,7 @@ class DTMCreator():
         print(originX)
         print(originY)
         return converter.getSiteFromParams(tileName, zone, EPSGOut, pasX, pasY, originX, originY)
+
     def run(self, outdir, tempout):
         """
         Run the DTM Creation using the two modules tuilage_mnt_eau*py and lib_mnt.py
@@ -253,6 +265,15 @@ class DTMCreator():
         """
         FileSystem.createDirectory(outdir) #Try to create output dir 
         import os
+        # TODO:
+        # - Write get_site() for each product type
+        # - Write get_site() for kml
+        # - In main: Run get_site() for the given input (kml/product)
+        # - In run: Interface with libmnt + download the necessary srtm files
+        # - In run: Download the needed GSW tiles and prepare tiled water-mask
+        # - Put mnt into given mnt directory
+        # - Interface new DTMCreation with new StartMaja
+
         if(self.mode == self.modeMTD):
             self.site = self.getSiteInfo(self.mtd, self.dtype)
         elif(self.mode == self.modeGranule):
@@ -273,15 +294,9 @@ class DTMCreator():
             converter.run(self.site.nom, tempout, self.coarseRes, outdir)
         
         print("Finished DTM creation for {0}".format(self.site.nom))
-    
+
+
 if __name__ == "__main__":
-    from osgeo import gdal, gdal_array
-    # Script runs fine with gdal >= 2.1.x
-    if int(gdal.VersionInfo()) <= 2010000:
-        raise ImportError("Please update your GDAL version to >2.1")
-    # Bug with v2.3.0 results in errors within the script:
-    if int(gdal.VersionInfo()) == 2030000:
-        raise ImportError("prepare_mnt can not run on GDAL 2.3.0. Please select another version")
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input",help="The path to the native or muscate L1C product folder.", required=False, type=str)
