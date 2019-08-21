@@ -346,14 +346,15 @@ class StartMaja(object):
             raise ValueError("No products available for the given start and end dates: %s -> %s"
                              % (self.start, self.end))
 
-        # Get L1 products that already have an L2 product available using a timedelta (as times can be differing):
-        has_l2 = [l1 for l1, l2 in zip(used_prod_l1, self.avail_input_l2)
-                  if l1.get_date() - l2.get_date() < max_product_difference]
+        # Get L1 products that already have an L2 product available using a timedelta:
+        has_l2 = []
+        for prod_l1 in used_prod_l1:
+            for prod_l2 in self.avail_input_l2:
+                if abs(prod_l1.get_date() - prod_l2.get_date()) < max_product_difference:
+                    has_l2.append(prod_l1)
 
         # Setup workplans:
         workplans = []
-
-        # TODO Write workplans
         # Process the first product separately:
         if used_prod_l1[0] not in has_l2 or self.overwrite:
             # Check if there is a recent L2 available for a nominal workplan
@@ -395,11 +396,13 @@ class StartMaja(object):
                                                    ))
                     pass
                 pass
+        else:
+            logging.info("Skipping L1 product %s because it was already processed!" % used_prod_l1[0].base)
 
         # For the rest: Setup NOMINAL
         for prod in used_prod_l1[1:]:
-            if prod in has_l2 and self.overwrite:
-                logging.info("Skipping L1 product %s because it was already processed!")
+            if prod in has_l2 or self.overwrite:
+                logging.info("Skipping L1 product %s because it was already processed!" % prod.base)
                 continue
             workplans.append(Workplan.Nominal(wdir=self.rep_work,
                                               outdir=self.path_input_l2,
@@ -438,14 +441,11 @@ class StartMaja(object):
             print(wp)
         # TODO Make this line skippable as param
         if sys.version >= (3, 0):
-            input("Press Enter to continue...")
+            input("Press Enter to continue...\n")
         else:
-            raw_input("Press Enter to continue...")
+            raw_input("Press Enter to continue...\n")
         for wp in workplans:
             # TODO Add some more logging info here.
-            # Also.. remove this:
-            if wp in workplans[:2]:
-                continue
             wp.execute(self.maja, self.dtm, self.gipp, self.userconf)
         logging.info("=============Start_Maja v%s finished=============" % self.version)
 
