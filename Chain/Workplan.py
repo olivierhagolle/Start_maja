@@ -79,8 +79,9 @@ class Workplan(object):
         :param gipps: The GIPP object
         :return: The full path to the created input directory
         """
-        from Common.FileSystem import create_directory, symlink
-
+        from Common.FileSystem import create_directory, remove_directory, symlink
+        # Try to remove the directory before proceeding:
+        remove_directory(self.input_dir)
         create_directory(self.input_dir)
         create_directory(self.wdir)
         if not os.path.isdir(self.input_dir) or not os.path.isdir(self.wdir):
@@ -202,13 +203,14 @@ class Nominal(Workplan):
         avail_input_l2 = StartMaja.get_available_products(self.outdir, "l2a", self.tile)
         # Get only products which are close to the desired l2 date and before the l1 date:
         l2_prods = [prod for prod in avail_input_l2
-                    if prod.get_date() - self.l2_date < StartMaja.max_product_difference and
+                    if abs(prod.get_date() - self.l2_date) < StartMaja.max_l2_diff and
                     prod.get_date() < self.date and prod.is_valid()]
         if not l2_prods:
-            raise ValueError("Cannot find previous L2 product for date %s in %s: %s"
-                             % (self.date, self.outdir, avail_input_l2))
+            # TODO Pass on mode backward/init here.
+            raise ValueError("Cannot find previous L2 product for date %s in %s"
+                             % (self.date, self.outdir))
         if len(l2_prods) > 1:
-            logging.warning("More than one L2 product found for date %s: %s" % (self.date, l2_prods))
+            logging.info("%s products found for date %s" % (len(l2_prods), self.date))
         # Take the first product:
         self.l2 = l2_prods[0]
         # Link additional L1 products:
@@ -220,7 +222,7 @@ class Nominal(Workplan):
     def __str__(self):
         return str("%19s | %5s | %8s | %70s | %15s" % (self.date, self.tile,
                                                        self.mode, self.l1.base,
-                                                       "L2 from %s" % self.l2_date))
+                                                       "L2 from previous"))
 
 
 if __name__ == "__main__":
