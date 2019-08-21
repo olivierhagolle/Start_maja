@@ -20,19 +20,22 @@ class Workplan(object):
     """
     mode = "INIT"
 
-    def __init__(self, wdir, outdir, l1, log_level="INFO", **kwargs):
+    def __init__(self, root, outdir, l1, log_level="INFO", **kwargs):
         supported_params = {
             param
             for param in ("cams", "meteo", )
             if kwargs.get(param, None) is not None
         }
         # Check if the directories exist:
-        assert os.path.isdir(wdir)
+        assert os.path.isdir(root)
         assert os.path.isdir(outdir)
-
-        self.wdir = wdir
-        self.outdir = outdir
         self.l1 = l1
+        self.outdir = outdir
+
+        self.root = root
+        self.input_dir = os.path.join(self.root, "Start_maja_" + self.get_dirname(self.l1.base))
+        self.wdir = os.path.join(self.input_dir, "maja_working_directory")
+
         self.tile = self.l1.get_tile()
         self.date = self.l1.get_date()
         self.log_level = log_level if log_level.upper() in ['INFO', 'PROGRESS', 'WARNING', 'DEBUG', 'ERROR'] else "INFO"
@@ -78,22 +81,24 @@ class Workplan(object):
         """
         from Common.FileSystem import create_directory, symlink
 
-        input_dir = os.path.join(self.wdir, "Start_maja_" + self.get_dirname(self.l1.base))
-        create_directory(input_dir)
-        if not os.path.isdir(input_dir):
-            raise OSError("Cannot create temp directory %s" % input_dir)
-        symlink(self.l1.fpath, os.path.join(input_dir, self.l1.base))
+        create_directory(self.input_dir)
+        create_directory(self.wdir)
+        if not os.path.isdir(self.input_dir) or not os.path.isdir(self.wdir):
+            raise OSError("Cannot create temp directory %s, %s" % (self.input_dir, self.wdir))
+        symlink(self.l1.fpath, os.path.join(self.input_dir, self.l1.base))
         for f in self.aux_files:
-            f.link(input_dir)
-        dtm.link(input_dir)
-        gipps.link(input_dir)
-        return input_dir
+            f.link(self.input_dir)
+        dtm.link(self.input_dir)
+        gipps.link(self.input_dir)
 
-    def launch_maja(self, maja, wdir, outdir, conf):
+        return self.input_dir
+
+    def launch_maja(self, maja, wdir, inputdir, outdir, conf):
         """
         Run the MAJA processor for the given input_dir, mode and tile
         :param maja: The full path to the maja executable
         :param wdir: The working dir containing all inputs
+        :param inputdir: The input directory containing all necessary files
         :param outdir: The output L2-directory
         :param conf: The full path to the userconf folder
         :return: The return code of Maja
@@ -102,12 +107,12 @@ class Workplan(object):
         args = ["-w",
                 wdir,
                 "--input",
-                wdir,
+                inputdir,
                 "--output",
                 outdir,
                 "--mode",
                 "L2" + self.mode,
-                "--conf",
+                "-ucs",
                 conf,
                 "--TileId",
                 self.tile,
@@ -129,9 +134,9 @@ class Init(Workplan):
         :return: The return code of the Maja app
         """
         from Common.FileSystem import remove_directory
-        input_dir = self.create_working_dir(dtm, gipp)
-        return_code = self.launch_maja(maja, wdir=input_dir, outdir=self.outdir, conf=conf)
-        remove_directory(input_dir)
+        self.create_working_dir(dtm, gipp)
+        return_code = self.launch_maja(maja, wdir=self.wdir, inputdir=self.input_dir, outdir=self.outdir, conf=conf)
+        remove_directory(self.input_dir)
         return return_code
         
     def __str__(self):
@@ -157,12 +162,12 @@ class Backward(Workplan):
         :return: The return code of the Maja app
         """
         from Common.FileSystem import symlink, remove_directory
-        input_dir = self.create_working_dir(dtm, gipp)
+        self.create_working_dir(dtm, gipp)
         # Link additional L1 products:
         for prod in self.l1_list:
-            symlink(prod.fpath, os.path.join(input_dir, prod.base))
-        return_code = self.launch_maja(maja, wdir=input_dir, outdir=self.outdir, conf=conf)
-        remove_directory(input_dir)
+            symlink(prod.fpath, os.path.join(self.input_dir, prod.base))
+        return_code = self.launch_maja(maja, wdir=self.wdir, inputdir=self.input_dir, outdir=self.outdir, conf=conf)
+        remove_directory(self.input_dir)
         return return_code
 
     def __str__(self):
@@ -192,7 +197,7 @@ class Nominal(Workplan):
         """
         from Common.FileSystem import symlink, remove_directory
         from Start_maja import StartMaja
-        input_dir = self.create_working_dir(dtm, gipp)
+        self.create_working_dir(dtm, gipp)
         # Find the previous L2 product
         avail_input_l2 = StartMaja.get_available_products(self.outdir, "l2a", self.tile)
         # Get only products which are close to the desired l2 date and before the l1 date:
@@ -207,9 +212,9 @@ class Nominal(Workplan):
         # Take the first product:
         self.l2 = l2_prods[0]
         # Link additional L1 products:
-        symlink(self.l2.fpath, os.path.join(input_dir, self.l2.base))
-        return_code = self.launch_maja(maja, wdir=input_dir, outdir=self.outdir, conf=conf)
-        remove_directory(input_dir)
+        symlink(self.l2.fpath, os.path.join(self.input_dir, self.l2.base))
+        return_code = self.launch_maja(maja, wdir=self.wdir, inputdir=self.input_dir, outdir=self.outdir, conf=conf)
+        remove_directory(self.input_dir)
         return return_code
 
     def __str__(self):
