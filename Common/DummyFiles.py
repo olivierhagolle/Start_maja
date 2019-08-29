@@ -26,12 +26,19 @@ def random_tile(platform="S2"):
         return random.choice([number, tile])
     elif platform == "VE":
         return ''.join(random.choice(letters) for _ in range(5))
+    elif "SPOT" in platform:
+        tile_id_1 = str(random.randint(0, 999)).zfill(3)
+        tile_id_2 = str(random.randint(0, 999)).zfill(3)
+        tile_id_3 = str(random.randint(0, 999)).zfill(1)
+        return "-".join([tile_id_1, tile_id_2, tile_id_3])
+
+    return tile
 
 
 def random_platform(product_level=None):
     import random
     if product_level == "L1C":
-        return "S2"
+        return random.choice(["S2", "SPOT4", "SPOT5"])
     return random.choice(["S2", "VE", "L8"])
 
 
@@ -61,6 +68,10 @@ class DummyGenerator(object):
             self.platform = "L8"
         elif platform[:2].upper() == "VE":
             self.platform = "VE"
+        elif platform.upper() == "SPOT4":
+            self.platform = "SPOT4"
+        elif platform.upper() == "SPOT5":
+            self.platform = "SPOT5"
         else:
             raise ValueError("Unknown platform found: %s" % platform)
         if not tile:
@@ -76,6 +87,13 @@ class DummyEarthExplorer(DummyGenerator):
     """
     Base class for all EarthExplorer-like files
     """
+
+    mission_choices = {"tm": {"S2": "SENTINEL-2"},
+                       "muscate": {"S2": "SENTINEL2", "L8": "LANDSAT8", "VE": "VENUS",
+                                   "SPOT4": "SPOT4", "SPOT5": "SPOT5"},
+                       "natif": {"S2": "SENTINEL-2", "L8": "LANDSAT_8", "VE": "VENuS"}
+                       }
+
     def __init__(self, root, date=None, tile=None, platform=random_platform()):
         super(DummyEarthExplorer, self).__init__(root, date, tile, platform)
         self.hdr = []
@@ -87,12 +105,8 @@ class DummyEarthExplorer(DummyGenerator):
         :return:
         """
         import random
-        mission_choices = {"tm": {"S2": "SENTINEL-2"},
-                           "muscate": {"S2": "SENTINEL2", "L8": "LANDSAT8", "VE": "VENUS"},
-                           "natif": {"S2": "SENTINEL-2", "L8": "LANDSAT_8", "VE": "VENuS"}
-                           }
         mtype = random.choice(["muscate", "natif"])
-        return mission_choices[mtype][self.platform]
+        return self.mission_choices[mtype][self.platform]
 
     def create_dummy_hdr(self, file_path, mission=None):
         """
@@ -104,7 +118,9 @@ class DummyEarthExplorer(DummyGenerator):
         from xml.etree import ElementTree
         platform_hdr = {"S2": random.choice(["SENTINEL2_", "SENTINEL-2_"]),
                         "VE": random.choice(["VENUS", "VENuS"]),
-                        "L8": random.choice(["LANDSAT8", "LANDSAT_8"])}
+                        "L8": random.choice(["LANDSAT8", "LANDSAT_8"]),
+                        "SPOT4": "SPOT4",
+                        "SPOT5": "SPOT5"}
         mission = mission if mission else platform_hdr[self.platform]
         root = ElementTree.Element("Earth_Explorer_Header")
         sub = ElementTree.SubElement(root, "Fixed_Header")
@@ -186,14 +202,10 @@ class GippGenerator(DummyEarthExplorer):
         from datetime import datetime
         import random
         from Common import FileSystem
-        mission_choice = {"tm": {"S2": "SENTINEL-2"},
-                          "muscate": {"S2": "SENTINEL2", "L8": "LANDSAT8", "VE": "VENUS"},
-                          "natif": {"S2": "SENTINEL-2", "L8": "LANDSAT_8", "VE": "VENuS"}
-                          }
         mission_param = kwargs.get("mission", random.choice(["muscate", "natif"]))
         if mission_param == "tm":
             self.platform = "S2"
-        mission = mission_choice[mission_param][self.platform]
+        mission = self.mission_choices[mission_param][self.platform]
         satellites = [self.platform] if self.platform != "S2" else ["S2A", "S2B"]
         with_cams = kwargs.get("cams", True)
         if with_cams:
@@ -226,7 +238,9 @@ class GippGenerator(DummyEarthExplorer):
 
 
 class ProductGenerator(DummyGenerator):
-    platform_options = {"L1C": {"S2": ["S2A", "S2B"]},
+    platform_options = {"L1C": {"S2": ["S2A", "S2B"],
+                                "SPOT4": ["SPOT4-HRG2-XS"],
+                                "SPOT5": ["SPOT5-HRG2-XS"]},
                         "L2A": {"S2": ["SENTINEL2B", "SENTINEL2A"],
                                 "L8": ["LANDSAT8-OLITIRS"],
                                 "VE": ["VENUS-XS"]}}
@@ -251,16 +265,24 @@ class L1Generator(ProductGenerator):
         import random
         from Common import TestFunctions, FileSystem
         platform_specifier = random.choice(self.platform_options["L1C"][self.platform])
+        date_str = self.date.strftime("%Y%m%dT%H%M%S")
         orbit = kwargs.get("orbit", random.randint(0, 999))
         version_orbit = kwargs.get("version", random.randint(0, 9))
-        date_str = self.date.strftime("%Y%m%dT%H%M%S")
-        product_name = "_".join([platform_specifier,
-                                 "MSIL1C",
-                                 date_str,
-                                 "N" + str(orbit).zfill(4),
-                                 "R" + str(version_orbit).zfill(3),
-                                 self.tile,
-                                 date_str + ".SAFE"])
+        if "S2" in self.platform:
+            product_name = "_".join([platform_specifier,
+                                     "MSIL1C",
+                                     date_str,
+                                     "N" + str(orbit).zfill(4),
+                                     "R" + str(version_orbit).zfill(3),
+                                     self.tile,
+                                     date_str + ".SAFE"])
+        else:
+            product_name = "_".join([platform_specifier,
+                                     date_str,
+                                     "L2A",
+                                     self.tile,
+                                     random.choice("DC"),
+                                     "V" + str(version_orbit) + "-" + str(version_orbit)])
         product_path = os.path.join(self.root, product_name)
         self.prod = product_path
         metadata_path = os.path.join(product_path, "MTD_MSIL1C.xml")

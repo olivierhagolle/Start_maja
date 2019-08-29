@@ -169,14 +169,38 @@ class TestDummyFiles(unittest.TestCase):
             os.remove(hdr)
             self.assertFalse(os.path.exists(hdr))
 
-    def test_l1_generation(self):
+    def test_s2_l1_generation(self):
         import shutil
-        gen = DummyFiles.L1Generator(self.root)
+        gen = DummyFiles.L1Generator(self.root, platform="S2")
         gen.generate()
         self.assertTrue(os.path.exists(gen.mtd))
         self.assertTrue(os.path.exists(gen.prod))
         self.assertTrue("MTD_MSIL1C.xml" in os.path.basename(gen.mtd))
         self.assertTrue("MSIL1C" in gen.prod)
+
+        shutil.rmtree(gen.prod)
+        self.assertFalse(os.path.exists(gen.prod))
+
+    def test_spot4_l1_generation(self):
+        import shutil
+        gen = DummyFiles.L1Generator(self.root, platform="SPOT4")
+        gen.generate()
+        self.assertTrue(os.path.exists(gen.mtd))
+        self.assertTrue(os.path.exists(gen.prod))
+        self.assertTrue("MTD_MSIL1C.xml" in os.path.basename(gen.mtd))
+        self.assertTrue("SPOT4" in gen.prod)
+
+        shutil.rmtree(gen.prod)
+        self.assertFalse(os.path.exists(gen.prod))
+
+    def test_spot5_l1_generation(self):
+        import shutil
+        gen = DummyFiles.L1Generator(self.root, platform="SPOT5")
+        gen.generate()
+        self.assertTrue(os.path.exists(gen.mtd))
+        self.assertTrue(os.path.exists(gen.prod))
+        self.assertTrue("MTD_MSIL1C.xml" in os.path.basename(gen.mtd))
+        self.assertTrue("SPOT5" in gen.prod)
 
         shutil.rmtree(gen.prod)
         self.assertFalse(os.path.exists(gen.prod))
