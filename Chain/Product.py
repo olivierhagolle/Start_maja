@@ -20,11 +20,13 @@ class MajaProduct(object):
     reg_s2_ssc = r"^S2[AB]_OPER_SSC_L[12]VALD_\d{2}[a-zA-Z]{3}_\w+.DBL.DIR"
     reg_s2_prd = r"^S2[AB]_OPER_PRD_MSIL1C_PDMC_\w+_R\d+_V\w+.SAFE$"
     reg_l8_lc1 = r"^LC8\w+$"
-    reg_l8_lc2 = r"^LC08_L\w+"
+    reg_l8_lc2 = r"^LC08_L\w+$"
     reg_l8_mus = r"^LANDSAT8[\w-]*_[-\d]+_L(1C|2A)_T\d{2}[a-zA-Z]{3}_\w_V[\d-]+$"
-    reg_l8_nat = r"^L8_\w{4}_L8C_L[12]VALD_[\d_]+.DBL.DIR"
-    reg_vs_mus = r"^VENUS(-XS)?_[-\d]+_L(1C|2A|3A)_\w+_\w_V\w+"
-    reg_vs_nat = r"^VE_\w{4}_VSC_L[12]VALD_\w+.DBL.DIR"
+    reg_l8_nat = r"^L8_\w{4}_L8C_L[12]VALD_[\d_]+.DBL.DIR$"
+    reg_vs_mus = r"^VENUS(-XS)?_\d{8}-\d{6}-\d{3}_L(1C|2A|3A)_\w+_[DC]_V\d*-\d*$"
+    reg_vs_nat = r"^VE_\w{4}_VSC_L[12]VALD_\w+.DBL.DIR$"
+    reg_s5_mus = r"^SPOT5-HR\w+-XS_(\d{8})-\d{6}-\d{3}_L1C_\d{3}-\d{3}-\d_[DC]_V\d*-\d*$"
+    reg_s4_mus = r"^SPOT4-HR\w+-XS_(\d{8})-\d{6}-\d{3}_L1C_\d{3}-\d{3}-\d_[DC]_V\d*-\d*$"
     reg_tile = r"T\d{2}[a-zA-Z]{3}"
 
     def __init__(self, filepath):
@@ -56,6 +58,7 @@ class MajaProduct(object):
         from Chain.S2Product import Sentinel2SSC, Sentinel2Muscate, Sentinel2Natif
         from Chain.L8Product import Landsat8LC1, Landsat8LC2, Landsat8Muscate, Landsat8Natif
         from Chain.VSProduct import VenusNatif, VenusMuscate
+        from Chain.SpotProduct import Spot4Muscate, Spot5Muscate
         # Sentinel-2
         if re.search(self.reg_s2_nat, self.base):
             return Sentinel2Natif(self.fpath)
@@ -77,6 +80,11 @@ class MajaProduct(object):
             return VenusMuscate(self.fpath)
         if re.search(self.reg_vs_nat, self.base):
             return VenusNatif(self.fpath)
+        # Spot
+        if re.search(self.reg_s5_mus, self.base):
+            return Spot5Muscate(self.fpath)
+        if re.search(self.reg_s4_mus, self.base):
+            return Spot4Muscate(self.fpath)
         pass
 
     def get_platform(self):
