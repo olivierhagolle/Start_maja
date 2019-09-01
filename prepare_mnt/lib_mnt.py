@@ -46,7 +46,7 @@ def TestLand(lon, lat):
 
 ##################################### Lecture de fichier de parametres "Mot_clé=Valeur"
 def lire_param_txt(fic_txt):
-    with file(fic_txt, 'r') as f:
+    with open(fic_txt, 'r') as f:
         for ligne in f.readlines():
             if ligne.find('INDIR_MNT') == 0:
                 INDIR_MNT = (ligne.split('=')[1]).strip()
@@ -99,15 +99,15 @@ def lire_fichier_site(fic_site):
             if ligne.find('ty_max') == 0:
                 ty_max = int(ligne.split('=')[1])
             if ligne.find('pas_x') == 0:
-                pas_x = int(ligne.split('=')[1])
+                pas_x = float(ligne.split('=')[1])
             if ligne.find('pas_y') == 0:
-                pas_y = int(ligne.split('=')[1])
+                pas_y = float(ligne.split('=')[1])
             if ligne.find('marge') == 0:
-                marge = int(ligne.split('=')[1])
+                marge = float(ligne.split('=')[1])
             if ligne.find('orig_x') == 0:
-                orig_x = int(ligne.split('=')[1])
+                orig_x = float(ligne.split('=')[1])
             if ligne.find('orig_y') == 0:
-                orig_y = int(ligne.split('=')[1])
+                orig_y = float(ligne.split('=')[1])
     site = classe_site(nom, proj, EPSG_out, chaine_proj, tx_min, tx_max, ty_min, ty_max, pas_x, pas_y, marge, orig_x,
                        orig_y)
     return (site)
