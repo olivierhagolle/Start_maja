@@ -68,7 +68,6 @@ class TestS2Product(unittest.TestCase):
         for root in cls.prod_s2_mus + cls.prod_s2_nat:
             shutil.rmtree(root)
 
-
     def test_reg_s2_muscate(self):
         tiles = ["31TCH", "31TCH", "31UFR"]
         levels = ["l1c", "l2a", "l3a"]
