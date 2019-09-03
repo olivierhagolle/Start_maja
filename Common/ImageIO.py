@@ -113,17 +113,18 @@ def get_resolution(driver):
     return xres, yres
 
 
-def transform_point(point, driver, new_epsg=4326):
+def transform_point(point, old_epsg, new_epsg=4326):
     """
     Transform a tuple (x,y) into lat lon using EPSG 4326
     :param point: The point as tuple (x,y)
-    :param driver: The gdal driver of the given point
+    :param old_epsg: The EPSG code of the old coordinate system
     :param new_epsg: The EPSG code of the new coordinate system to transfer to. Default is 4326 (WGS84).
     :return: The point's location in the new epsg as (x, y, z) with z usually being 0.0
     """
     from osgeo import osr
     source = osr.SpatialReference()
-    source.ImportFromWkt(driver.GetProjection())
+    # TODO Adapt unittests
+    source.ImportFromEPSG(old_epsg)
 
     # The target projection
     target = osr.SpatialReference()
