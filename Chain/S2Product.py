@@ -47,6 +47,16 @@ class Sentinel2Natif(MajaProduct):
             return True
         return False
 
+    def get_site(self):
+        from Common import ImageIO
+        from prepare_mnt.mnt.MNTBase import Site
+        try:
+            band_b2 = self.get_file(filename=r"*B0?2*.tif")
+        except IOError as e:
+            raise e
+        driver = ImageIO.open_tiff(band_b2)
+        return Site.from_driver(self.get_tile(), driver)
+
 
 class Sentinel2Muscate(MajaProduct):
     """
@@ -98,6 +108,16 @@ class Sentinel2Muscate(MajaProduct):
                 return True
         return False
 
+    def get_site(self):
+        from Common import ImageIO
+        from prepare_mnt.mnt.MNTBase import Site
+        try:
+            band_b2 = self.get_file(filename=r"*B0?2*.tif")
+        except IOError as e:
+            raise e
+        driver = ImageIO.open_tiff(band_b2)
+        return Site.from_driver(self.get_tile(), driver)
+
 
 class Sentinel2SSC(MajaProduct):
     """
@@ -135,3 +155,13 @@ class Sentinel2SSC(MajaProduct):
         if os.path.exists(self.get_metadata_file()):
             return True
         return False
+
+    def get_site(self):
+        from Common import ImageIO
+        from prepare_mnt.mnt.MNTBase import Site
+        try:
+            band_r1 = self.get_file(filename=r"*R1*.DBL.TIF")
+        except IOError as e:
+            raise e
+        driver = ImageIO.open_tiff(band_r1)
+        return Site.from_driver(self.get_tile(), driver)

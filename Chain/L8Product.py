@@ -51,6 +51,16 @@ class Landsat8Natif(MajaProduct):
         # Add a timedelta of 12hrs in order to compensate for the missing H/M/S:
         return datetime.strptime(str_date, "%Y%m%d") + timedelta(hours=12)
 
+    def get_site(self):
+        from Common import ImageIO
+        from prepare_mnt.mnt.MNTBase import Site
+        try:
+            band_bx = self.get_file(filename=r"*_B0?1*.tif")
+        except IOError as e:
+            raise e
+        driver = ImageIO.open_tiff(band_bx)
+        return Site.from_driver(self.get_tile(), driver)
+
 
 class Landsat8Muscate(MajaProduct):
     """
@@ -100,6 +110,16 @@ class Landsat8Muscate(MajaProduct):
                 return True
         return False
 
+    def get_site(self):
+        from Common import ImageIO
+        from prepare_mnt.mnt.MNTBase import Site
+        try:
+            band_bx = self.get_file(filename=r"*_B0?1*.tif")
+        except IOError as e:
+            raise e
+        driver = ImageIO.open_tiff(band_bx)
+        return Site.from_driver(self.get_tile(), driver)
+
 
 class Landsat8LC1(MajaProduct):
     """
@@ -130,6 +150,16 @@ class Landsat8LC1(MajaProduct):
             return True
         return False
 
+    def get_site(self):
+        from Common import ImageIO
+        from prepare_mnt.mnt.MNTBase import Site
+        try:
+            band_bx = self.get_file(filename=r"*_B0?1*.tif")
+        except IOError as e:
+            raise e
+        driver = ImageIO.open_tiff(band_bx)
+        return Site.from_driver(self.get_tile(), driver)
+
 
 class Landsat8LC2(MajaProduct):
     """
@@ -159,3 +189,13 @@ class Landsat8LC2(MajaProduct):
         if os.path.exists(self.get_metadata_file()):
             return True
         return False
+
+    def get_site(self):
+        from Common import ImageIO
+        from prepare_mnt.mnt.MNTBase import Site
+        try:
+            band_bx = self.get_file(filename=r"*_B0?1*.tif")
+        except IOError as e:
+            raise e
+        driver = ImageIO.open_tiff(band_bx)
+        return Site.from_driver(self.get_tile(), driver)

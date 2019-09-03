@@ -50,6 +50,16 @@ class Spot5Muscate(MajaProduct):
             return True
         return False
 
+    def get_site(self):
+        from Common import ImageIO
+        from prepare_mnt.mnt.MNTBase import Site
+        try:
+            band_bx = self.get_file(filename=r"*_B0?1*.tif")
+        except IOError as e:
+            raise e
+        driver = ImageIO.open_tiff(band_bx)
+        return Site.from_driver(self.get_tile(), driver)
+
 
 class Spot4Muscate(MajaProduct):
     """
@@ -85,3 +95,13 @@ class Spot4Muscate(MajaProduct):
         if os.path.exists(self.get_metadata_file()):
             return True
         return False
+
+    def get_site(self):
+        from Common import ImageIO
+        from prepare_mnt.mnt.MNTBase import Site
+        try:
+            band_bx = self.get_file(filename=r"*_B0?1*.tif")
+        except IOError as e:
+            raise e
+        driver = ImageIO.open_tiff(band_bx)
+        return Site.from_driver(self.get_tile(), driver)

@@ -112,6 +112,9 @@ class MajaProduct(object):
     def is_valid(self):
         raise NotImplementedError
 
+    def get_site(self):
+        raise NotImplementedError
+
     def __lt__(self, other):
         return self.get_date() < other.get_date()
 

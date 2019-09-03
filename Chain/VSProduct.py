@@ -49,6 +49,16 @@ class VenusNatif(MajaProduct):
             return True
         return False
 
+    def get_site(self):
+        from Common import ImageIO
+        from prepare_mnt.mnt.MNTBase import Site
+        try:
+            band_bx = self.get_file(filename=r"*_B0?1*.tif")
+        except IOError as e:
+            raise e
+        driver = ImageIO.open_tiff(band_bx)
+        return Site.from_driver(self.get_tile(), driver)
+
 
 class VenusMuscate(MajaProduct):
     """
@@ -101,3 +111,13 @@ class VenusMuscate(MajaProduct):
             if "L2VALD" in validity_flags:
                 return True
         return False
+
+    def get_site(self):
+        from Common import ImageIO
+        from prepare_mnt.mnt.MNTBase import Site
+        try:
+            band_bx = self.get_file(filename=r"*_B0?1*.tif")
+        except IOError as e:
+            raise e
+        driver = ImageIO.open_tiff(band_bx)
+        return Site.from_driver(self.get_tile(), driver)
