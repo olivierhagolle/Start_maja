@@ -103,6 +103,16 @@ def get_ul_lr(driver):
     return (ulx, uly), (lrx, lry)
 
 
+def get_resolution(driver):
+    """
+    Get the resolution of a given driver in x and y
+    :param driver: The gdal driver
+    :return: The x- and y-resolution in meters
+    """
+    _, xres, _, _, _, yres = driver.GetGeoTransform()
+    return xres, yres
+
+
 def transform_point(point, driver, new_epsg=4326):
     """
     Transform a tuple (x,y) into lat lon using EPSG 4326

@@ -108,6 +108,23 @@ class TestFileIO(unittest.TestCase):
         # Check if file removed
         self.assertFalse(os.path.exists(path))
 
+    def test_get_resolution(self):
+        from Common import FileSystem
+        img = np.ones((self.height, self.width), np.int16)
+        path = os.path.join(os.getcwd(), "test_get_resolution.tif")
+        # Write Image and check return code
+        ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
+        self.assertTrue(os.path.exists(path))
+
+        img_read, driver = ImageIO.tiff_to_array(path, array_only=False)
+        ul, lr = ImageIO.get_ul_lr(driver)
+        res_expected = (self.coordinates[1], self.coordinates[-1])
+        self.assertEqual(res_expected, ImageIO.get_resolution(driver))
+
+        FileSystem.remove_file(path)
+        # Check if file removed
+        self.assertFalse(os.path.exists(path))
+
     def test_get_ul_lr(self):
         from Common import FileSystem
         img = np.ones((self.height, self.width), np.int16)
