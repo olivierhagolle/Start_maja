@@ -65,7 +65,7 @@ def write_xml(root, filepath):
     tree.write(filepath, encoding="UTF-8", xml_declaration=True)
 
 
-def nodes(root, mission, basename_out, date_end, acquisition_date, cams_files):
+def nodes(root, mission, basename_out, date_end, acquisition_date, rel_netcdf):
     """
     Update the HDR file with the needed information.
     :param root: The root of the HDR
@@ -73,7 +73,7 @@ def nodes(root, mission, basename_out, date_end, acquisition_date, cams_files):
     :param basename_out: The basename of the HDR
     :param date_end: The validity end date, usually 2100-01-01
     :param acquisition_date: The acquisition date
-    :param cams_files: The list of CAMS files inside the .DBL.DIR. The filepaths are all relative to the HDR.
+    :param rel_netcdf: The list of CAMS files inside the .DBL.DIR. The filepaths are all relative to the HDR.
     :return: Writes the HDR in the same directory as the .DBL.DIR.
     """
     creation_date = datetime.now()
@@ -153,7 +153,7 @@ def nodes(root, mission, basename_out, date_end, acquisition_date, cams_files):
 
     b4 = ElementTree.SubElement(b3, "DBL_Organization")
     b5 = ElementTree.SubElement(b4, "List_of_Packaged_DBL_Files", count=str(len(cams_files)))
-    for index, cams_file in enumerate(cams_files):
+    for index, cams_file in enumerate(rel_netcdf):
         b6 = ElementTree.SubElement(b5, "Packaged_DBL_File", sn=str(index+1))
         b7 = ElementTree.SubElement(b6, "Relative_File_Path")
         b7.text = cams_file
@@ -177,12 +177,10 @@ def compress_directory_bzip2(destination_filename, source_directory):
     os.system(command)
 
 
-def create_archive(aot_file, mr_file, rh_file, output_file_basename, archive_dir, compress=False):
+def create_archive(netcdf, output_file_basename, archive_dir, compress=False):
     """
     Create the DBL.DIR folder and a compressed .DBL version if needed.
-    :param aot_file: The path to the AOT-NetCDF file
-    :param mr_file: The path to the MR-NetCDF file
-    :param rh_file: The path to the RH-NetCDF file
+    :param netcdf: The list of netcdf files
     :param output_file_basename: The basename of the cams file of format .._EXO_CAMS_...
     :param archive_dir: The directory to zip the files to
     :param compress: Create a compressed .DBL or not.
@@ -192,18 +190,14 @@ def create_archive(aot_file, mr_file, rh_file, output_file_basename, archive_dir
     from Common import FileSystem
     destination_filename = "{}.DBL".format(output_file_basename)
     destination_filepath = os.path.join(archive_dir, destination_filename)
-
     dbl_dir = os.path.join(archive_dir, output_file_basename + ".DBL.DIR")
     FileSystem.create_directory(dbl_dir)
-    shutil.copy(aot_file, os.path.join(dbl_dir, os.path.basename(aot_file)))
-    shutil.copy(mr_file, os.path.join(dbl_dir, os.path.basename(mr_file)))
-    shutil.copy(rh_file, os.path.join(dbl_dir, os.path.basename(rh_file)))
-
+    cams_file_to_return = []
+    for nc in netcdf:
+        shutil.copy(nc, os.path.join(dbl_dir, os.path.basename(nc)))
+        cams_file_to_return.append(os.path.join(destination_filename + ".DIR", os.path.basename(nc)))
     if compress:
         compress_directory_bzip2(destination_filepath, archive_dir)
-    cams_file_to_return = [os.path.join(destination_filename + ".DIR", os.path.basename(aot_file)),
-                           os.path.join(destination_filename + ".DIR", os.path.basename(mr_file)),
-                           os.path.join(destination_filename + ".DIR", os.path.basename(rh_file))]
     return destination_filepath, cams_file_to_return
 
 
@@ -213,37 +207,62 @@ def get_raw_cams_date(cams_file, cams_group="(AOT|MR|RH)"):
     :param cams_file: The filename string of the cams file
     :param cams_group: Specify the type of CAMS group the file should belong in.
                        By default this is either AOT, RH or MR
-    :return: The date of the given file.
+    :return: The date of the given file as well as it's group type.
     """
+    assert cams_group[0] == "(" and cams_group[-1] == ")"
     regex = r"CAMS_%s_(\d{8}UTC\d{6})\.nc$" % cams_group
     result = re.search(regex, cams_file)
     if result:
-        return datetime.strptime(result.group(2), "%Y%m%dUTC%H%M%S")
+        return datetime.strptime(result.group(2), "%Y%m%dUTC%H%M%S"), result.group(1)
     return None
 
 
-def get_raw_cams_triplet(aot_file, file_list, input_dir):
+def get_list_of_cams_files(input_dir):
+    """
+    Get all available cams files inside a directory tree sorting out the duplicates.
+    :param input_dir: The input directory.
+    :return: The list of available cams files.
+    """
+    from Common import FileSystem
+    regex = r"CAMS_(AOT|MR|RH)_(\d{8}UTC\d{6})\.nc$"
+    raw_files = FileSystem.find(regex, input_dir)
+    unique_files, basenames = [], []
+    # Sort out duplicates by basename
+    for i in raw_files:
+        bname = os.path.basename(i)
+        if bname not in basenames:
+            basenames.append(bname)
+            unique_files.append(i)
+    return unique_files
+
+
+def get_raw_cams_triplet(aot_file, file_list):
     """
     Get the triplets of MR, AOT and RH CAMS files for the same date.
     :param aot_file: The AOT file of a given date.
     :param file_list: The list of other raw cams files present.
-    :param input_dir: The base folder
-    :return:
+    :return: The AOT, RH and MR files for a same datetime.
     """
+    cams_types = ["AOT", "MR", "RH"]
+    cams_file = {i: None for i in cams_types}
+
     # Start out using the date of a valid AOT file:
-    date_aot = get_raw_cams_date(aot_file)
-    triplet = []
+    date_aot, _ = get_raw_cams_date(aot_file)
+    input_dir = os.path.dirname(aot_file)
     for fl in file_list:
-        # Find corresponding AOT, MR and RH files:
-        date_mr_rh = get_raw_cams_date(fl)
-        if date_mr_rh == date_aot:
-            triplet.append(os.path.join(input_dir, fl))
-    if len(triplet) == 3:
-        return sorted(triplet)
-    return None
+        # Find corresponding MR and RH files:
+        date_mr_rh, cams_type = get_raw_cams_date(fl)
+        if cams_type not in cams_types:
+            continue
+        if date_mr_rh == date_aot and not cams_file[str(cams_type)]:
+            cams_file[cams_type] = os.path.join(input_dir, fl)
+    for i in cams_file.values():
+        if not os.path.isfile(i):
+            return None
+    return list(cams_file.values())
 
 
-def process_one_file(aot_file, mr_file, rh_file, acq_date, archive_dir, mission):
+def process_one_file(netcdf, acq_date, archive_dir, mission):
     from collections import namedtuple
     satellite = namedtuple('satellite', ('full_name', 'short_name'))
     mission_choices = {"s2": satellite("SENTINEL2_", "S2_"),
@@ -258,7 +277,7 @@ def process_one_file(aot_file, mr_file, rh_file, acq_date, archive_dir, mission)
                                                            date_end.strftime("%Y%m%dT%H%M%S"))
 
     # Create archive
-    dbl_filename, cams = create_archive(aot_file, mr_file, rh_file, output_file_basename, archive_dir)
+    dbl_filename, cams = create_archive(netcdf, output_file_basename, archive_dir)
 
     # Create hdr
     output_filename = os.path.join(archive_dir, output_file_basename + ".HDR")
@@ -285,10 +304,11 @@ if __name__ == "__main__":
     out_dir = os.path.realpath(args.output_filename)
     sensor = args.sensor
     cams_triplets = []
-    for f in os.listdir(in_dir):
+    cams_files = get_list_of_cams_files(in_dir)
+    for f in cams_files:
         if get_raw_cams_date(f, cams_group="(AOT)"):
-            cams_triplets.append(get_raw_cams_triplet(f, os.listdir(in_dir), in_dir))
+            cams_triplets.append(get_raw_cams_triplet(f, cams_files))
     cams_triplets = [c for c in cams_triplets if c is not None]
-    for aot, mr, rh in cams_triplets:
-        cams_date = get_raw_cams_date(aot)
-        process_one_file(aot, mr, rh, cams_date, out_dir, sensor)
+    for nc_files in cams_triplets:
+        cams_date, _ = get_raw_cams_date(nc_files[0])
+        process_one_file(nc_files, cams_date, out_dir, sensor)
