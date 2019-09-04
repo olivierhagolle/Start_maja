@@ -130,4 +130,5 @@ def transform_point(point, old_epsg, new_epsg=4326):
     target = osr.SpatialReference()
     target.ImportFromEPSG(new_epsg)
     transform = osr.CoordinateTransformation(source, target)
-    return transform.TransformPoint(point[0], point[1])
+    new_pt = transform.TransformPoint(point[0], point[1])
+    return new_pt[1], new_pt[0]
