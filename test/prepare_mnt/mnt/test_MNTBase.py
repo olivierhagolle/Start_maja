@@ -16,15 +16,24 @@ from prepare_mnt.mnt import MNTBase
 
 class TestMNTBase(unittest.TestCase):
 
-    def setUp(self):
-        self.site = MNTBase.Site("T31TCJ", 32631,
-                                 ul=(300000.000, 4900020.000),
-                                 lr=(409800.000, 4790220.000),
-                                 res_x=10,
-                                 res_y=-10)
+    def atest_gsw_codes_toulouse(self):
+        site = MNTBase.Site("T31TCJ", 32631,
+                            ul=(300000.000, 4900020.000),
+                            lr=(409800.000, 4790220.000),
+                            res_x=10,
+                            res_y=-10)
 
-    def test_gsw_codes(self):
-        gsw_codes = MNTBase.MNT.get_gsw_codes(self.site)
+        gsw_codes = MNTBase.MNT.get_gsw_codes(site)
+        self.assertEqual(gsw_codes, [0, 1])
+
+    def test_gsw_codes_spain(self):
+        site = MNTBase.Site("T31TBE", 32631,
+                            ul=(199980.000, 4500000.000),
+                            lr=(309780.000, 4390200.000),
+                            res_x=10,
+                            res_y=-10)
+
+        gsw_codes = MNTBase.MNT.get_gsw_codes(site)
         self.assertEqual(gsw_codes, [0, 1])
 
 

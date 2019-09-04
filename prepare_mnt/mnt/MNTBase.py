@@ -22,7 +22,7 @@ class Site:
         self.res_y = res_y
         self.ul = ul
         self.lr = lr
-        self.latmin, self.latmax, self.lonmin, self.lonmax = self.get_latlon_minmax()
+        self.ul_latlon, self.lr_latlon = self.get_latlon_minmax()
 
     def get_latlon_minmax(self):
         """
@@ -31,8 +31,8 @@ class Site:
         """
         from Common import ImageIO
         ul_latlon = ImageIO.transform_point(self.ul, self.epsg, new_epsg=4326)
-        lr_latlon = ImageIO.transform_point(self.ul, self.epsg, new_epsg=4326)
-        return lr_latlon[0], ul_latlon[0], ul_latlon[1], lr_latlon[1]
+        lr_latlon = ImageIO.transform_point(self.lr, self.epsg, new_epsg=4326)
+        return ul_latlon, lr_latlon
 
     @staticmethod
     def from_driver(name, driver):
@@ -74,29 +74,27 @@ class MNT(object):
         :return: The list of filenames needed in order to cover to whole site.
         """
         import math
-        print(site.latmin)
-        print(site.lonmin)
-        num_x = [math.ceil(math.fabs(site.latmin) / 10) * 10, math.ceil(math.fabs(site.lonmin) / 10) * 10]
-        if site.latmin > 0:
+        num_x = [math.ceil(math.fabs(site.ul_latlon[0]) / 10) * 10, math.ceil(math.fabs(site.ul_latlon[1]) / 10) * 10]
+        if site.ul_latlon[0] > 0:
             code_x1 = "N"
         else:
             code_x1 = "S"
-        if site.lonmin < 0:
+        if site.ul_latlon[1] < 0:
             code_x2 = "W"
         else:
             code_x2 = "E"
-            num_x[0] -= 10
+            num_x[1] -= 10
 
-        num_y = [math.ceil(math.fabs(site.latmax) / 10) * 10, math.ceil(math.fabs(site.lonmax) / 10) * 10]
-        if site.latmax > 0:
+        num_y = [math.ceil(math.fabs(site.lr_latlon[0]) / 10) * 10, math.ceil(math.fabs(site.lr_latlon[1]) / 10) * 10]
+        if site.lr_latlon[0] > 0:
             code_y1 = "N"
         else:
             code_y1 = "S"
-        if site.lonmax < 0:
+        if site.lr_latlon[1] < 0:
             code_y2 = "W"
         else:
             code_y2 = "E"
-            num_y[0] -= 10
+            num_y[1] -= 10
         return num_x, code_x1, code_x2, num_y, code_y1, code_y2
 
     def get_water_data(self):
