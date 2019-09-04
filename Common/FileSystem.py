@@ -65,33 +65,37 @@ def __get_item(path, reg):
     return os.path.abspath(os.path.join(path, available_dirs[0]))
 
 
-def find(pattern, path):
+def find(pattern, path, case_sensitive=False):
     """
     Find a file or dir in a directory-tree.
     :param pattern: The filename to be searched for
     :param path: The path to the root directory
+    :param case_sensitive: Do a case sensitive comparison.
     :return: The file/directory if found. AssertionError if not.
     """
     import re
     result = []
     parameter = pattern.replace("*", ".*")
+    if not case_sensitive:
+        parameter = parameter.lower()
     for root, dirs, files in os.walk(path):
         for name in files + dirs:
-            if re.search(parameter.lower(), name.lower()):
+            if re.search(parameter.lower(), name if case_sensitive else name.lower()):
                 result.append(os.path.join(root, name))
     if not result:
         raise ValueError("Cannot find %s in %s" % (parameter, path))
     return result
 
 
-def find_single(pattern, path):
+def find_single(pattern, path, case_sensitive=False):
     """
     Find a file or dir in a directory-tree.
     :param pattern: The filename to be searched for
     :param path: The path to the root directory
+    :param case_sensitive: Do a case sensitive comparison.
     :return: The file/directory if found. AssertionError if not.
     """
-    return find(pattern, path)[0]
+    return find(pattern, path, case_sensitive)[0]
 
 
 def get_file(**kwargs):
