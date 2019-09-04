@@ -15,7 +15,7 @@ def indent(elem, level=0):
     :param level: The level of indentation
     :return: The indented element
     """
-
+    # TODO Unittest?
     i = "\n" + level * "  "
     if len(elem):
         if not elem.text or not elem.text.strip():
@@ -40,6 +40,7 @@ def write_xml(root, filepath):
     :return: Writes the given xml file with proper indentation.
     """
     from xml.etree import ElementTree
+    # TODO Unittest
     indent(root)
     tree = ElementTree.ElementTree(root)
     tree.write(filepath, encoding="UTF-8", xml_declaration=True)
