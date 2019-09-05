@@ -151,7 +151,7 @@ class TestFileIO(unittest.TestCase):
 
         ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
-        ImageIO.gdal_merge(path, empty, init="0", createonly=True, q=True)
+        ImageIO.gdal_merge(empty, path, init="0", createonly=True, q=True)
         img_read, driver = ImageIO.tiff_to_array(empty, array_only=False)
         np.testing.assert_almost_equal(img_read, 0)
         FileSystem.remove_file(path)
@@ -165,7 +165,7 @@ class TestFileIO(unittest.TestCase):
         path = os.path.join(os.getcwd(), "test_gdal_buildvrt.tif")
         vrt = os.path.join(os.getcwd(), "test_vrt.vrt")
 
-        ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
+        ImageIO.write_geotiff(path, img, self.projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
         ImageIO.gdal_buildvrt(vrt, path, q=True)
         img_read, driver = ImageIO.tiff_to_array(vrt, array_only=False)
@@ -181,10 +181,28 @@ class TestFileIO(unittest.TestCase):
         out_resolution = (20, -20)
         ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
-        ImageIO.gdal_translate(scaled, path, tr=" ".join(str(e) for e in out_resolution), scale="0 1 0 255", q=True)
+        ImageIO.gdal_translate(path, scaled, tr=" ".join(str(e) for e in out_resolution), scale="0 1 0 255", q=True)
         img_read, driver = ImageIO.tiff_to_array(scaled, array_only=False)
         self.assertEqual(ImageIO.get_resolution(driver), out_resolution)
         np.testing.assert_almost_equal(img_read, 255)
+        FileSystem.remove_file(path)
+        FileSystem.remove_file(scaled)
+
+    def test_gdal_warp(self):
+        from Common import FileSystem
+        img = np.ones((self.height, self.width), np.int16)
+        img_rescaled = np.ones((int(self.height/2), int(self.width/2)), np.int16)
+        out_resolution = (20, -20)
+        path = os.path.join(os.getcwd(), "test_gdal_warp.tif")
+        scaled = os.path.join(os.getcwd(), "res_changed.tif")
+        ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
+        self.assertTrue(os.path.exists(path))
+        ImageIO.gdal_warp(scaled, path,
+                          tr=" ".join(str(e) for e in out_resolution),
+                          r="max", q=True)
+        img_read, driver = ImageIO.tiff_to_array(scaled, array_only=False)
+        self.assertEqual(ImageIO.get_resolution(driver), out_resolution)
+        np.testing.assert_almost_equal(img_read, img_rescaled)
         FileSystem.remove_file(path)
         FileSystem.remove_file(scaled)
 

@@ -54,9 +54,12 @@ def write_geotiff(img, dst, projection, coordinates, dtype=None):
     # Add dimension for a single band-image
     if img.ndim is 2:
         img = img[..., np.newaxis]
-    # Set output dtype if not specified
+    # Set output dtype if not specified. GDAL cannot write GTiff as binary files, so convert to uint8:
+    if img.dtype == np.bool:
+        dtype = gdal_array.NumericTypeCodeToGDALTypeCode(np.uint8)
     if not dtype:
         dtype = gdal_array.NumericTypeCodeToGDALTypeCode(img.dtype)
+    print(dtype)
     dataset = driver.Create(dst, img.shape[1], img.shape[0], img.shape[2], dtype)
     if not dataset:
         raise OSError("GDAL Could not create file {0}".format(dst))
@@ -141,7 +144,9 @@ def gdal_buildvrt(vrtpath, *inputs, **options):
     :return: Builds vrt at the given path.
     """
     from Common import FileSystem
-    file_list = [vrtpath] + list(inputs)
+    file_list = [vrtpath]
+    for inp in inputs:
+        file_list.append(inp[0])
     options_list = []
     [options_list.extend(["-" + k, v])
      if type(v) is not bool else
@@ -150,7 +155,7 @@ def gdal_buildvrt(vrtpath, *inputs, **options):
     return FileSystem.run_external_app("gdalbuildvrt", file_list + options_list)
 
 
-def gdal_merge(src, dst, **options):
+def gdal_merge(dst, src, **options):
     """
     Merge a set of gdal rasters
     :param src: The source filename
@@ -169,7 +174,7 @@ def gdal_merge(src, dst, **options):
     return FileSystem.run_external_app("gdal_merge.py", file_list + options_list)
 
 
-def gdal_translate(src, dst, **options):
+def gdal_translate(dst, src, **options):
     """
     Merge a set of gdal rasters
     :param src: The source filename
@@ -186,3 +191,24 @@ def gdal_translate(src, dst, **options):
      options_list.extend(["-" + k])
      for k, v in options.items()]
     return FileSystem.run_external_app("gdal_translate", file_list + options_list)
+
+
+def gdal_warp(dst, src, **options):
+    """
+    Warp a set of gdal rasters
+    :param src: The source filename
+    :param dst: The destination filename
+    :param options: Optional arguments such as 't_srs' or 'crop_to_cutline'
+    :return: A raster is written to the destination filename
+    """
+
+    from Common import FileSystem
+    file_list = [dst, src]
+    options_list = []
+    [options_list.extend(["-" + k, v])
+     if type(v) is not bool else
+     options_list.extend(["-" + k])
+     for k, v in options.items()]
+    # Append overwrite by default in order to avoid writing errors:
+    options_list += ["-overwrite"]
+    return FileSystem.run_external_app("gdalwarp", file_list + options_list)
