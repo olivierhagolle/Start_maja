@@ -161,7 +161,7 @@ def __get_return_code(proc, log_level):
     while proc.poll() is None:
         line = proc.stdout.readline()  # This blocks until it receives a newline.
         if log_level == logging.DEBUG:
-            print(line, end="")
+            print(line.decode('utf-8'), end="")
     proc.stdout.close()
     return proc.wait()
 
@@ -177,7 +177,7 @@ def run_external_app(name, args, log_level=logging.DEBUG):
     from timeit import default_timer as timer
     import subprocess
     full_args = [name] + args
-    cmd = " ".join(a for a in full_args)
+    cmd = " ".join(str(a) for a in full_args)
     log.log(log_level, "Executing cmd: " + cmd)
     start = timer()
     try:
