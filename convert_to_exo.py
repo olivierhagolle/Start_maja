@@ -13,41 +13,67 @@ import argparse
 from datetime import datetime
 import os
 import re
-import sys
 
 
 class RawCAMSArchive(object):
-    def __init__(self, input_dir, output_dir, sat):
+    """
+    Converts a set of raw .nc files to the Maja format
+    """
+    def __init__(self, input_dir, output_dir, sensor):
+        assert os.path.isdir(input_dir)
         self.input_dir = input_dir
         self.output_dir = output_dir
-        self.sensor = sat
+        assert sensor in ['s2', 'l8', 've', 'gen']
+        self.sensor = sensor
         self.cams_triplets = []
         self.cams_files = self.get_list_of_cams_files()
         for f in self.cams_files:
-            if self.get_raw_cams_date(f, cams_group="(AOT)"):
+            if self._get_raw_cams_date(f, cams_group="(AOT)"):
                 self.cams_triplets.append(self.get_raw_cams_triplet(f, self.cams_files))
         # Sort out non-cams files:
         self.cams_triplets = [c_file for c_file in self.cams_triplets if c_file is not None]
 
-    @staticmethod
-    def get_cams_root():
+    def _get_cams_root(self):
         """
-        Get the root of a cams file
+        Create the root of a single cams file
         :return:
         """
         from xml.etree import ElementTree
+        from collections import namedtuple
+        header_info = namedtuple("header_info", ("schema_path", "schema_version"))
+        schema_by_sensor = {"s2": header_info("EXO_CAMS_CamsData.xsd", "1.00"),
+                            "l8": header_info("LN_EXO_CAMS_CamsData.xsd", "1.00"),
+                            "ve": header_info("VE_EXO_CAMS_CamsData.xsd", "2.0"),
+                            "gen": header_info("GEN_EXO_CAMS_CamsData.xsd", "1.00")}
         xmlns = "http://eop-cfi.esa.int/CFI"
         xsi = "http://www.w3.org/2001/XMLSchema-instance"
-        schema_location = "%s ./EXO_CAMS_CamsData.xsd" % xmlns
+        schema_location = "%s ./%s" % (xmlns, schema_by_sensor[self.sensor].schema_path)
         type_xsi = "CAMS_Header_Type"
-        root = ElementTree.Element("Earth_Explorer_Header", attrib={"xmlns": xmlns,
-                                                                    "schema_version": "1.00",
-                                                                    "{" + xsi + "}schemaLocation": schema_location,
-                                                                    "{" + xsi + "}type": type_xsi})
+        root = ElementTree.Element("Earth_Explorer_Header",
+                                   attrib={"xmlns": xmlns,
+                                           "schema_version": schema_by_sensor[self.sensor].schema_version,
+                                           "{" + xsi + "}schemaLocation": schema_location,
+                                           "{" + xsi + "}type": type_xsi})
         return root
 
     @staticmethod
-    def nodes(root, mission, basename_out, date_end, acquisition_date, rel_netcdf):
+    def _get_raw_cams_date(cams_file, cams_group="(AOT|MR|RH)"):
+        """
+        Get the date from a file of the format CAMS_XXX_yyyymmddUTChhmmss.nc
+        :param cams_file: The filename string of the cams file
+        :param cams_group: Specify the type of CAMS group the file should belong in.
+                           By default this is either AOT, RH or MR
+        :return: The date of the given file as well as it's group type.
+        """
+        assert cams_group[0] == "(" and cams_group[-1] == ")"
+        regex = r"CAMS_%s_(\d{8}UTC\d{6})\.nc$" % cams_group
+        result = re.search(regex, cams_file)
+        if result:
+            return datetime.strptime(result.group(2), "%Y%m%dUTC%H%M%S"), result.group(1)
+        return None
+
+    @staticmethod
+    def _update_nodes(root, mission, basename_out, date_end, acquisition_date, rel_netcdf):
         """
         Update the HDR file with the needed information.
         :param root: The HDR xml-root.
@@ -114,7 +140,7 @@ class RawCAMSArchive(object):
         toto = ElementTree.SubElement(b2, "Creator_Version")
         toto.text = "1.14"
         toto = ElementTree.SubElement(b2, "Creation_Date")
-        toto.text = "UTC=" + creation_date.isoformat()
+        toto.text = "UTC=" + creation_date.strftime("%Y-%m-%dT%H:%M:%S")
 
         a = ElementTree.SubElement(root, "Variable_Header")
         b2 = ElementTree.SubElement(a, "Main_Product_Header")
@@ -165,22 +191,6 @@ class RawCAMSArchive(object):
             cams_file_to_return.append(os.path.join(destination_filename + ".DIR", os.path.basename(nc)))
         return destination_filepath, cams_file_to_return
 
-    @staticmethod
-    def get_raw_cams_date(cams_file, cams_group="(AOT|MR|RH)"):
-        """
-        Get the date from a file of the format CAMS_XXX_yyyymmddUTChhmmss.nc
-        :param cams_file: The filename string of the cams file
-        :param cams_group: Specify the type of CAMS group the file should belong in.
-                           By default this is either AOT, RH or MR
-        :return: The date of the given file as well as it's group type.
-        """
-        assert cams_group[0] == "(" and cams_group[-1] == ")"
-        regex = r"CAMS_%s_(\d{8}UTC\d{6})\.nc$" % cams_group
-        result = re.search(regex, cams_file)
-        if result:
-            return datetime.strptime(result.group(2), "%Y%m%dUTC%H%M%S"), result.group(1)
-        return None
-
     def get_list_of_cams_files(self):
         """
         Get all available cams files inside a directory tree sorting out the duplicates.
@@ -209,11 +219,11 @@ class RawCAMSArchive(object):
         cams_file = {i: None for i in cams_types}
 
         # Start out using the date of a valid AOT file:
-        date_aot, _ = self.get_raw_cams_date(aot_file)
+        date_aot, _ = self._get_raw_cams_date(aot_file)
         input_dir = os.path.dirname(aot_file)
         for fl in file_list:
             # Find corresponding MR and RH files:
-            date_mr_rh, cams_type = self.get_raw_cams_date(fl)
+            date_mr_rh, cams_type = self._get_raw_cams_date(fl)
             if cams_type not in cams_types:
                 continue
             if date_mr_rh == date_aot and not cams_file[str(cams_type)]:
@@ -234,14 +244,14 @@ class RawCAMSArchive(object):
         from Common import XMLTools
         from collections import namedtuple
         satellite = namedtuple('satellite', ('full_name', 'short_name'))
-        mission_choices = {"s2": satellite("SENTINEL2_", "S2_"),
-                           "l8": satellite("LANDSAT8", "L8"),
-                           "ve": satellite("VENUS", "VE"),
+        mission_choices = {"s2": satellite("SENTINEL-2_", "S2_"),
+                           "l8": satellite("LANDSAT_8", "L8"),
+                           "ve": satellite("VENuS", "VE"),
                            "gen": satellite("GENERIC", "GEN")}
         current_satellite = mission_choices[mission]
         date_end = datetime(year=2100, month=1, day=1)
 
-        output_file_basename = "{}_TEST_EXO_CAMS_{}_{}".format(current_satellite.short_name,
+        output_file_basename = "{}_OPER_EXO_CAMS_{}_{}".format(current_satellite.short_name,
                                                                acq_date.strftime("%Y%m%dT%H%M%S"),
                                                                date_end.strftime("%Y%m%dT%H%M%S"))
 
@@ -252,8 +262,8 @@ class RawCAMSArchive(object):
         output_filename = os.path.join(self.output_dir, output_file_basename + ".HDR")
         basename_out = os.path.basename(os.path.splitext(output_filename)[0])
         print(basename_out)
-        root = self.get_cams_root()
-        self.nodes(root, current_satellite.full_name, basename_out, date_end, acq_date, cams)
+        root = self._get_cams_root()
+        self._update_nodes(root, current_satellite.full_name, basename_out, date_end, acq_date, cams)
         XMLTools.write_xml(root, output_filename)
 
     def convert_to_exo(self):
@@ -262,8 +272,8 @@ class RawCAMSArchive(object):
         :return: Writes a set of DBL.DIR and HDR files to the given output directory
         """
         for nc_files in self.cams_triplets:
-            cams_date, _ = self.get_raw_cams_date(nc_files[0])
-            self.process_one_file(nc_files, cams_date, sensor)
+            cams_date, _ = self._get_raw_cams_date(nc_files[0])
+            self.process_one_file(nc_files, cams_date, self.sensor)
 
 
 if __name__ == "__main__":
@@ -271,14 +281,11 @@ if __name__ == "__main__":
     required_arguments = argParser.add_argument_group('required arguments')
     required_arguments.add_argument('-i', '--input_dir', required=True,
                                     help='Path to input image')
-    required_arguments.add_argument('-o', '--output_filename', required=True,
-                                    help='Path to output HDR filename')
+    required_arguments.add_argument('-o', '--output_dir', required=True,
+                                    help='Path to output dir')
     required_arguments.add_argument('-s', "--sensor", choices=['s2', 'l8', 've', 'gen'], required=True)
 
-    args = argParser.parse_args(sys.argv[1:])
+    args = argParser.parse_args()
 
-    in_dir = os.path.realpath(args.input_dir)
-    out_dir = os.path.realpath(args.output_filename)
-    sensor = args.sensor
-    c = RawCAMSArchive(in_dir, out_dir, sensor)
+    c = RawCAMSArchive(args.input_dir, args.output_dir, args.sensor)
     c.convert_to_exo()
