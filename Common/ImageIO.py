@@ -119,11 +119,10 @@ def transform_point(point, old_epsg, new_epsg=4326):
     :param point: The point as tuple (x,y)
     :param old_epsg: The EPSG code of the old coordinate system
     :param new_epsg: The EPSG code of the new coordinate system to transfer to. Default is 4326 (WGS84).
-    :return: The point's location in the new epsg as (x, y, z) with z usually being 0.0
+    :return: The point's location in the new epsg as (x, y) - z is omitted due to it being 0 most of the time
     """
     from osgeo import osr
     source = osr.SpatialReference()
-    # TODO Adapt unittests
     source.ImportFromEPSG(old_epsg)
 
     # The target projection
@@ -132,3 +131,58 @@ def transform_point(point, old_epsg, new_epsg=4326):
     transform = osr.CoordinateTransformation(source, target)
     new_pt = transform.TransformPoint(point[0], point[1])
     return new_pt[1], new_pt[0]
+
+
+def gdal_buildvrt(vrtpath, *inputs, **options):
+    """
+    Build a gdalvrt using a subprocess.
+    :param vrtpath: The path to build the vrt to.
+    :param inputs: The list of inputs + other options if needed.
+    :return: Builds vrt at the given path.
+    """
+    from Common import FileSystem
+    file_list = [vrtpath] + list(inputs)
+    options_list = []
+    [options_list.extend(["-" + k, v])
+     if type(v) is not bool else
+     options_list.extend(["-" + k])
+     for k, v in options.items()]
+    return FileSystem.run_external_app("gdalbuildvrt", file_list + options_list)
+
+
+def gdal_merge(src, dst, **options):
+    """
+    Merge a set of gdal rasters
+    :param src: The source filename
+    :param dst: The destination filename
+    :param options: Optional arguments such as 'init' or 'createonly'
+    :return: A merged raster is written to the destination filename
+    """
+
+    from Common import FileSystem
+    file_list = ["-o", dst, src]
+    options_list = []
+    [options_list.extend(["-" + k, v])
+     if type(v) is not bool else
+     options_list.extend(["-" + k])
+     for k, v in options.items()]
+    return FileSystem.run_external_app("gdal_merge.py", file_list + options_list)
+
+
+def gdal_translate(src, dst, **options):
+    """
+    Merge a set of gdal rasters
+    :param src: The source filename
+    :param dst: The destination filename
+    :param options: Optional arguments such as 'scale' or 'projwin'
+    :return: A raster is written to the destination filename
+    """
+
+    from Common import FileSystem
+    file_list = [dst, src]
+    options_list = []
+    [options_list.extend(["-" + k, v])
+     if type(v) is not bool else
+     options_list.extend(["-" + k])
+     for k, v in options.items()]
+    return FileSystem.run_external_app("gdal_translate", file_list + options_list)

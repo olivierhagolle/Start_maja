@@ -38,7 +38,6 @@ class TestFileIO(unittest.TestCase):
 
         img = np.ones((self.height, self.width), np.int16)
         path = os.path.join(os.getcwd(), "test_write_read_geotiff.tif")
-        # Write Image and check return code
         ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
         
@@ -98,7 +97,6 @@ class TestFileIO(unittest.TestCase):
                         AUTHORITY["EPSG","%s"]]' % epsg_ref
         img = np.ones((self.height, self.width), np.int16)
         path = os.path.join(os.getcwd(), "test_epsg.tif")
-        # Write Image and check return code
         ImageIO.write_geotiff(img, path, projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
 
@@ -112,12 +110,10 @@ class TestFileIO(unittest.TestCase):
         from Common import FileSystem
         img = np.ones((self.height, self.width), np.int16)
         path = os.path.join(os.getcwd(), "test_get_resolution.tif")
-        # Write Image and check return code
         ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
 
         img_read, driver = ImageIO.tiff_to_array(path, array_only=False)
-        ul, lr = ImageIO.get_ul_lr(driver)
         res_expected = (self.coordinates[1], self.coordinates[-1])
         self.assertEqual(res_expected, ImageIO.get_resolution(driver))
 
@@ -129,7 +125,6 @@ class TestFileIO(unittest.TestCase):
         from Common import FileSystem
         img = np.ones((self.height, self.width), np.int16)
         path = os.path.join(os.getcwd(), "test_get_ul_lr.tif")
-        # Write Image and check return code
         ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
 
@@ -143,21 +138,56 @@ class TestFileIO(unittest.TestCase):
         self.assertFalse(os.path.exists(path))
 
     def test_transform_point_lat_lon(self):
+        center = (653095.355, 5071879.228)
+        lat_lon_expected = (45.78349724618419, 4.9694934619557145)
+        lat_lon_calc = ImageIO.transform_point(center, old_epsg=32631, new_epsg=4326)
+        self.assertEqual(lat_lon_expected, lat_lon_calc)
+
+    def test_gdal_merge(self):
         from Common import FileSystem
         img = np.ones((self.height, self.width), np.int16)
-        path = os.path.join(os.getcwd(), "test_transform_point_lat_lon.tif")
-        # Write Image and check return code
+        path = os.path.join(os.getcwd(), "test_gdal_merge.tif")
+        empty = os.path.join(os.getcwd(), "empty.tif")
+
         ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
-
-        img_read, driver = ImageIO.tiff_to_array(path, array_only=False)
-        center = (653095.355, 5071879.228)
-        lat_lon_expected = (4.9694934619557145, 45.78349724618419, 0.0)
-        lat_lon_calc = ImageIO.transform_point(center, driver, new_epsg=4326)
-        self.assertEqual(lat_lon_expected, lat_lon_calc)
+        ImageIO.gdal_merge(path, empty, init="0", createonly=True, q=True)
+        img_read, driver = ImageIO.tiff_to_array(empty, array_only=False)
+        np.testing.assert_almost_equal(img_read, 0)
         FileSystem.remove_file(path)
-        # Check if file removed
+        FileSystem.remove_file(empty)
         self.assertFalse(os.path.exists(path))
+        self.assertFalse(os.path.exists(empty))
+
+    def test_gdal_buildvrt(self):
+        from Common import FileSystem
+        img = np.ones((self.height, self.width), np.int16)
+        path = os.path.join(os.getcwd(), "test_gdal_buildvrt.tif")
+        vrt = os.path.join(os.getcwd(), "test_vrt.vrt")
+
+        ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
+        self.assertTrue(os.path.exists(path))
+        ImageIO.gdal_buildvrt(vrt, path, q=True)
+        img_read, driver = ImageIO.tiff_to_array(vrt, array_only=False)
+        np.testing.assert_almost_equal(img_read, img)
+        FileSystem.remove_file(path)
+        FileSystem.remove_file(vrt)
+
+    def test_gdal_translate(self):
+        from Common import FileSystem
+        img = np.ones((self.height, self.width), np.int16)
+        path = os.path.join(os.getcwd(), "test_gdal_translate.tif")
+        scaled = os.path.join(os.getcwd(), "scaled.tif")
+        out_resolution = (20, -20)
+        ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
+        self.assertTrue(os.path.exists(path))
+        ImageIO.gdal_translate(scaled, path, tr=" ".join(str(e) for e in out_resolution), scale="0 1 0 255", q=True)
+        img_read, driver = ImageIO.tiff_to_array(scaled, array_only=False)
+        self.assertEqual(ImageIO.get_resolution(driver), out_resolution)
+        np.testing.assert_almost_equal(img_read, 255)
+        FileSystem.remove_file(path)
+        FileSystem.remove_file(scaled)
+
 
 if __name__ == '__main__':
     unittest.main()
