@@ -142,13 +142,18 @@ def gdal_buildvrt(vrtpath, *inputs, **options):
     :param inputs: The list of inputs + other options if needed.
     :return: Builds vrt at the given path.
     """
+    import os
     from Common import FileSystem
+    if os.path.exists(vrtpath):
+        FileSystem.remove_file(vrtpath)
     file_list = [vrtpath]
     options_list = []
     [options_list.extend(["-" + k, v])
      if type(v) is not bool else
      options_list.extend(["-" + k])
      for k, v in options.items()]
+    # Append overwrite by default in order to avoid writing errors:
+    options_list += ["-overwrite"]
     return FileSystem.run_external_app("gdalbuildvrt", file_list + list(inputs) + options_list)
 
 
@@ -160,8 +165,10 @@ def gdal_merge(dst, src, **options):
     :param options: Optional arguments such as 'init' or 'createonly'
     :return: A merged raster is written to the destination filename
     """
-
+    import os
     from Common import FileSystem
+    if os.path.exists(dst):
+        FileSystem.remove_file(dst)
     file_list = ["-o", dst, src]
     options_list = []
     [options_list.extend(["-" + k, v])
@@ -179,7 +186,10 @@ def gdal_translate(dst, src, **options):
     :param options: Optional arguments such as 'scale' or 'projwin'
     :return: A raster is written to the destination filename
     """
+    import os
     from Common import FileSystem
+    if os.path.exists(dst):
+        FileSystem.remove_file(dst)
     file_list = [dst, src]
     options_list = []
     [options_list.extend(["-" + k, v])
@@ -197,9 +207,12 @@ def gdal_warp(dst, src, **options):
     :param options: Optional arguments such as 't_srs' or 'crop_to_cutline'
     :return: A raster is written to the destination filename
     """
-
+    import os
     from Common import FileSystem
-    file_list = [dst, src]
+    if os.path.exists(dst):
+        FileSystem.remove_file(dst)
+
+    file_list = [src, dst]
     options_list = []
     [options_list.extend(["-" + k, v])
      if type(v) is not bool else
