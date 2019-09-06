@@ -203,12 +203,17 @@ def download_file(url, filepath, log_level=logging.DEBUG):
     :param log_level: The log level for the messages displayed.
     :return:
     """
+    import tempfile
+    import shutil
+    tmp_file = tempfile.mktemp()
     args = ["--retry-connrefused", "--waitretry=1",
             "--read-timeout=20", "--timeout=15",
-            "-O", filepath, url]
+            "-O", tmp_file, url]
     if log_level != logging.DEBUG:
         args.append("-nv")
-    return run_external_app("wget", args, log_level=log_level)
+    ret_code = run_external_app("wget", args, log_level=log_level)
+    shutil.move(tmp_file, filepath)
+    return ret_code
 
 
 def unzip(archive, dest):
