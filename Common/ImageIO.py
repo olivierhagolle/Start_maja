@@ -144,14 +144,12 @@ def gdal_buildvrt(vrtpath, *inputs, **options):
     """
     from Common import FileSystem
     file_list = [vrtpath]
-    for inp in inputs:
-        file_list.append(inp)
     options_list = []
     [options_list.extend(["-" + k, v])
      if type(v) is not bool else
      options_list.extend(["-" + k])
      for k, v in options.items()]
-    return FileSystem.run_external_app("gdalbuildvrt", file_list + options_list)
+    return FileSystem.run_external_app("gdalbuildvrt", file_list + list(inputs) + options_list)
 
 
 def gdal_merge(dst, src, **options):
@@ -181,7 +179,6 @@ def gdal_translate(dst, src, **options):
     :param options: Optional arguments such as 'scale' or 'projwin'
     :return: A raster is written to the destination filename
     """
-
     from Common import FileSystem
     file_list = [dst, src]
     options_list = []
@@ -189,7 +186,7 @@ def gdal_translate(dst, src, **options):
      if type(v) is not bool else
      options_list.extend(["-" + k])
      for k, v in options.items()]
-    return FileSystem.run_external_app("gdal_translate", file_list + options_list)
+    return FileSystem.run_external_app("gdal_translate", options_list + file_list)
 
 
 def gdal_warp(dst, src, **options):
@@ -210,4 +207,4 @@ def gdal_warp(dst, src, **options):
      for k, v in options.items()]
     # Append overwrite by default in order to avoid writing errors:
     options_list += ["-overwrite"]
-    return FileSystem.run_external_app("gdalwarp", file_list + options_list)
+    return FileSystem.run_external_app("gdalwarp", options_list + file_list)
