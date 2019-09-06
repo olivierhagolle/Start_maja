@@ -44,6 +44,12 @@ class Site:
         return " ".join([str(self.ul[1]), str(self.ul[0]), str(self.lr[1]), str(self.lr[0])])
 
     @property
+    def te_str(self):
+        x_val = list(sorted([self.lr[1], self.ul[1]]))
+        y_val = list(sorted([self.lr[0], self.ul[0]]))
+        return " ".join([str(x_val[0]), str(y_val[0]), str(x_val[1]), str(y_val[1])])
+
+    @property
     def epsg_str(self):
         return "EPSG:" + str(self.epsg)
 
@@ -176,14 +182,17 @@ class MNT(object):
         # Combine VRT of all gsw files:
         vrt_path = os.path.join(self.wdir, "occurrence.vrt")
         water_mask = os.path.join(self.wdir, "water_mask.tif")
-        ImageIO.gdal_buildvrt(vrt_path, gsw_files)
+        ImageIO.gdal_buildvrt(vrt_path, *gsw_files,
+                              q=True)
         # Overlay occurrence image with same extent as the given site.
         # Should the occurrence files not be complete, this sets all areas not covered by the occurrence to 0.
         ImageIO.gdal_warp(vrt_path, water_mask,
-                          te=self.site.projwin,
+                          te=self.site.te_str,
+                          te_srs=self.site.epsg_str,
                           t_srs=self.site.epsg_str,
                           tr=self.site.tr_str,
-                          dstnodata="0")
+                          dstnodata="0",
+                          q=True)
         # Threshold the final image and write to destination:
         image, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
         image_bin = image > threshold
