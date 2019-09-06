@@ -59,7 +59,6 @@ def write_geotiff(img, dst, projection, coordinates, dtype=None):
         dtype = gdal_array.NumericTypeCodeToGDALTypeCode(np.uint8)
     if not dtype:
         dtype = gdal_array.NumericTypeCodeToGDALTypeCode(img.dtype)
-    print(dtype)
     dataset = driver.Create(dst, img.shape[1], img.shape[0], img.shape[2], dtype)
     if not dataset:
         raise OSError("GDAL Could not create file {0}".format(dst))
@@ -146,7 +145,7 @@ def gdal_buildvrt(vrtpath, *inputs, **options):
     from Common import FileSystem
     file_list = [vrtpath]
     for inp in inputs:
-        file_list.append(inp[0])
+        file_list.append(inp)
     options_list = []
     [options_list.extend(["-" + k, v])
      if type(v) is not bool else
