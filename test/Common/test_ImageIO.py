@@ -165,7 +165,7 @@ class TestFileIO(unittest.TestCase):
         path = os.path.join(os.getcwd(), "test_gdal_buildvrt.tif")
         vrt = os.path.join(os.getcwd(), "test_vrt.vrt")
 
-        ImageIO.write_geotiff(path, img, self.projection, self.coordinates)
+        ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
         ImageIO.gdal_buildvrt(vrt, path, q=True)
         img_read, driver = ImageIO.tiff_to_array(vrt, array_only=False)
@@ -197,7 +197,7 @@ class TestFileIO(unittest.TestCase):
         scaled = os.path.join(os.getcwd(), "res_changed.tif")
         ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
-        ImageIO.gdal_warp(scaled, path,
+        ImageIO.gdal_warp(path, scaled,
                           tr=" ".join(str(e) for e in out_resolution),
                           r="max", q=True)
         img_read, driver = ImageIO.tiff_to_array(scaled, array_only=False)
