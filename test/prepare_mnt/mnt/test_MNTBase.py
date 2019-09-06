@@ -89,14 +89,22 @@ class TestMNTBase(unittest.TestCase):
             self.assertFalse(os.path.isfile(fn))
 
     def test_get_water_data(self):
+        """
+        Create a dummy gsw file in EPSG 4326 with the upper around 85% ==0 and the rest ==1.
+        Then, create an EPSG 32631 tile which is completely within this gsw file and right on the border of 0 vs. 1's
+        Then, test whether the ROI is correctly extracted and thresholded. Due to second EPSG being slightly warped,
+        the border between the two is not entirely straight, leaving thus a gap between where the border gradually
+        ascends.
+        :return:
+        """
         import numpy as np
         from Common import ImageIO, FileSystem
         width, height = 100, 100
         water_input = MNTBase.Site("World", 4326,
                                    px=width,
                                    py=height,
-                                   ul=(50, -10),
-                                   lr=(50, -10),
+                                   ul=(45, 0),
+                                   lr=(50, -5),  # FYI This value is not used here.
                                    res_x=.5,
                                    res_y=-.5)
         site = MNTBase.Site("T31TCJ", 32631,
@@ -107,7 +115,7 @@ class TestMNTBase(unittest.TestCase):
                             res_x=400,
                             res_y=-400)
         img = np.ones((height, width), np.int16) * 150
-        img[:99, :99] = 0
+        img[:85, :] = 0
         path = os.path.join(os.getcwd(), "test_get_water_data.tif")
         water_mask = os.path.join(os.getcwd(), "water_mask.tif")
         dem_dir = os.path.join(os.getcwd(), "dummy_dir")
@@ -118,13 +126,53 @@ class TestMNTBase(unittest.TestCase):
         mnt.get_water_data(water_mask, [path])
         self.assertTrue(os.path.exists(water_mask))
         img_read, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
-        np.testing.assert_almost_equal(img_read[:, :170], 0)
-        np.testing.assert_almost_equal(img_read[0, 190:], 1)
-
-        # TODO Finish this!
+        # Note the the part of the image which is not covered by the unittest. This is where the border is ascending:
+        np.testing.assert_almost_equal(img_read[:160, :], 0)
+        np.testing.assert_almost_equal(img_read[170:, :], 1)
         FileSystem.remove_file(path)
         FileSystem.remove_file(water_mask)
         FileSystem.remove_directory(dem_dir)
+
+    def test_get_water_data_void(self):
+        """
+        Unlike the water_input file above, this one is not at all intersecting with the desired ROI.
+        Thus the test is to check whether the image still contains at least 0's everywhere.
+        :return:
+        """
+        import numpy as np
+        from Common import ImageIO, FileSystem
+        width, height = 10, 10
+        water_input = MNTBase.Site("World", 4326,
+                                   px=width,
+                                   py=height,
+                                   ul=(45, 0),
+                                   lr=(50, -5),  # FYI This value is not used here.
+                                   res_x=.5,
+                                   res_y=-.5)
+        site = MNTBase.Site("T31TCJ", 32631,
+                            px=400,
+                            py=500,
+                            ul=(300000.000, 4900020.000),
+                            lr=(409800.000, 4790220.000),
+                            res_x=400,
+                            res_y=-400)
+        img = np.ones((height, width), np.int16) * 150
+        img[:85, :] = 0
+        path = os.path.join(os.getcwd(), "test_get_water_data_void.tif")
+        water_mask = os.path.join(os.getcwd(), "water_mask.tif")
+        dem_dir = os.path.join(os.getcwd(), "dummy_dir")
+        ImageIO.write_geotiff_existing(img, path, water_input.to_driver(water_mask))
+        self.assertTrue(os.path.exists(path))
+
+        mnt = MNTBase.MNT(site, dem_dir)
+        mnt.get_water_data(water_mask, [path])
+        self.assertTrue(os.path.exists(water_mask))
+        img_read, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
+        np.testing.assert_almost_equal(img_read, 0)
+        FileSystem.remove_file(path)
+        FileSystem.remove_file(water_mask)
+        FileSystem.remove_directory(dem_dir)
+
 
 if __name__ == '__main__':
     unittest.main()
