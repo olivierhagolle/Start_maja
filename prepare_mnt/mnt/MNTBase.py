@@ -150,9 +150,9 @@ class MNT(object):
         return gsw_granules
 
     @staticmethod
-    def download_gsw(codes, dst):
+    def get_raw_water_data(codes, dst):
         """
-        Download the given gsw codes
+        Find the given gsw files or download them if not existing.
         :param codes: The gsw codes of format 'XX(E/W)_YY(N/S)'
         :param dst: The destination folder
         :return: The list of filenames downloaded.
@@ -162,17 +162,19 @@ class MNT(object):
         import logging
         filenames = []
         for code in codes:
-            # Download files one by one:
             current_url = surface_water_url % code
             filename = os.path.basename(current_url)
-            filenames.append(filename)
             output_path = os.path.join(dst, filename)
-            FileSystem.download_file(current_url, output_path, log_level=logging.INFO)
+            if not os.path.isfile(output_path):
+                # Download file:
+                FileSystem.download_file(current_url, output_path, log_level=logging.INFO)
+            filenames.append(output_path)
         return filenames
 
-    def get_water_data(self, dst, gsw_files, threshold=100):
+    def prepare_water_data(self, dst, gsw_files, threshold=100):
         """
         Prepare the water mask constituing of a set of gsw files.
+        :param dst: The destination filepath
         :param gsw_files: The list of gsw filenames
         :param threshold: The threshold that should be applied.
         :return:

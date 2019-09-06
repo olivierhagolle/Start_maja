@@ -80,13 +80,15 @@ class TestMNTBase(unittest.TestCase):
     def atest_gsw_download(self):
         from Common import FileSystem
         gsw_codes = ['10E_50N']
-        fnames = MNTBase.MNT.download_gsw(gsw_codes, os.getcwd())
+        gsw_dir = os.path.join(os.getcwd(), "gsw_dir")
+        FileSystem.create_directory(gsw_dir)
+        fnames = MNTBase.MNT.get_raw_water_data(gsw_codes, gsw_dir)
         self.assertEqual(len(fnames), 1)
         for fn in fnames:
             self.assertTrue(os.path.exists(fn))
             self.assertEqual(os.path.basename(fn), "occurrence_10E_50N_v1_1.tif")
-            FileSystem.remove_file(fn)
-            self.assertFalse(os.path.isfile(fn))
+        FileSystem.remove_directory(gsw_dir)
+        self.assertFalse(os.path.exists(gsw_dir))
 
     def test_get_water_data(self):
         """
@@ -107,13 +109,14 @@ class TestMNTBase(unittest.TestCase):
                                    lr=(50, -5),  # FYI This value is not used here.
                                    res_x=.5,
                                    res_y=-.5)
+        resx, resy = 400, -400
         site = MNTBase.Site("T31TCJ", 32631,
                             px=400,
                             py=500,
                             ul=(300000.000, 4900020.000),
                             lr=(409800.000, 4790220.000),
-                            res_x=400,
-                            res_y=-400)
+                            res_x=resx,
+                            res_y=resy)
         img = np.ones((height, width), np.int16) * 150
         img[:85, :] = 0
         path = os.path.join(os.getcwd(), "test_get_water_data.tif")
@@ -123,10 +126,11 @@ class TestMNTBase(unittest.TestCase):
         self.assertTrue(os.path.exists(path))
 
         mnt = MNTBase.MNT(site, dem_dir)
-        mnt.get_water_data(water_mask, [path])
+        mnt.prepare_water_data(water_mask, [path])
         self.assertTrue(os.path.exists(water_mask))
         img_read, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
         # Note the the part of the image which is not covered by the unittest. This is where the border is ascending:
+        self.assertEqual(ImageIO.get_resolution(drv), (resx, resy))
         np.testing.assert_almost_equal(img_read[:160, :], 0)
         np.testing.assert_almost_equal(img_read[170:, :], 1)
         FileSystem.remove_file(path)
@@ -149,13 +153,14 @@ class TestMNTBase(unittest.TestCase):
                                    lr=(50, -5),  # FYI This value is not used here.
                                    res_x=.5,
                                    res_y=-.5)
+        resx, resy = 400, -400
         site = MNTBase.Site("T31TCJ", 32631,
                             px=400,
                             py=500,
                             ul=(300000.000, 4900020.000),
                             lr=(409800.000, 4790220.000),
-                            res_x=400,
-                            res_y=-400)
+                            res_x=resx,
+                            res_y=resy)
         img = np.ones((height, width), np.int16) * 150
         img[:85, :] = 0
         path = os.path.join(os.getcwd(), "test_get_water_data_void.tif")
@@ -165,9 +170,10 @@ class TestMNTBase(unittest.TestCase):
         self.assertTrue(os.path.exists(path))
 
         mnt = MNTBase.MNT(site, dem_dir)
-        mnt.get_water_data(water_mask, [path])
+        mnt.prepare_water_data(water_mask, [path])
         self.assertTrue(os.path.exists(water_mask))
         img_read, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
+        self.assertEqual(ImageIO.get_resolution(drv), (resx, resy))
         np.testing.assert_almost_equal(img_read, 0)
         FileSystem.remove_file(path)
         FileSystem.remove_file(water_mask)
