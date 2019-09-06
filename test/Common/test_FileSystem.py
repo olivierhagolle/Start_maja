@@ -182,9 +182,10 @@ class TestFileSystem(unittest.TestCase):
         self.assertTrue(os.path.exists(origin))
 
     def test_run_app(self):
+        import logging
         cmd = "echo"
         args = ["Hello"]
-        self.assertEqual(FileSystem.run_external_app(cmd, args), 0)
+        self.assertEqual(FileSystem.run_external_app(cmd, args, log_level=logging.INFO), 0)
 
     def test_run_nonexisting_app(self):
         import subprocess
