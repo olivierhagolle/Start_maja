@@ -50,14 +50,12 @@ class VenusNatif(MajaProduct):
         return False
 
     def get_site(self):
-        from Common import ImageIO
         from prepare_mnt.mnt.MNTBase import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:
             raise e
-        driver = ImageIO.open_tiff(band_bx)
-        return Site.from_driver(self.get_tile(), driver)
+        return Site.from_raster(self.get_tile(), band_bx)
 
 
 class VenusMuscate(MajaProduct):
@@ -97,7 +95,7 @@ class VenusMuscate(MajaProduct):
         return datetime.strptime(str_date_no_ms, "%Y%m%d-%H%M%S")
 
     def is_valid(self):
-        from Common import FileSystem
+        from Common import FileSystem, XMLTools
         if self.get_level() == "l1c" and os.path.exists(self.get_metadata_file()):
             return True
         if self.get_level() == "l2a":
@@ -106,18 +104,16 @@ class VenusMuscate(MajaProduct):
             except ValueError:
                 return False
             validity_xpath = "./Processing_Flags_And_Modes_List/Processing_Flags_And_Modes/Value"
-            processing_flags = FileSystem.get_xpath(jpi, validity_xpath)
+            processing_flags = XMLTools.get_xpath(jpi, validity_xpath)
             validity_flags = [flg.text for flg in processing_flags]
             if "L2VALD" in validity_flags:
                 return True
         return False
 
     def get_site(self):
-        from Common import ImageIO
         from prepare_mnt.mnt.MNTBase import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:
             raise e
-        driver = ImageIO.open_tiff(band_bx)
-        return Site.from_driver(self.get_tile(), driver)
+        return Site.from_raster(self.get_tile(), band_bx)

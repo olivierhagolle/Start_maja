@@ -48,14 +48,12 @@ class Sentinel2Natif(MajaProduct):
         return False
 
     def get_site(self):
-        from Common import ImageIO
         from prepare_mnt.mnt.MNTBase import Site
         try:
-            band_b2 = self.get_file(filename=r"*B0?2*.tif")
+            band_b2 = self.get_file(filename=r"*B0?2*.jp2")
         except IOError as e:
             raise e
-        driver = ImageIO.open_tiff(band_b2)
-        return Site.from_driver(self.get_tile(), driver)
+        return Site.from_raster(self.get_tile(), band_b2)
 
 
 class Sentinel2Muscate(MajaProduct):
@@ -93,7 +91,7 @@ class Sentinel2Muscate(MajaProduct):
         return datetime.strptime(str_date_no_ms, "%Y%m%d-%H%M%S")
 
     def is_valid(self):
-        from Common import FileSystem
+        from Common import FileSystem, XMLTools
         if self.get_level() == "l1c" and os.path.exists(self.get_metadata_file()):
             return True
         if self.get_level() == "l2a":
@@ -102,21 +100,19 @@ class Sentinel2Muscate(MajaProduct):
             except ValueError:
                 return False
             validity_xpath = "./Processing_Flags_And_Modes_List/Processing_Flags_And_Modes/Value"
-            processing_flags = FileSystem.get_xpath(jpi, validity_xpath)
+            processing_flags = XMLTools.get_xpath(jpi, validity_xpath)
             validity_flags = [flg.text for flg in processing_flags]
             if "L2VALD" in validity_flags:
                 return True
         return False
 
     def get_site(self):
-        from Common import ImageIO
         from prepare_mnt.mnt.MNTBase import Site
         try:
             band_b2 = self.get_file(filename=r"*B0?2*.tif")
         except IOError as e:
             raise e
-        driver = ImageIO.open_tiff(band_b2)
-        return Site.from_driver(self.get_tile(), driver)
+        return Site.from_raster(self.get_tile(), band_b2)
 
 
 class Sentinel2SSC(MajaProduct):
@@ -157,11 +153,9 @@ class Sentinel2SSC(MajaProduct):
         return False
 
     def get_site(self):
-        from Common import ImageIO
         from prepare_mnt.mnt.MNTBase import Site
         try:
-            band_r1 = self.get_file(filename=r"*R1*.DBL.TIF")
+            band_b2 = self.get_file(filename=r"*B0?2*.DBL.TIF")
         except IOError as e:
             raise e
-        driver = ImageIO.open_tiff(band_r1)
-        return Site.from_driver(self.get_tile(), driver)
+        return Site.from_raster(self.get_tile(), band_b2)

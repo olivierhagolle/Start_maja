@@ -40,7 +40,7 @@ def write_xml(root, filepath):
     :return: Writes the given xml file with proper indentation.
     """
     from xml.etree import ElementTree
-    # TODO Unittest
+    assert os.path.isdir(os.path.dirname(filepath))
     indent(root)
     tree = ElementTree.ElementTree(root)
     tree.write(filepath, encoding="UTF-8", xml_declaration=True)
