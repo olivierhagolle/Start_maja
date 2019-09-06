@@ -45,8 +45,8 @@ class Site:
 
     @property
     def te_str(self):
-        x_val = list(sorted([self.lr[1], self.ul[1]]))
-        y_val = list(sorted([self.lr[0], self.ul[0]]))
+        y_val = list(sorted([self.lr[1], self.ul[1]]))
+        x_val = list(sorted([self.lr[0], self.ul[0]]))
         return " ".join([str(x_val[0]), str(y_val[0]), str(x_val[1]), str(y_val[1])])
 
     @property
@@ -150,11 +150,11 @@ class MNT(object):
         return gsw_granules
 
     @staticmethod
-    def get_raw_water_data(codes, dst):
+    def get_raw_water_data(codes, dst_folder):
         """
         Find the given gsw files or download them if not existing.
         :param codes: The gsw codes of format 'XX(E/W)_YY(N/S)'
-        :param dst: The destination folder
+        :param dst_folder: The destination folder
         :return: The list of filenames downloaded.
         """
         import os
@@ -164,27 +164,27 @@ class MNT(object):
         for code in codes:
             current_url = surface_water_url % code
             filename = os.path.basename(current_url)
-            output_path = os.path.join(dst, filename)
+            output_path = os.path.join(dst_folder, filename)
             if not os.path.isfile(output_path):
                 # Download file:
                 FileSystem.download_file(current_url, output_path, log_level=logging.INFO)
             filenames.append(output_path)
         return filenames
 
-    def prepare_water_data(self, dst, gsw_files, threshold=100):
+    def prepare_water_data(self, dst, threshold=30.):
         """
         Prepare the water mask constituing of a set of gsw files.
         :param dst: The destination filepath
-        :param gsw_files: The list of gsw filenames
         :param threshold: The threshold that should be applied.
         :return:
         """
         import os
         from Common import ImageIO
+        occ_files = self.get_raw_water_data(self.gsw_codes, self.wdir)
         # Combine VRT of all gsw files:
         vrt_path = os.path.join(self.wdir, "occurrence.vrt")
-        water_mask = os.path.join(self.wdir, "water_mask.tif")
-        ImageIO.gdal_buildvrt(vrt_path, *gsw_files,
+        water_mask = os.path.join(self.wdir, "water_mask_comb.tif")
+        ImageIO.gdal_buildvrt(vrt_path, *occ_files,
                               q=True)
         # Overlay occurrence image with same extent as the given site.
         # Should the occurrence files not be complete, this sets all areas not covered by the occurrence to 0.
