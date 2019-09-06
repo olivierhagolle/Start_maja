@@ -278,7 +278,7 @@ class L1Generator(ProductGenerator):
                                      date_str + ".SAFE"])
         else:
             product_name = "_".join([platform_specifier,
-                                     date_str,
+                                     date_str + "-000",
                                      "L2A",
                                      self.tile,
                                      random.choice("DC"),
@@ -304,7 +304,7 @@ class L2Generator(ProductGenerator):
         platform_specifier = random.choice(self.platform_options["L2A"][self.platform])
         ms = kwargs.get("ms", random.randint(0, 999))
         version = kwargs.get("version", random.randint(0, 9))
-        date_str = self.date.strftime("%Y%m%d-%H%M%S-") + str(ms)
+        date_str = self.date.strftime("%Y%m%d-%H%M%S-") + str(ms).zfill(3)
         product_name = "_".join([platform_specifier,
                                  date_str,
                                  "L2A",
