@@ -90,7 +90,7 @@ class MNT(object):
     Base class to get the necessary mnt for a given site.
     """
 
-    def __init__(self, site, dem_dir, wdir=None):
+    def __init__(self, site, dem_dir, raw_dem, raw_gsw, wdir=None):
         import os
         import tempfile
         from osgeo import gdal
@@ -108,6 +108,12 @@ class MNT(object):
         else:
             assert os.path.isdir(wdir)
             self.wdir = wdir
+        self.raw_dem = raw_dem
+        if not os.path.exists(self.raw_dem):
+            FileSystem.create_directory(self.raw_dem)
+        self.raw_gsw = raw_gsw
+        if not os.path.exists(self.raw_gsw):
+            FileSystem.create_directory(self.raw_gsw)
 
     def get_raw_data(self):
         """
@@ -116,6 +122,18 @@ class MNT(object):
         :return:
         """
         raise NotImplementedError
+
+    def prepare_mnt(self):
+        raise NotImplementedError
+
+    @property
+    def to_maja_format(self):
+        import os
+
+        # Get water data
+        water_mask_bin = os.path.join(self.wdir, "water_mask_bin.tif")
+        self.prepare_water_data(water_mask_bin)
+        return None
 
     @staticmethod
     def get_gsw_codes(site):
@@ -153,22 +171,19 @@ class MNT(object):
                 gsw_granules.append("%s%s_%s%s" % (int(math.fabs(x)), code_lon, int(math.fabs(y)), code_lat))
         return gsw_granules
 
-    @staticmethod
-    def get_raw_water_data(codes, dst_folder):
+    def get_raw_water_data(self):
         """
         Find the given gsw files or download them if not existing.
-        :param codes: The gsw codes of format 'XX(E/W)_YY(N/S)'
-        :param dst_folder: The destination folder
         :return: The list of filenames downloaded.
         """
         import os
         from Common import FileSystem
         import logging
         filenames = []
-        for code in codes:
+        for code in self.gsw_codes:
             current_url = surface_water_url % code
             filename = os.path.basename(current_url)
-            output_path = os.path.join(dst_folder, filename)
+            output_path = os.path.join(self.raw_gsw, filename)
             if not os.path.isfile(output_path):
                 # Download file:
                 FileSystem.download_file(current_url, output_path, log_level=logging.INFO)
@@ -184,7 +199,7 @@ class MNT(object):
         """
         import os
         from Common import ImageIO
-        occ_files = self.get_raw_water_data(self.gsw_codes, self.wdir)
+        occ_files = self.get_raw_water_data()
         # Fusion of all gsw files:
         fusion_path = os.path.join(self.wdir, "occurrence.tiff")
         water_mask = os.path.join(self.wdir, "water_mask_comb.tif")
@@ -201,9 +216,6 @@ class MNT(object):
         image, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
         image_bin = image > threshold
         ImageIO.write_geotiff_existing(image_bin, dst, drv)
-
-    def prepare_mnt(self):
-        raise NotImplementedError
 
 
 if __name__ == "__main__":

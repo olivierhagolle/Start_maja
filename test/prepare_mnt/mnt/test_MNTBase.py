@@ -79,10 +79,16 @@ class TestMNTBase(unittest.TestCase):
 
     def atest_gsw_download(self):
         from Common import FileSystem
-        gsw_codes = ['10E_50N']
-        gsw_dir = os.path.join(os.getcwd(), "gsw_dir")
-        FileSystem.create_directory(gsw_dir)
-        fnames = MNTBase.MNT.get_raw_water_data(gsw_codes, gsw_dir)
+        site = MNTBase.Site("Ecuador", 32619,
+                            px=400,
+                            py=500,
+                            ul=(-250000.000, 250000.000),
+                            lr=(400000.000, -120000.000),
+                            res_x=10,
+                            res_y=-10)
+        gsw_dir = os.path.join(os.getcwd(), "test_gsw_download")
+        m = MNTBase.MNT(site, gsw_dir, raw_gsw=gsw_dir, raw_dem=gsw_dir)
+        fnames = m.get_raw_water_data()
         self.assertEqual(len(fnames), 1)
         for fn in fnames:
             self.assertTrue(os.path.exists(fn))
@@ -90,93 +96,129 @@ class TestMNTBase(unittest.TestCase):
         FileSystem.remove_directory(gsw_dir)
         self.assertFalse(os.path.exists(gsw_dir))
 
-    def test_get_water_data(self):
+    def test_get_water_data_tls_s2(self):
         """
-        Create a dummy gsw file in EPSG 4326 with the upper around 85% ==0 and the rest ==1.
-        Then, create an EPSG 32631 tile which is completely within this gsw file and right on the border of 0 vs. 1's
-        Then, test whether the ROI is correctly extracted and thresholded. Due to second EPSG being slightly warped,
-        the border between the two is not entirely straight, leaving thus a gap between where the border gradually
-        ascends.
-        :return:
+        Download the given gsw file and project it to a 10km x 10km resolution (11x11 image)
         """
         import numpy as np
         from Common import ImageIO, FileSystem
-        width, height = 100, 100
-        water_input = MNTBase.Site("World", 4326,
-                                   px=width,
-                                   py=height,
-                                   ul=(45, 0),
-                                   lr=(50, -5),  # FYI This value is not used here.
-                                   res_x=.5,
-                                   res_y=-.5)
-        resx, resy = 400, -400
+        resx, resy = 10000, -10000
+        px, py = 11, 11
         site = MNTBase.Site("T31TCJ", 32631,
-                            px=400,
-                            py=500,
+                            px=px,
+                            py=py,
                             ul=(300000.000, 4900020.000),
                             lr=(409800.000, 4790220.000),
                             res_x=resx,
                             res_y=resy)
-        img = np.ones((height, width), np.int16) * 150
-        img[:85, :] = 0
-        path = os.path.join(os.getcwd(), "test_get_water_data.tif")
-        water_mask = os.path.join(os.getcwd(), "water_mask.tif")
-        dem_dir = os.path.join(os.getcwd(), "dummy_dir")
-        ImageIO.write_geotiff_existing(img, path, water_input.to_driver(water_mask))
-        self.assertTrue(os.path.exists(path))
-
-        mnt = MNTBase.MNT(site, dem_dir)
-        mnt.prepare_water_data(water_mask, [path])
+        dem_dir = os.path.join(os.getcwd(), "test_get_water_data_tls_s2")
+        water_mask = os.path.join(dem_dir, "water_mask.tif")
+        mnt = MNTBase.MNT(site, dem_dir, raw_dem=dem_dir, raw_gsw=dem_dir)
+        self.assertTrue(os.path.exists(dem_dir))
+        mnt.prepare_water_data(water_mask)
         self.assertTrue(os.path.exists(water_mask))
         img_read, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
-        # Note the the part of the image which is not covered by the unittest. This is where the border is ascending:
+        img_expected = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        # Note the the part of the image which is not covered by the unittest.
+        # This is where the border is ascending:
         self.assertEqual(ImageIO.get_resolution(drv), (resx, resy))
-        np.testing.assert_almost_equal(img_read[:160, :], 0)
-        np.testing.assert_almost_equal(img_read[170:, :], 1)
-        FileSystem.remove_file(path)
+        self.assertEqual(ImageIO.get_epsg(drv), 32631)
+        self.assertEqual(img_read.shape, (py, py))
+        np.testing.assert_almost_equal(img_expected, img_read)
         FileSystem.remove_file(water_mask)
         FileSystem.remove_directory(dem_dir)
 
-    def test_get_water_data_void(self):
+    def test_get_water_data_spain_s2(self):
         """
-        Unlike the water_input file above, this one is not at all intersecting with the desired ROI.
-        Thus the test is to check whether the image still contains at least 0's everywhere.
-        :return:
+        Download the given gsw file and project it to a 10km x 10km resolution (11x11 image)
         """
         import numpy as np
         from Common import ImageIO, FileSystem
-        width, height = 10, 10
-        water_input = MNTBase.Site("World", 4326,
-                                   px=width,
-                                   py=height,
-                                   ul=(45, 0),
-                                   lr=(50, -5),  # FYI This value is not used here.
-                                   res_x=.5,
-                                   res_y=-.5)
-        resx, resy = 400, -400
-        site = MNTBase.Site("T31TCJ", 32631,
-                            px=400,
-                            py=500,
-                            ul=(300000.000, 4900020.000),
-                            lr=(409800.000, 4790220.000),
+        resx, resy = 10000, -10000
+        px, py = 11, 11
+        site = MNTBase.Site("T30TYK", 32630,
+                            px=px,
+                            py=py,
+                            ul=(699960.000, 4500000.000),
+                            lr=(809760.000, 4390200.000),
                             res_x=resx,
                             res_y=resy)
-        img = np.ones((height, width), np.int16) * 150
-        img[:85, :] = 0
-        path = os.path.join(os.getcwd(), "test_get_water_data_void.tif")
-        water_mask = os.path.join(os.getcwd(), "water_mask.tif")
-        dem_dir = os.path.join(os.getcwd(), "dummy_dir")
-        ImageIO.write_geotiff_existing(img, path, water_input.to_driver(water_mask))
-        self.assertTrue(os.path.exists(path))
-
-        mnt = MNTBase.MNT(site, dem_dir)
-        mnt.prepare_water_data(water_mask, [path])
+        dem_dir = os.path.join(os.getcwd(), "test_get_water_data_spain_s2")
+        water_mask = os.path.join(dem_dir, "water_mask.tif")
+        mnt = MNTBase.MNT(site, dem_dir, raw_dem=dem_dir, raw_gsw=dem_dir)
+        self.assertTrue(os.path.exists(dem_dir))
+        mnt.prepare_water_data(water_mask)
         self.assertTrue(os.path.exists(water_mask))
         img_read, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
+        img_expected = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
+                        , [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+                        , [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+                        , [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+                        , [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+                        , [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1]
+                        , [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1]]
+
+        # Note the the part of the image which is not covered by the unittest.
+        # This is where the border is ascending:
         self.assertEqual(ImageIO.get_resolution(drv), (resx, resy))
-        np.testing.assert_almost_equal(img_read, 0)
-        FileSystem.remove_file(path)
-        FileSystem.remove_file(water_mask)
+        self.assertEqual(ImageIO.get_epsg(drv), 32630)
+        self.assertEqual(img_read.shape, (py, px))
+        np.testing.assert_almost_equal(img_expected, img_read)
+        FileSystem.remove_directory(dem_dir)
+
+    def test_get_water_data_maccanw2_vns(self):
+        import numpy as np
+        from Common import ImageIO, FileSystem
+        resx, resy = 5000, -5000
+        px, py = 11, 14
+        site = MNTBase.Site("MACCANW2", 32633,
+                            px=px,
+                            py=py,
+                            ul=(246439.500, 4672656.500),
+                            lr=(299769.500, 4604231.500),
+                            res_x=resx,
+                            res_y=resy)
+        dem_dir = os.path.join(os.getcwd(), "test_get_water_data_maccanw2_vns")
+        water_mask = os.path.join(dem_dir, "water_mask.tif")
+        mnt = MNTBase.MNT(site, dem_dir, raw_dem=dem_dir, raw_gsw=dem_dir)
+        self.assertTrue(os.path.exists(dem_dir))
+        mnt.prepare_water_data(water_mask)
+        self.assertTrue(os.path.exists(water_mask))
+        img_read, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
+        img_expected = [[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+                        , [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0]
+                        , [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+                        , [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+                        , [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+                        , [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]
+                        , [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0]
+                        , [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
+                        , [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0]
+                        , [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0]
+                        , [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0]]
+        # Note the the part of the image which is not covered by the unittest.
+        # This is where the border is ascending:
+        self.assertEqual(ImageIO.get_resolution(drv), (resx, resy))
+        self.assertEqual(ImageIO.get_epsg(drv), 32633)
+        self.assertEqual(img_read.shape, (py, px))
+        np.testing.assert_almost_equal(img_expected, img_read)
         FileSystem.remove_directory(dem_dir)
 
 

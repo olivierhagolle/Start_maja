@@ -20,8 +20,8 @@ class SRTM(MNT):
     Base class to get the necessary mnt for a given site.
     """
 
-    def __init__(self, site, dem_dir, wdir=None):
-        super(SRTM, self).__init__(site, dem_dir, wdir)
+    def __init__(self, site, dem_dir, raw_dem, raw_gsw, wdir=None):
+        super(SRTM, self).__init__(site, dem_dir, raw_dem, raw_gsw, wdir)
         if (self.site.ul_latlon[0]) > 60 or (self.site.lr_latlon[0] > 60):
             raise ValueError("Latitude over +-60deg - No SRTM data available!")
         self.srtm_codes = self.get_srtm_codes(self.site)
@@ -39,7 +39,7 @@ class SRTM(MNT):
         for code in self.srtm_codes:
             current_url = srtm_url % code
             filename = os.path.basename(current_url)
-            output_path = os.path.join(self.wdir, filename)
+            output_path = os.path.join(self.raw_dem, filename)
             if not os.path.isfile(output_path):
                 # Download file:
                 FileSystem.download_file(current_url, output_path, log_level=logging.DEBUG)
@@ -73,10 +73,7 @@ class SRTM(MNT):
                           t_srs=self.site.epsg_str,
                           tr=self.site.tr_str,
                           dstnodata="0")
-        # Get water data
-        water_mask_bin = os.path.join(self.wdir, "water_mask_bin.tif")
-        self.prepare_water_data(water_mask_bin)
-        return srtm_full_res, water_mask_bin
+        return srtm_full_res
 
     @staticmethod
     def get_srtm_codes(site):
