@@ -93,7 +93,11 @@ class MNT(object):
     def __init__(self, site, dem_dir, wdir=None):
         import os
         import tempfile
+        from osgeo import gdal
         from Common import FileSystem
+        if not int(gdal.VersionInfo()) >= 2000000:
+            raise ImportError("MNT creation needs Gdal >2.0!")
+
         self.site = site
         self.dem_dir = dem_dir
         if not os.path.isdir(self.dem_dir):
