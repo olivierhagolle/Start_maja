@@ -181,20 +181,18 @@ class MNT(object):
         import os
         from Common import ImageIO
         occ_files = self.get_raw_water_data(self.gsw_codes, self.wdir)
-        # Combine VRT of all gsw files:
-        vrt_path = os.path.join(self.wdir, "occurrence.vrt")
+        # Fusion of all gsw files:
+        fusion_path = os.path.join(self.wdir, "occurrence.tiff")
         water_mask = os.path.join(self.wdir, "water_mask_comb.tif")
-        ImageIO.gdal_buildvrt(vrt_path, *occ_files,
-                              q=True)
+        ImageIO.gdal_merge(fusion_path, *occ_files)
         # Overlay occurrence image with same extent as the given site.
         # Should the occurrence files not be complete, this sets all areas not covered by the occurrence to 0.
-        ImageIO.gdal_warp(vrt_path, water_mask,
+        ImageIO.gdal_warp(water_mask, fusion_path,
+                          r="near",
                           te=self.site.te_str,
-                          te_srs=self.site.epsg_str,
                           t_srs=self.site.epsg_str,
                           tr=self.site.tr_str,
-                          dstnodata="0",
-                          q=True)
+                          dstnodata="0")
         # Threshold the final image and write to destination:
         image, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
         image_bin = image > threshold

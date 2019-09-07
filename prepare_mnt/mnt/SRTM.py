@@ -62,19 +62,17 @@ class SRTM(MNT):
             FileSystem.unzip(arch, self.wdir)
             fn_unzipped = FileSystem.find_single(pattern=basename + ".tif", path=self.wdir)
             unzipped.append(fn_unzipped)
-        # Build vrt
-        vrt_path = os.path.join(self.wdir, "srtm_combined.vrt")
-        ImageIO.gdal_buildvrt(vrt_path, *unzipped,
-                              q=True)
+        # Fusion of all SRTM files
+        fusion_path = os.path.join(self.wdir, "srtm_combined.tiff")
+        ImageIO.gdal_merge(fusion_path, *unzipped)
         # Combine to image of fixed extent
         srtm_full_res = os.path.join(self.wdir, "srtm_%sm.tif" % self.site.res_x)
-        ImageIO.gdal_warp(srtm_full_res, vrt_path,
+        ImageIO.gdal_warp(srtm_full_res, fusion_path,
+                          r="cubic",
                           te=self.site.te_str,
-                          te_srs=self.site.epsg_str,
                           t_srs=self.site.epsg_str,
                           tr=self.site.tr_str,
-                          dstnodata="0",
-                          q=True)
+                          dstnodata="0")
         # Get water data
         water_mask_bin = os.path.join(self.wdir, "water_mask_bin.tif")
         self.prepare_water_data(water_mask_bin)
