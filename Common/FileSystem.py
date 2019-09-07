@@ -178,14 +178,19 @@ def run_external_app(name, args, log_level=logging.DEBUG):
     import subprocess
     full_args = [name] + args
     cmd = " ".join(str(a) for a in full_args)
+    print(cmd)
+    # Bug in conda: Windows path prepended in linux versions
+    env = os.environ.copy()
+    if os.name != "nt" and ";" in env["PATH"]:
+        env["PATH"] = env["PATH"].split(";")[1]
     log.log(log_level, "Executing cmd: " + cmd)
     start = timer()
     try:
-        with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
+        with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env) as proc:
             return_code = __get_return_code(proc, log_level=log_level)
     except AttributeError:
         # For Python 2.7, popen has no context manager:
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
         return_code = __get_return_code(proc, log_level=log_level)
     if return_code:
         raise subprocess.CalledProcessError(return_code, cmd)
