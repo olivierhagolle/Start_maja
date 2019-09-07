@@ -157,7 +157,7 @@ def gdal_buildvrt(vrtpath, *inputs, **options):
     return FileSystem.run_external_app("gdalbuildvrt", file_list + list(inputs) + options_list)
 
 
-def gdal_merge(dst, src, **options):
+def gdal_merge(dst, *src, **options):
     """
     Merge a set of gdal rasters
     :param src: The source filename
@@ -169,7 +169,7 @@ def gdal_merge(dst, src, **options):
     from Common import FileSystem
     if os.path.exists(dst):
         FileSystem.remove_file(dst)
-    file_list = ["-o", dst, src]
+    file_list = ["-o", dst] + list(src)
     options_list = []
     [options_list.extend(["-" + k, v])
      if type(v) is not bool else
@@ -190,7 +190,7 @@ def gdal_translate(dst, src, **options):
     from Common import FileSystem
     if os.path.exists(dst):
         FileSystem.remove_file(dst)
-    file_list = [dst, src]
+    file_list = [src, dst]
     options_list = []
     [options_list.extend(["-" + k, v])
      if type(v) is not bool else
@@ -221,3 +221,32 @@ def gdal_warp(dst, src, **options):
     # Append overwrite by default in order to avoid writing errors:
     options_list += ["-overwrite"]
     return FileSystem.run_external_app("gdalwarp", options_list + file_list)
+
+
+def gdal_calc(dst, calc, *src, **options):
+    """
+    Warp a set of gdal rasters
+    :param src: The source filename
+    :param calc: The expression to calculate
+    :param dst: The destination filename
+    :param options: Optional arguments such as 't_srs' or 'crop_to_cutline'
+    :return: A raster is written to the destination filename
+    """
+    import os
+    import string
+    from Common import FileSystem
+    if os.path.exists(dst):
+        FileSystem.remove_file(dst)
+
+    file_list = ["--outfile", dst] + ["-" + letter + " " + inp
+                                      for inp, letter in zip(list(src), string.ascii_uppercase)]
+    options_list = ["--calc='%s'" % calc, "--NoDataValue=0"]
+    [options_list.extend(["-" + k, v])
+     if type(v) is not bool else
+     options_list.extend(["-" + k])
+     for k, v in options.items()]
+
+    # Append overwrite by default in order to avoid writing errors:
+    options_list += ["--overwrite"]
+    return FileSystem.run_external_app("gdal_calc.py", options_list + file_list)
+
