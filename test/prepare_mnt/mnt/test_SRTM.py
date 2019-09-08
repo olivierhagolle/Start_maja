@@ -60,7 +60,7 @@ class TestSRTM(unittest.TestCase):
         srtm_codes = SRTM.SRTM.get_srtm_codes(site)
         s.get_raw_data()
         for code in srtm_codes:
-            filepath = os.path.join(s.wdir, code + ".zip")
+            filepath = os.path.join(dem_dir, code + ".zip")
             self.assertTrue(os.path.isfile(filepath))
         FileSystem.remove_directory(dem_dir)
 

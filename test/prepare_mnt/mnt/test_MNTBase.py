@@ -133,10 +133,14 @@ class TestMNTBase(unittest.TestCase):
         gsw_dir = os.path.join(os.getcwd(), "test_gsw_download")
         m = MNTBase.MNT(site, gsw_dir, raw_gsw=gsw_dir, raw_dem=gsw_dir)
         fnames = m.get_raw_water_data()
-        self.assertEqual(len(fnames), 1)
-        for fn in fnames:
+        self.assertEqual(len(fnames), 4)
+        fnames_expected = ['occurrence_70W_0N_v1_1.tif',
+                           'occurrence_70W_10N_v1_1.tif',
+                           'occurrence_80W_0N_v1_1.tif',
+                           'occurrence_80W_10N_v1_1.tif']
+        for fn, expected in zip(fnames, fnames_expected):
             self.assertTrue(os.path.exists(fn))
-            self.assertEqual(os.path.basename(fn), "occurrence_10E_50N_v1_1.tif")
+            self.assertEqual(os.path.basename(fn), expected)
         FileSystem.remove_directory(gsw_dir)
         self.assertFalse(os.path.exists(gsw_dir))
 
