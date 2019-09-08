@@ -85,12 +85,33 @@ class Site:
         return Site(name, epsg, nx, ny, ul, lr, xres, yres)
 
 
+class DEMInfo:
+    def __init__(self, site, dem_full_res):
+        from Common import ImageIO
+        import numpy as np
+        self.epsg = site.epsg_str
+        self.ulx = site.ul[0]
+        self.uly = site.ul[1]
+        self.resx = site.res_x
+        self.resy = site.res_y
+        self.lx = site.px
+        self.ly = site.py
+        self.alt = dem_full_res
+        arr, drv = ImageIO.tiff_to_array(self.alt, array_only=False)
+        self.mean_alt = np.mean(arr)
+        self.std_dev_alt = np.std(arr)
+        self.short_description = ImageIO.get_utm_description(drv)
+        self.nodata = ImageIO.get_nodata_value(drv)
+        res_arr = ImageIO.get_resolution(drv)
+        self.dem_subsampling_ratio = str(int(float(res_arr[0]) / float(site.res_x)))
+
+
 class MNT(object):
     """
     Base class to get the necessary mnt for a given site.
     """
 
-    def __init__(self, site, dem_dir, raw_dem, raw_gsw, wdir=None):
+    def __init__(self, site, dem_dir, raw_dem, raw_gsw, wdir=None, dem_version=1):
         import os
         import tempfile
         from osgeo import gdal
@@ -113,6 +134,7 @@ class MNT(object):
         self.raw_gsw = raw_gsw
         if not os.path.exists(self.raw_gsw):
             FileSystem.create_directory(self.raw_gsw)
+        self.dem_version = dem_version
 
     def get_raw_data(self):
         """
@@ -145,42 +167,202 @@ class MNT(object):
         aspect = np.where(slope == 0, 0, aspect)
         return slope, aspect
 
-    def to_maja_format(self, platform_id, mission_field, coarse_res, other_resolutions=[]):
+    def to_maja_format(self, platform_id, mission_field, coarse_res, resolutions):
         import os
-        from Common import ImageIO
-        # Coarse res rasters:
-        coarse_res_raster_bnames = ["ALC", "ASC", "SLC"]
-        water_mask_bname = "MSK"
-        # Full resoltion ones (That might have to be written 2x for e.g. S2:
-        full_res_raster_bnames = ["ALT", "ASP", "SLP"]
-        basename = str("%s_TEST_AUX_REFDE2_%s_0001" % platform_id, self.site.nom)
+        import tempfile
+        from datetime import datetime
+        from Common import ImageIO, XMLTools, FileSystem
+        assert len(resolutions) >= 1
+        basename = str("%s_TEST_AUX_REFDE2_%s_%s" % (platform_id, self.site.nom, str(self.dem_version).zfill(4)))
         # Get water data
         water_mask_bin = os.path.join(self.wdir, "water_mask_bin.tif")
         self.prepare_water_data(water_mask_bin)
         # Get mnt data
         mnt_full_res = self.prepare_mnt()
-        dbl_dir = os.path.join(self.dem_dir, basename + ".DBL.DIR")
+        dbl_base = basename + ".DBL.DIR"
+        dbl_dir = os.path.join(self.dem_dir, dbl_base)
+        FileSystem.create_directory(dbl_dir)
         hdr = os.path.join(self.dem_dir, basename + ".HDR")
 
         # Read MNT and water mask at full resolution:
         mnt_in, drv = ImageIO.tiff_to_array(mnt_full_res, array_only=False)
         grad_y, grad_x = self.calc_gradient(mnt_in)
         slope, aspect = self.calc_slope_aspect(grad_y, grad_x)
-        for bname in coarse_res_raster_bnames:
-            print(bname)
-
-        all_resolutions = [(self.site.res_x, -self.site.res_y)] + other_resolutions
-        write_resolution_name = True if len(all_resolutions) > 1 else False
+        # Full resolution:
+        write_resolution_name = True if len(resolutions) > 1 else False
         # Names for R1, R2 etc.
-        resolution_names = ["R" + str(r[0] / 10).zfill(1) for r in all_resolutions]
-        for bname in full_res_raster_bnames:
-            for res in all_resolutions:
-                print(bname, res)
+        rasters_written = []
+        path_alt, path_asp, path_slp = "", "", ""
+        for res in resolutions:
+            # ALT:
+            bname_alt = basename + "_ALT"
+            bname_alt += "_" + res["name"] if write_resolution_name else basename
+            bname_alt += ".TIF"
+            rel_alt = os.path.join(dbl_base, bname_alt)
+            path_alt = os.path.join(self.dem_dir, rel_alt)
+            ImageIO.gdal_translate(path_alt, mnt_full_res, tr=res["val"])
+            rasters_written.append(rel_alt)
+            # ASP:
+            bname_asp = basename + "_ASP"
+            bname_asp += "_" + res["name"] if write_resolution_name else basename
+            bname_asp += ".TIF"
+            rel_asp = os.path.join(dbl_base, bname_asp)
+            tmp_asp = tempfile.mktemp(dir=self.wdir)
+            path_asp = os.path.join(self.dem_dir, rel_asp)
+            ImageIO.write_geotiff_existing(aspect, tmp_asp, drv)
+            ImageIO.gdal_translate(path_asp, tmp_asp, tr=res["val"])
+            rasters_written.append(rel_asp)
+            # SLP:
+            bname_slp = basename + "_SLP"
+            bname_slp += "_" + res["name"] if write_resolution_name else basename
+            bname_slp += ".TIF"
+            rel_slp = os.path.join(dbl_base, bname_slp)
+            tmp_slp = tempfile.mktemp(dir=self.wdir)
+            path_slp = os.path.join(self.dem_dir, rel_slp)
+            ImageIO.write_geotiff_existing(aspect, tmp_slp, drv)
+            ImageIO.gdal_translate(path_slp, tmp_slp, tr=res["val"])
+            rasters_written.append(rel_slp)
 
-        # Water mask
-        print(water_mask_bname)
+        # Resize all rasters for coarse res.
+        coarse_res_str = str(coarse_res[0]) + " " + str(coarse_res[1])
+        # ALC:
+        bname_alc = basename + "_ALC.TIF"
+        rel_alc = os.path.join(dbl_base, bname_alc)
+        path_alc = os.path.join(self.dem_dir, rel_alc)
+        ImageIO.gdal_translate(path_alc, path_alt, tr=coarse_res_str)
+        rasters_written.append(rel_alc)
+        # ALC:
+        bname_asc = basename + "_ASC.TIF"
+        rel_asc = os.path.join(dbl_base, bname_asc)
+        path_asc = os.path.join(self.dem_dir, rel_asc)
+        ImageIO.gdal_translate(path_asc, path_asp, tr=coarse_res_str)
+        rasters_written.append(rel_asc)
+        # ALC:
+        bname_slc = basename + "_SLC.TIF"
+        rel_slc = os.path.join(dbl_base, bname_slc)
+        path_slc = os.path.join(self.dem_dir, rel_slc)
+        ImageIO.gdal_translate(path_slc, path_slp, tr=coarse_res_str)
+        rasters_written.append(rel_slc)
+        # Water mask:
+        bname_msk = basename + "_MSK.TIF"
+        rel_msk = os.path.join(dbl_base, bname_msk)
+        path_msk = os.path.join(self.dem_dir, rel_msk)
+        ImageIO.gdal_translate(path_msk, water_mask_bin, tr=coarse_res_str)
+        rasters_written.append(rel_msk)
+
+        # Write HDR Metadata:
+
+        date_start = datetime(1970, 1, 1)
+        date_end = datetime(2100, 1, 1)
+        dem_info = DEMInfo(self.site, path_alt)
+        root = self._get_root()
+        self._create_hdr(root, mission_field, basename, rasters_written,
+                         dem_info, date_start, date_end, self.dem_version)
+        XMLTools.write_xml(root, hdr)
 
         return hdr, dbl_dir
+
+    @staticmethod
+    def _get_root():
+        """
+        Create the root of a single dem file
+        :return:
+        """
+        from xml.etree import ElementTree
+        xmlns = "http://eop-cfi.esa.int/CFI"
+        xsi = "http://www.w3.org/2001/XMLSchema-instance"
+        schema_location = "%s ./%s" % (xmlns, "AUX_REFDE2_ReferenceDemDataLevel2.xsd")
+        type_xsi = "REFDE2_Header_Type"
+        root = ElementTree.Element("Earth_Explorer_Header",
+                                   attrib={"xmlns": xmlns,
+                                           "schema_version": "1.00",
+                                           "{" + xsi + "}schemaLocation": schema_location,
+                                           "{" + xsi + "}type": type_xsi})
+        return root
+
+    @staticmethod
+    def _create_hdr(root, mission, basename_out, rel_files, dem_info, date_start, date_end, version):
+        """
+        Create a DEM HDR file with the needed information.
+        :param root: The HDR xml-root.
+        :param mission: The full mission name, e.g. 'SENTINEL2_'
+        :param basename_out: The basename of the HDR
+        :param dem_info: A DEMInfo object
+        :param date_start: The validity start date, usually 1970-01-01
+        :param date_end: The validity end date, usually 2100-01-01
+        :param rel_files: The list of files inside the .DBL.DIR. The filepaths are all relative to the HDR.
+        :return: Writes the HDR in the same directory as the .DBL.DIR.
+        """
+        from datetime import datetime
+        from xml.etree import ElementTree
+        creation_date = datetime.now()
+
+        a1 = ElementTree.SubElement(root, "Fixed_Header")
+        toto = ElementTree.SubElement(a1, "File_Name")
+        toto.text = basename_out
+        toto = ElementTree.SubElement(a1, "File_Description")
+        toto.text = "ReferenceDemDataLevel2"
+        toto = ElementTree.SubElement(a1, "Notes")
+        toto.text = "Created using Start_Maja"
+        toto = ElementTree.SubElement(a1, "Mission")
+        toto.text = mission
+        toto = ElementTree.SubElement(a1, "File_Class")
+        toto.text = "TEST"
+        toto = ElementTree.SubElement(a1, "File_Type")
+        toto.text = "AUX_REFDE2"
+        b1 = ElementTree.SubElement(a1, "Validity_Period")
+        toto = ElementTree.SubElement(b1, "Validity_Start")
+        toto.text = "UTC=%s" % date_start.strftime("%Y-%m-%dT%H:%M:%S")
+        toto = ElementTree.SubElement(b1, "Validity_Stop")
+        toto.text = "UTC=%s" % date_end.strftime("%Y-%m-%dT%H:%M:%S")
+        toto = ElementTree.SubElement(a1, "File_Version")
+        toto.text = str(version).zfill(4)
+        b2 = ElementTree.SubElement(a1, "Source")
+        toto = ElementTree.SubElement(b2, "System")
+        toto.text = "MAJA"
+        toto = ElementTree.SubElement(b2, "Creator")
+        toto.text = "Start_Maja"
+        toto = ElementTree.SubElement(b2, "Creator_Version")
+        toto.text = "1.0"
+        toto = ElementTree.SubElement(b2, "Creation_Date")
+        toto.text = "UTC=" + creation_date.strftime("%Y-%m-%dT%H:%M:%S")
+
+        a = ElementTree.SubElement(root, "Variable_Header")
+        b2 = ElementTree.SubElement(a, "Main_Product_Header")
+        ElementTree.SubElement(b2, "List_of_Consumers", count="0")
+        ElementTree.SubElement(b2, "List_of_Extensions", count="0")
+        b3 = ElementTree.SubElement(a, "Specific_Product_Header")
+        b4 = ElementTree.SubElement(b3, "Instance_Id")
+        ElementTree.SubElement(b4, "Applicable_Site_Nick_Name").text = "Tile"
+        ElementTree.SubElement(b4, "File_Version").text = str(version).zfill(4)
+        b5 = ElementTree.SubElement(b3, "List_of_Applicable_SiteDefinition_Ids")
+        ElementTree.SubElement(b5, "List_of_Applicable_SiteDefinition_Ids", count="0")
+        b6 = ElementTree.SubElement(b3, "DEM_Information")
+        c1 = ElementTree.SubElement(b6, "Cartographic")
+        d1 = ElementTree.SubElement(c1, "Coordinate_Reference_System")
+        ElementTree.SubElement(d1, "Code").text = str(dem_info.epsg)
+        ElementTree.SubElement(d1, "Short_Description").text = str(dem_info.short_description)
+        d2 = ElementTree.SubElement(c1, "Upper_Left_Corner")
+        ElementTree.SubElement(d2, "X", unit="m").text = str(dem_info.ulx)
+        ElementTree.SubElement(d2, "Y", unit="m").text = str(dem_info.uly)
+        d3 = ElementTree.SubElement(c1, "Sampling_Interval")
+        ElementTree.SubElement(d3, "By_Line", unit="m").text = str(dem_info.resx)
+        ElementTree.SubElement(d3, "By_Column", unit="m").text = str(dem_info.resy)
+        d4 = ElementTree.SubElement(c1, "Size")
+        ElementTree.SubElement(d4, "Lines").text = str(dem_info.lx)
+        ElementTree.SubElement(d4, "Columns").text = str(dem_info.ly)
+        ElementTree.SubElement(b6, "Mean_Altitude_Over_L2_Coverage", unit="m").text = str(dem_info.mean_alt)
+        ElementTree.SubElement(b6, "Altitude_Standard_Deviation_Over_L2_Coverage", unit="m").text = str(dem_info.std_dev_alt)
+        ElementTree.SubElement(b6, "Nodata_Value").text = str(int(dem_info.nodata))
+        ElementTree.SubElement(b6, "L2_To_DEM_Subsampling_Ratio").text = str(dem_info.dem_subsampling_ratio)
+        ElementTree.SubElement(b6, "Comment").text = "No comment"
+
+        b4 = ElementTree.SubElement(b3, "DBL_Organization")
+        b5 = ElementTree.SubElement(b4, "List_of_Packaged_DBL_Files", count=str(len(rel_files)))
+        for index, dem_file in enumerate(rel_files):
+            b6 = ElementTree.SubElement(b5, "Packaged_DBL_File", sn=str(index+1))
+            b7 = ElementTree.SubElement(b6, "Relative_File_Path")
+            b7.text = dem_file
 
     @staticmethod
     def get_gsw_codes(site):

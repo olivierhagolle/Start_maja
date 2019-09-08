@@ -175,6 +175,31 @@ class TestSRTM(unittest.TestCase):
         np.testing.assert_equal(expected_img, img_read)
         FileSystem.remove_directory(dem_dir)
 
+    def test_srtm_get_maja_format_tls_l8(self):
+        import os
+        from Common import FileSystem
+        resx, resy = 30, -30
+        px, py = 15, 14
+        site = MNTBase.Site("19080", 32631,
+                            px=px,
+                            py=py,
+                            ul=(285431.584, 4884950.507),
+                            lr=(510124.885, 4680403.373),
+                            res_x=resx,
+                            res_y=resy)
+        dem_dir = os.path.join(os.getcwd(), "test_srtm_get_maja_format_tls_l8")
+        s = SRTM.SRTM(site, dem_dir, raw_dem=dem_dir, raw_gsw=dem_dir, wdir=dem_dir)
+        self.assertTrue(os.path.isdir(dem_dir))
+        hdr, dbl = s.to_maja_format(platform_id="S2_",
+                                    mission_field="SENTINEL-2_",
+                                    coarse_res=(240, -240),
+                                    resolutions=[{"name": "R1",
+                                                  "val": "30 -30"},
+                                                 {"name": "R2",
+                                                  "val": "60 -60"}])
+        self.assertTrue(os.path.exists(hdr))
+        self.assertTrue(os.path.isdir(dbl))
+
 
 if __name__ == '__main__':
     unittest.main()

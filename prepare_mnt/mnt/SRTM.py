@@ -63,7 +63,7 @@ class SRTM(MNT):
             fn_unzipped = FileSystem.find_single(pattern=basename + ".tif", path=self.wdir)
             unzipped.append(fn_unzipped)
         # Fusion of all SRTM files
-        fusion_path = os.path.join(self.wdir, "srtm_combined.tiff")
+        fusion_path = os.path.join(self.wdir, "srtm_combined.tif")
         ImageIO.gdal_merge(fusion_path, *unzipped)
         # Set nodata to 0
         fixed_nodata = os.path.join(self.wdir, "fixed_nodata.tif")
