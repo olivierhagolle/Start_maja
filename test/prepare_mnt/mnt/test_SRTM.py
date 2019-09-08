@@ -12,9 +12,26 @@ Created on:     Tue Dec  5 10:26:05 2018
 
 import unittest
 from prepare_mnt.mnt import SRTM, MNTBase
+import tempfile
+import os
 
 
 class TestSRTM(unittest.TestCase):
+
+    raw_gsw = os.path.join(tempfile.gettempdir(), "raw_gsw")
+    raw_srtm = os.path.join(tempfile.gettempdir(), "raw_srtm")
+
+    @classmethod
+    def setUpClass(cls):
+        from Common import FileSystem
+        FileSystem.create_directory(cls.raw_gsw)
+        FileSystem.create_directory(cls.raw_srtm)
+
+    @classmethod
+    def tearDownClass(cls):
+        from Common import FileSystem
+        FileSystem.remove_directory(cls.raw_gsw)
+        FileSystem.remove_directory(cls.raw_srtm)
 
     def test_get_srtm_codes_tls(self):
         resx, resy = 240, -240
@@ -55,7 +72,7 @@ class TestSRTM(unittest.TestCase):
                             res_x=resx,
                             res_y=resy)
         dem_dir = os.path.join(os.getcwd(), "srtm_dir")
-        s = SRTM.SRTM(site, dem_dir, raw_dem=dem_dir, raw_gsw=dem_dir)
+        s = SRTM.SRTM(site, dem_dir, raw_dem=self.raw_srtm, raw_gsw=self.raw_gsw)
         self.assertTrue(os.path.isdir(dem_dir))
         srtm_codes = SRTM.SRTM.get_srtm_codes(site)
         s.get_raw_data()
@@ -77,7 +94,7 @@ class TestSRTM(unittest.TestCase):
                             res_x=resx,
                             res_y=resy)
         dem_dir = os.path.join(os.getcwd(), "test_srtm_prepare_mnt_s2_tls")
-        s = SRTM.SRTM(site, dem_dir, raw_dem=dem_dir, raw_gsw=dem_dir, wdir=dem_dir)
+        s = SRTM.SRTM(site, dem_dir, raw_dem=dem_dir, raw_gsw=self.raw_gsw, wdir=self.raw_srtm)
         self.assertTrue(os.path.isdir(dem_dir))
         srtm = s.prepare_mnt()
         self.assertTrue(os.path.isfile(srtm))
@@ -112,7 +129,7 @@ class TestSRTM(unittest.TestCase):
                             res_x=resx,
                             res_y=resy)
         dem_dir = os.path.join(os.getcwd(), "test_srtm_prepare_mnt_vns_maccanw2")
-        s = SRTM.SRTM(site, dem_dir, raw_dem=dem_dir, raw_gsw=dem_dir, wdir=dem_dir)
+        s = SRTM.SRTM(site, dem_dir, raw_dem=dem_dir, raw_gsw=self.raw_gsw, wdir=self.raw_srtm)
         self.assertTrue(os.path.isdir(dem_dir))
         srtm = s.prepare_mnt()
         self.assertTrue(os.path.isfile(srtm))
@@ -150,7 +167,7 @@ class TestSRTM(unittest.TestCase):
                             res_x=resx,
                             res_y=resy)
         dem_dir = os.path.join(os.getcwd(), "test_srtm_prepare_mnt_l8_tls")
-        s = SRTM.SRTM(site, dem_dir, raw_dem=dem_dir, raw_gsw=dem_dir, wdir=dem_dir)
+        s = SRTM.SRTM(site, dem_dir, raw_dem=dem_dir, raw_gsw=self.raw_gsw, wdir=self.raw_srtm)
         self.assertTrue(os.path.isdir(dem_dir))
         srtm = s.prepare_mnt()
         self.assertTrue(os.path.isfile(srtm))
@@ -188,15 +205,37 @@ class TestSRTM(unittest.TestCase):
                             res_x=resx,
                             res_y=resy)
         dem_dir = os.path.join(os.getcwd(), "test_srtm_get_maja_format_tls_l8")
-        s = SRTM.SRTM(site, dem_dir, raw_dem=dem_dir, raw_gsw=dem_dir, wdir=dem_dir)
+        s = SRTM.SRTM(site, dem_dir, raw_dem=dem_dir, raw_gsw=self.raw_gsw, wdir=self.raw_srtm)
+        self.assertTrue(os.path.isdir(dem_dir))
+        hdr, dbl = s.to_maja_format(platform_id="L8_",
+                                    mission_field="LANDSAT8",
+                                    coarse_res=(240, -240),
+                                    resolutions=[{"name": "R1",
+                                                  "val": "30 -30"}])
+        self.assertTrue(os.path.exists(hdr))
+        self.assertTrue(os.path.isdir(dbl))
+
+    def test_srtm_get_maja_format_s2_31tcj(self):
+        import os
+        from Common import FileSystem
+        resx, resy = 90, -90
+        site = MNTBase.Site("T31TCJ", 32631,
+                            px=None,
+                            py=None,
+                            ul=(300000.000, 4900020.000),
+                            lr=(409800.000, 4790220.000),
+                            res_x=resx,
+                            res_y=resy)
+        dem_dir = os.path.join(os.getcwd(), "test_srtm_get_maja_format_s2_31tcj")
+        s = SRTM.SRTM(site, dem_dir, raw_dem=dem_dir, raw_gsw=self.raw_gsw, wdir=self.raw_srtm)
         self.assertTrue(os.path.isdir(dem_dir))
         hdr, dbl = s.to_maja_format(platform_id="S2_",
                                     mission_field="SENTINEL-2_",
                                     coarse_res=(240, -240),
                                     resolutions=[{"name": "R1",
-                                                  "val": "30 -30"},
+                                                  "val": "10 -10"},
                                                  {"name": "R2",
-                                                  "val": "60 -60"}])
+                                                  "val": "20 -20"}])
         self.assertTrue(os.path.exists(hdr))
         self.assertTrue(os.path.isdir(dbl))
 
