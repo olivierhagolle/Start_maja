@@ -181,7 +181,7 @@ class TestFileIO(unittest.TestCase):
         out_resolution = (20, -20)
         ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
-        ImageIO.gdal_translate(path, scaled, tr=" ".join(str(e) for e in out_resolution), scale="0 1 0 255", q=True)
+        ImageIO.gdal_translate(scaled, path, tr=" ".join(str(e) for e in out_resolution), scale="0 1 0 255", q=True)
         img_read, driver = ImageIO.tiff_to_array(scaled, array_only=False)
         self.assertEqual(ImageIO.get_resolution(driver), out_resolution)
         np.testing.assert_almost_equal(img_read, 255)
@@ -197,7 +197,7 @@ class TestFileIO(unittest.TestCase):
         scaled = os.path.join(os.getcwd(), "res_changed.tif")
         ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
         self.assertTrue(os.path.exists(path))
-        ImageIO.gdal_warp(path, scaled,
+        ImageIO.gdal_warp(scaled, path,
                           tr=" ".join(str(e) for e in out_resolution),
                           r="max", q=True)
         img_read, driver = ImageIO.tiff_to_array(scaled, array_only=False)
