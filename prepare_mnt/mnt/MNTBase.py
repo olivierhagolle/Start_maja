@@ -97,7 +97,6 @@ class MNT(object):
         from Common import FileSystem
         if not int(gdal.VersionInfo()) >= 2000000:
             raise ImportError("MNT creation needs Gdal >2.0!")
-
         self.site = site
         self.dem_dir = dem_dir
         if not os.path.isdir(self.dem_dir):
@@ -126,14 +125,62 @@ class MNT(object):
     def prepare_mnt(self):
         raise NotImplementedError
 
-    @property
-    def to_maja_format(self):
-        import os
+    @staticmethod
+    def calc_gradient(mnt_arr):
+        import numpy as np
+        from scipy import ndimage
+        # TODO Find a pure numpy 2D convolution.
+        kernel_horizontal = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+        kernel_vertical = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
+        dz_dc = ndimage.convolve(mnt_arr, kernel_horizontal)
+        dz_dl = ndimage.convolve(mnt_arr, kernel_vertical)
+        return dz_dc, dz_dl
 
+    @staticmethod
+    def calc_slope_aspect(dz_dc, dz_dl):
+        import numpy as np
+        norme = np.sqrt(dz_dc * dz_dc) + (dz_dl * dz_dl)
+        slope = np.arctan(norme)
+        aspect = np.where(dz_dc > 0, np.arccos(dz_dl / norme), 2 * np.pi - np.arccos(dz_dl / norme))
+        aspect = np.where(slope == 0, 0, aspect)
+        return slope, aspect
+
+    def to_maja_format(self, platform_id, mission_field, coarse_res, other_resolutions=[]):
+        import os
+        from Common import ImageIO
+        # Coarse res rasters:
+        coarse_res_raster_bnames = ["ALC", "ASC", "SLC"]
+        water_mask_bname = "MSK"
+        # Full resoltion ones (That might have to be written 2x for e.g. S2:
+        full_res_raster_bnames = ["ALT", "ASP", "SLP"]
+        basename = str("%s_TEST_AUX_REFDE2_%s_0001" % platform_id, self.site.nom)
         # Get water data
         water_mask_bin = os.path.join(self.wdir, "water_mask_bin.tif")
         self.prepare_water_data(water_mask_bin)
-        return None
+        # Get mnt data
+        mnt_full_res = self.prepare_mnt()
+        dbl_dir = os.path.join(self.dem_dir, basename + ".DBL.DIR")
+        hdr = os.path.join(self.dem_dir, basename + ".HDR")
+
+        # Read MNT and water mask at full resolution:
+        mnt_in, drv = ImageIO.tiff_to_array(mnt_full_res, array_only=False)
+        grad_y, grad_x = self.calc_gradient(mnt_in)
+        slope, aspect = self.calc_slope_aspect(grad_y, grad_x)
+        for bname in coarse_res_raster_bnames:
+            print(bname)
+
+        all_resolutions = [(self.site.res_x, -self.site.res_y)] + other_resolutions
+        write_resolution_name = True if len(all_resolutions) > 1 else False
+        # Names for R1, R2 etc.
+        resolution_names = ["R" + str(r[0] / 10).zfill(1) for r in all_resolutions]
+        for bname in full_res_raster_bnames:
+            for res in all_resolutions:
+                print(bname, res)
+
+        # Water mask
+        print(water_mask_bname)
+
+        return hdr, dbl_dir
 
     @staticmethod
     def get_gsw_codes(site):
