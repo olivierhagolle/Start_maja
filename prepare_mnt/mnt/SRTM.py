@@ -65,14 +65,18 @@ class SRTM(MNT):
         # Fusion of all SRTM files
         fusion_path = os.path.join(self.wdir, "srtm_combined.tiff")
         ImageIO.gdal_merge(fusion_path, *unzipped)
+        # Set nodata to 0
+        fixed_nodata = os.path.join(self.wdir, "fixed_nodata.tif")
+        ImageIO.gdal_warp(fixed_nodata, fusion_path,
+                          srcnodata=-32767,
+                          dstnodata=0)
         # Combine to image of fixed extent
         srtm_full_res = os.path.join(self.wdir, "srtm_%sm.tif" % self.site.res_x)
-        ImageIO.gdal_warp(srtm_full_res, fusion_path,
+        ImageIO.gdal_warp(srtm_full_res, fixed_nodata,
                           r="cubic",
                           te=self.site.te_str,
                           t_srs=self.site.epsg_str,
-                          tr=self.site.tr_str,
-                          dstnodata="0")
+                          tr=self.site.tr_str)
         return srtm_full_res
 
     @staticmethod
