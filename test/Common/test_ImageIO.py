@@ -6,7 +6,7 @@ import numpy as np
 import os
 
 
-class TestFileIO(unittest.TestCase):
+class TestImageIO(unittest.TestCase):
 
     def setUp(self):
         self.coordinates = (652594.9112913811, 10.00887639510383, 0,
@@ -104,6 +104,38 @@ class TestFileIO(unittest.TestCase):
         self.assertEqual(epsg_ref, ImageIO.get_epsg(driver))
         FileSystem.remove_file(path)
         # Check if file removed
+        self.assertFalse(os.path.exists(path))
+
+    def test_get_nodata(self):
+        from Common import FileSystem
+        expected_nodata = 42.0
+        img = np.ones((self.height, self.width), np.int16)
+        path = os.path.join(os.getcwd(), "test_get_nodata_init.tif")
+        ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
+        nodata_image = os.path.join(os.getcwd(), "test_get_nodata.tif")
+        ImageIO.gdal_merge(nodata_image,
+                           path,
+                           a_nodata=expected_nodata)
+        self.assertTrue(os.path.exists(nodata_image))
+        drv = ImageIO.open_tiff(nodata_image)
+        nodata = ImageIO.get_nodata_value(drv)
+        self.assertEqual(expected_nodata, nodata)
+        FileSystem.remove_file(nodata_image)
+        FileSystem.remove_file(path)
+        self.assertFalse(os.path.exists(path))
+        self.assertFalse(os.path.exists(nodata_image))
+
+    def test_get_utm_description(self):
+        from Common import FileSystem
+        img = np.ones((self.height, self.width), np.int16)
+        path = os.path.join(os.getcwd(), "test_get_nodata_init.tif")
+        ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
+        self.assertTrue(os.path.exists(path))
+        drv = ImageIO.open_tiff(path)
+        utm = ImageIO.get_utm_description(drv)
+        utm_expected = "WGS 84 / UTM zone 31N"
+        self.assertEqual(utm_expected, utm)
+        FileSystem.remove_file(path)
         self.assertFalse(os.path.exists(path))
 
     def test_get_resolution(self):

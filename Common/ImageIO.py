@@ -93,6 +93,30 @@ def get_epsg(driver):
     return int(gdal.Info(driver, format='json')['coordinateSystem']['wkt'].rsplit('"EPSG","', 1)[-1].split('"')[0])
 
 
+def get_nodata_value(driver):
+    """
+    Get the NoDataValue (if existing) from a given driver using gdal
+    :param driver: The gdal driver
+    :return: The NoDataValue if existing. None if not.
+    """
+    from osgeo import gdal
+    try:
+        nodata = float(gdal.Info(driver, format='json')["bands"][0]["noDataValue"])
+    except KeyError:
+        nodata = None
+    return nodata
+
+
+def get_utm_description(driver):
+    """
+    Get the UTM Description of a given driver using gdal
+    :param driver: The gdal driver
+    :return: The UTM Description as string.
+    """
+    from osgeo import gdal
+    return gdal.Info(driver, format='json')['coordinateSystem']['wkt'].rsplit('PROJCS["', 1)[-1].split('"')[0]
+
+
 def get_ul_lr(driver):
     """
     Get the coordinates of the upper left and lower right as tuples
@@ -249,4 +273,3 @@ def gdal_calc(dst, calc, *src, **options):
     # Append overwrite by default in order to avoid writing errors:
     options_list += ["--overwrite"]
     return FileSystem.run_external_app("gdal_calc.py", options_list + file_list)
-
