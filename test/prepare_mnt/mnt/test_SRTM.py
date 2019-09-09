@@ -55,7 +55,7 @@ class TestSRTM(unittest.TestCase):
         srtm_codes = SRTM.SRTM.get_srtm_codes(site)
         s.get_raw_data()
         for code in srtm_codes:
-            filepath = os.path.join(dem_dir, code + ".zip")
+            filepath = os.path.join(self.raw_srtm, code + ".zip")
             self.assertTrue(os.path.isfile(filepath))
         FileSystem.remove_directory(dem_dir)
 
@@ -174,6 +174,8 @@ class TestSRTM(unittest.TestCase):
         import os
         from Common import FileSystem
         site = SiteInfo.Site("19080", 32631,
+                             res_x=90,
+                             res_y=-90,
                              ul=(285431.584, 4884950.507),
                              lr=(510124.885, 4680403.373))
         dem_dir = os.path.join(os.getcwd(), "test_srtm_get_maja_format_tls_l8")
@@ -191,6 +193,8 @@ class TestSRTM(unittest.TestCase):
         import os
         from Common import FileSystem
         site = SiteInfo.Site("T31TCJ", 32631,
+                             res_x=90,
+                             res_y=-90,
                              ul=(300000.000, 4900020.000),
                              lr=(409800.000, 4790220.000))
         dem_dir = os.path.join(os.getcwd(), "test_srtm_get_maja_format_s2_31tcj")

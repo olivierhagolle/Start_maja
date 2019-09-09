@@ -34,10 +34,10 @@ class MNT(object):
         self.wdir = kwargs.get("wdir", tempfile.mkdtemp(prefix="prepare_mnt_"))
         if not os.path.isdir(self.wdir):
             FileSystem.create_directory(self.dem_dir)
-        self.raw_dem = tempfile.mkdtemp(prefix="raw_dem_")
+        self.raw_dem = kwargs.get("raw_dem", tempfile.mkdtemp(prefix="raw_dem_"))
         if not os.path.exists(self.raw_dem):
             FileSystem.create_directory(self.raw_dem)
-        self.raw_gsw = tempfile.mkdtemp(prefix="raw_gsw_")
+        self.raw_gsw = kwargs.get("raw_gsw", tempfile.mkdtemp(prefix="raw_gsw_"))
         if not os.path.exists(self.raw_gsw):
             FileSystem.create_directory(self.raw_gsw)
         self.gsw_codes = self.get_gsw_codes(self.site)
