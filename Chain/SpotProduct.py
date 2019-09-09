@@ -52,7 +52,7 @@ class Spot5Muscate(MajaProduct):
 
     def get_site(self):
         from Common import ImageIO
-        from prepare_mnt.mnt.MNTBase import Site
+        from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:
@@ -98,7 +98,7 @@ class Spot4Muscate(MajaProduct):
 
     def get_site(self):
         from Common import ImageIO
-        from prepare_mnt.mnt.MNTBase import Site
+        from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:

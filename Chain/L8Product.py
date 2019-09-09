@@ -52,7 +52,7 @@ class Landsat8Natif(MajaProduct):
         return datetime.strptime(str_date, "%Y%m%d") + timedelta(hours=12)
 
     def get_site(self):
-        from prepare_mnt.mnt.MNTBase import Site
+        from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:
@@ -109,7 +109,7 @@ class Landsat8Muscate(MajaProduct):
         return False
 
     def get_site(self):
-        from prepare_mnt.mnt.MNTBase import Site
+        from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:
@@ -147,7 +147,7 @@ class Landsat8LC1(MajaProduct):
         return False
 
     def get_site(self):
-        from prepare_mnt.mnt.MNTBase import Site
+        from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:
@@ -185,7 +185,7 @@ class Landsat8LC2(MajaProduct):
         return False
 
     def get_site(self):
-        from prepare_mnt.mnt.MNTBase import Site
+        from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:

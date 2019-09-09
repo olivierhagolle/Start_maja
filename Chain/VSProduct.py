@@ -26,6 +26,7 @@ class VenusNatif(MajaProduct):
         return "natif"
 
     def get_level(self):
+        # TODO Correct this
         return "l1c"
 
     def get_tile(self):
@@ -50,7 +51,7 @@ class VenusNatif(MajaProduct):
         return False
 
     def get_site(self):
-        from prepare_mnt.mnt.MNTBase import Site
+        from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:
@@ -111,7 +112,7 @@ class VenusMuscate(MajaProduct):
         return False
 
     def get_site(self):
-        from prepare_mnt.mnt.MNTBase import Site
+        from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:

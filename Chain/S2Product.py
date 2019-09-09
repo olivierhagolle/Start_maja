@@ -48,7 +48,7 @@ class Sentinel2Natif(MajaProduct):
         return False
 
     def get_site(self):
-        from prepare_mnt.mnt.MNTBase import Site
+        from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_b2 = self.get_file(filename=r"*B0?2*.jp2")
         except IOError as e:
@@ -107,7 +107,7 @@ class Sentinel2Muscate(MajaProduct):
         return False
 
     def get_site(self):
-        from prepare_mnt.mnt.MNTBase import Site
+        from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_b2 = self.get_file(filename=r"*B0?2*.tif")
         except IOError as e:
@@ -153,7 +153,7 @@ class Sentinel2SSC(MajaProduct):
         return False
 
     def get_site(self):
-        from prepare_mnt.mnt.MNTBase import Site
+        from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_b2 = self.get_file(filename=r"*B0?2*.DBL.TIF")
         except IOError as e:
