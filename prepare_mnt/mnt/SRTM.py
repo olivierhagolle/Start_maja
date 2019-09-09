@@ -20,9 +20,10 @@ class SRTM(MNT):
     Base class to get the necessary mnt for a given site.
     """
 
-    def __init__(self, site, dem_dir, raw_dem, raw_gsw, wdir=None):
-        super(SRTM, self).__init__(site, dem_dir, raw_dem, raw_gsw, wdir)
-        if (self.site.ul_latlon[0]) > 60 or (self.site.lr_latlon[0] > 60):
+    def __init__(self, site, **kwargs):
+        import math
+        super(SRTM, self).__init__(site, **kwargs)
+        if math.fabs(self.site.ul_latlon[0]) > 60 or math.fabs(self.site.lr_latlon[0]) > 60:
             raise ValueError("Latitude over +-60deg - No SRTM data available!")
         self.srtm_codes = self.get_srtm_codes(self.site)
 

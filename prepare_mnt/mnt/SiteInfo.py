@@ -17,13 +17,13 @@ class Site:
     """
     Stores all necessary information in order to create an MNT
     """
-    def __init__(self, nom, epsg, px, py, ul, lr, res_x, res_y):
+    def __init__(self, nom, epsg, ul, lr, **kwargs):
         self.nom = nom
         self.epsg = epsg
-        self.px = px
-        self.py = py
-        self.res_x = res_x
-        self.res_y = res_y
+        self.px = kwargs.get("px", None)
+        self.py = kwargs.get("py", None)
+        self.res_x = kwargs.get("res_x", None)
+        self.res_y = kwargs.get("res_y", None)
         self.ul = ul
         self.lr = lr
         self.ul_latlon, self.lr_latlon = self.latlon_minmax
@@ -82,6 +82,4 @@ class Site:
         epsg = ImageIO.get_epsg(driver)
         ul, lr = ImageIO.get_ul_lr(driver)
         xmin, xres, skx, ymax, sky, yres = driver.GetGeoTransform()
-        return Site(name, epsg, nx, ny, ul, lr, xres, yres)
-
-
+        return Site(name, epsg, ul=ul, lr=lr,  px=nx, py=ny, res_x=xres, res_y=yres)

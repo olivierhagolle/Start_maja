@@ -10,15 +10,17 @@ Project:        StartMaja, CNES
 Created on:     Tue Sep 11 15:31:00 2018
 """
 
+# GlobalSurfaceWater (GSW) base url for direct-download of the files:
 surface_water_url = "https://storage.googleapis.com/global-surface-water/downloads2/occurrence/occurrence_%s_v1_1.tif"
 
 
 class MNT(object):
     """
-    Base class to get the necessary mnt for a given site.
+    Base class to set the DEM/MNT interfaces for a given site.
+    DEM := Digital Elevation model)
+    MNT := Modèle numérique de terrain; french for DEM
     """
-
-    def __init__(self, site, dem_dir, raw_dem, raw_gsw, wdir=None, dem_version=1):
+    def __init__(self, site, **kwargs):
         import os
         import tempfile
         from osgeo import gdal
@@ -26,22 +28,22 @@ class MNT(object):
         if not int(gdal.VersionInfo()) >= 2000000:
             raise ImportError("MNT creation needs Gdal >2.0!")
         self.site = site
-        self.dem_dir = dem_dir
+        self.dem_dir = kwargs.get("dem_dir", os.path.join(tempfile.gettempdir(), "maja_dem_files"))
         if not os.path.isdir(self.dem_dir):
             FileSystem.create_directory(self.dem_dir)
-        self.gsw_codes = self.get_gsw_codes(self.site)
-        if not wdir:
-            self.wdir = tempfile.mkdtemp()
-        else:
-            assert os.path.isdir(wdir)
-            self.wdir = wdir
-        self.raw_dem = raw_dem
+        self.wdir = kwargs.get("wdir", tempfile.mkdtemp(prefix="prepare_mnt_"))
+        if not os.path.isdir(self.wdir):
+            FileSystem.create_directory(self.dem_dir)
+        self.raw_dem = tempfile.mkdtemp(prefix="raw_dem_")
         if not os.path.exists(self.raw_dem):
             FileSystem.create_directory(self.raw_dem)
-        self.raw_gsw = raw_gsw
+        self.raw_gsw = tempfile.mkdtemp(prefix="raw_gsw_")
         if not os.path.exists(self.raw_gsw):
             FileSystem.create_directory(self.raw_gsw)
-        self.dem_version = dem_version
+        self.gsw_codes = self.get_gsw_codes(self.site)
+        self.dem_version = kwargs.get("dem_version", 1)
+        self.gsw_threshold = kwargs.get("gsw_threshold", 30.)
+        self.gsw_dst = kwargs.get("gsw_dst", os.path.join(self.wdir, "surface_water_mask.tif"))
 
     def get_raw_data(self):
         """
@@ -74,6 +76,86 @@ class MNT(object):
         aspect = np.where(slope == 0, 0, aspect)
         return slope, aspect
 
+    @staticmethod
+    def get_gsw_codes(site):
+        """
+        Get the list of GSW files for a given site.
+        :param site: The site class
+        :return: The list of filenames of format 'XX(E/W)_YY(N/S)' needed in order to cover to whole site.
+        """
+        import math
+        from collections import namedtuple
+        if site.ul_latlon[1] > 170 and site.lr_latlon[1] < 160:
+            raise ValueError("Cannot wrap around longitude change")
+
+        grid_step = 10
+        point = namedtuple("point", ("y", "x"))
+        pts = []
+        for pt in [site.ul_latlon, site.lr_latlon]:
+            lat_dec = (math.fabs(pt[0]) / grid_step)
+            lon_dec = (math.fabs(pt[1]) / grid_step)
+            if pt[0] > 0:
+                lat_id = int(math.ceil(lat_dec) * grid_step)
+            else:
+                lat_id = -1 * int(math.floor(lat_dec) * grid_step)
+
+            if pt[1] < 0:
+                lon_id = int(math.ceil(lon_dec) * grid_step)
+            else:
+                lon_id = -1 * int(math.floor(lon_dec) * grid_step)
+            pts.append(point(lat_id, lon_id))
+        gsw_granules = []
+        for x in range(pts[1].x, pts[0].x + grid_step, grid_step):
+            for y in range(pts[1].y, pts[0].y + grid_step, grid_step):
+                code_lat = "S" if y < 0 else "N"
+                code_lon = "W" if x > 0 else "E"
+                gsw_granules.append("%s%s_%s%s" % (int(math.fabs(x)), code_lon, int(math.fabs(y)), code_lat))
+        return gsw_granules
+
+    def get_raw_water_data(self):
+        """
+        Find the given gsw files or download them if not existing.
+        :return: The list of filenames downloaded.
+        """
+        import os
+        from Common import FileSystem
+        import logging
+        filenames = []
+        for code in self.gsw_codes:
+            current_url = surface_water_url % code
+            filename = os.path.basename(current_url)
+            output_path = os.path.join(self.raw_gsw, filename)
+            if not os.path.isfile(output_path):
+                # Download file:
+                FileSystem.download_file(current_url, output_path, log_level=logging.INFO)
+            filenames.append(output_path)
+        return filenames
+
+    def prepare_water_data(self):
+        """
+        Prepare the water mask constituing of a set of gsw files.
+        :return: Writes the tiles water_mask to the self.gsw_dst path.
+        """
+        import os
+        from Common import ImageIO
+        occ_files = self.get_raw_water_data()
+        # Fusion of all gsw files:
+        fusion_path = os.path.join(self.wdir, "occurrence.tiff")
+        water_mask = os.path.join(self.wdir, "water_mask_comb.tif")
+        ImageIO.gdal_merge(fusion_path, *occ_files)
+        # Overlay occurrence image with same extent as the given site.
+        # Should the occurrence files not be complete, this sets all areas not covered by the occurrence to 0.
+        ImageIO.gdal_warp(water_mask, fusion_path,
+                          r="near",
+                          te=self.site.te_str,
+                          t_srs=self.site.epsg_str,
+                          tr=self.site.tr_str,
+                          dstnodata="0")
+        # Threshold the final image and write to destination:
+        image, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
+        image_bin = image > self.gsw_threshold
+        ImageIO.write_geotiff_existing(image_bin, self.gsw_dst, drv)
+
     def to_maja_format(self, platform_id, mission_field, coarse_res, resolutions):
         import os
         import tempfile
@@ -83,8 +165,7 @@ class MNT(object):
         assert len(resolutions) >= 1
         basename = str("%s_TEST_AUX_REFDE2_%s_%s" % (platform_id, self.site.nom, str(self.dem_version).zfill(4)))
         # Get water data
-        water_mask_bin = os.path.join(self.wdir, "water_mask_bin.tif")
-        self.prepare_water_data(water_mask_bin)
+        self.prepare_water_data()
         # Get mnt data
         mnt_full_res = self.prepare_mnt()
         dbl_base = basename + ".DBL.DIR"
@@ -155,7 +236,7 @@ class MNT(object):
         bname_msk = basename + "_MSK.TIF"
         rel_msk = os.path.join(dbl_base, bname_msk)
         path_msk = os.path.join(self.dem_dir, rel_msk)
-        ImageIO.gdal_translate(path_msk, water_mask_bin, tr=coarse_res_str)
+        ImageIO.gdal_translate(path_msk, self.gsw_dst, tr=coarse_res_str)
         rasters_written.append(rel_msk)
 
         # Write HDR Metadata:
@@ -260,7 +341,8 @@ class MNT(object):
         ElementTree.SubElement(d4, "Lines").text = str(dem_info.lx)
         ElementTree.SubElement(d4, "Columns").text = str(dem_info.ly)
         ElementTree.SubElement(b6, "Mean_Altitude_Over_L2_Coverage", unit="m").text = str(dem_info.mean_alt)
-        ElementTree.SubElement(b6, "Altitude_Standard_Deviation_Over_L2_Coverage", unit="m").text = str(dem_info.std_dev_alt)
+        ElementTree.SubElement(b6, "Altitude_Standard_Deviation_Over_L2_Coverage",
+                               unit="m").text = str(dem_info.std_dev_alt)
         ElementTree.SubElement(b6, "Nodata_Value").text = str(int(dem_info.nodata))
         ElementTree.SubElement(b6, "L2_To_DEM_Subsampling_Ratio").text = str(dem_info.dem_subsampling_ratio)
         ElementTree.SubElement(b6, "Comment").text = "No comment"
@@ -271,88 +353,6 @@ class MNT(object):
             b6 = ElementTree.SubElement(b5, "Packaged_DBL_File", sn=str(index+1))
             b7 = ElementTree.SubElement(b6, "Relative_File_Path")
             b7.text = dem_file
-
-    @staticmethod
-    def get_gsw_codes(site):
-        """
-        Get the list of GSW files for a given site.
-        :param site: The site class
-        :return: The list of filenames of format 'XX(E/W)_YY(N/S)' needed in order to cover to whole site.
-        """
-        import math
-        from collections import namedtuple
-        if site.ul_latlon[1] > 170 and site.lr_latlon[1] < 160:
-            raise ValueError("Cannot wrap around longitude change")
-
-        grid_step = 10
-        point = namedtuple("point", ("y", "x"))
-        pts = []
-        for pt in [site.ul_latlon, site.lr_latlon]:
-            lat_dec = (math.fabs(pt[0]) / grid_step)
-            lon_dec = (math.fabs(pt[1]) / grid_step)
-            if pt[0] > 0:
-                lat_id = int(math.ceil(lat_dec) * grid_step)
-            else:
-                lat_id = -1 * int(math.floor(lat_dec) * grid_step)
-
-            if pt[1] < 0:
-                lon_id = int(math.ceil(lon_dec) * grid_step)
-            else:
-                lon_id = -1 * int(math.floor(lon_dec) * grid_step)
-            pts.append(point(lat_id, lon_id))
-        gsw_granules = []
-        for x in range(pts[1].x, pts[0].x + grid_step, grid_step):
-            for y in range(pts[1].y, pts[0].y + grid_step, grid_step):
-                code_lat = "S" if y < 0 else "N"
-                code_lon = "W" if x > 0 else "E"
-                gsw_granules.append("%s%s_%s%s" % (int(math.fabs(x)), code_lon, int(math.fabs(y)), code_lat))
-        return gsw_granules
-
-    def get_raw_water_data(self):
-        """
-        Find the given gsw files or download them if not existing.
-        :return: The list of filenames downloaded.
-        """
-        import os
-        from Common import FileSystem
-        import logging
-        filenames = []
-        for code in self.gsw_codes:
-            current_url = surface_water_url % code
-            filename = os.path.basename(current_url)
-            output_path = os.path.join(self.raw_gsw, filename)
-            if not os.path.isfile(output_path):
-                # Download file:
-                FileSystem.download_file(current_url, output_path, log_level=logging.INFO)
-            filenames.append(output_path)
-        return filenames
-
-    def prepare_water_data(self, dst, threshold=30.):
-        """
-        Prepare the water mask constituing of a set of gsw files.
-        :param dst: The destination filepath
-        :param threshold: The threshold that should be applied.
-        :return:
-        """
-        import os
-        from Common import ImageIO
-        occ_files = self.get_raw_water_data()
-        # Fusion of all gsw files:
-        fusion_path = os.path.join(self.wdir, "occurrence.tiff")
-        water_mask = os.path.join(self.wdir, "water_mask_comb.tif")
-        ImageIO.gdal_merge(fusion_path, *occ_files)
-        # Overlay occurrence image with same extent as the given site.
-        # Should the occurrence files not be complete, this sets all areas not covered by the occurrence to 0.
-        ImageIO.gdal_warp(water_mask, fusion_path,
-                          r="near",
-                          te=self.site.te_str,
-                          t_srs=self.site.epsg_str,
-                          tr=self.site.tr_str,
-                          dstnodata="0")
-        # Threshold the final image and write to destination:
-        image, drv = ImageIO.tiff_to_array(water_mask, array_only=False)
-        image_bin = image > threshold
-        ImageIO.write_geotiff_existing(image_bin, dst, drv)
 
 
 if __name__ == "__main__":
