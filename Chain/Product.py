@@ -54,6 +54,7 @@ class MajaProduct(object):
         Detect the underlying product
         :return:
         """
+        # TODO Evtly as property ?
         import re
         from Chain.S2Product import Sentinel2SSC, Sentinel2Muscate, Sentinel2Natif
         from Chain.L8Product import Landsat8LC1, Landsat8LC2, Landsat8Muscate, Landsat8Natif
@@ -88,32 +89,61 @@ class MajaProduct(object):
         pass
 
     def get_platform(self):
+        # TODO As property
         raise NotImplementedError
 
     def get_tile(self):
+        # TODO As property
         raise NotImplementedError
 
     def get_type(self):
+        # TODO As property
         raise NotImplementedError
+
+    @property
+    def type_xml_maja(self):
+        platform = self.get_platform()
+        ptype = self.get_type()
+        # Note that only s2, l8 and vns are supported:
+        types = {"sentinel2": {"natif": "SENTINEL-2_", "muscate": "SENTINEL2_", "ssc": "SENTINEL-2_"},
+                 "landsat8": {"lc1": "LANDSAT_8", "lc2": "LANDSAT_8", "muscate": "LANDSAT8"},
+                 "venus": {"natif": "VENuS", "muscate": "VENUS"}
+                 }
+        return types[platform][ptype]
 
     def get_file(self, **kwargs):
         from Common.FileSystem import get_file
         return get_file(root=self.fpath, **kwargs)
 
     def get_metadata_file(self):
+        # TODO As property
         raise NotImplementedError
 
     def get_level(self):
+        # TODO As property
         raise NotImplementedError
 
     def get_date(self):
+        # TODO As property
         raise NotImplementedError
 
     def is_valid(self):
+        # TODO As property
         raise NotImplementedError
 
     def get_site(self):
+        # TODO As property
         raise NotImplementedError
+
+    @property
+    def maja_mnt_resolutions(self):
+        raise NotImplementedError
+
+    def get_mnt(self, **kwargs):
+        from prepare_mnt.mnt.MNTFactory import MNTFactory
+        return MNTFactory(site=self.get_site(), platform_id=self.get_platform(),
+                          mission_field=self.type_xml_maja, resolutions=self.maja_mnt_resolutions,
+                          **kwargs)
 
     def __lt__(self, other):
         return self.get_date() < other.get_date()
