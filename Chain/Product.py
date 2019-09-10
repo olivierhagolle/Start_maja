@@ -40,10 +40,10 @@ class MajaProduct(object):
         
     def __str__(self):
         return "\n".join(["Product:   " + self.base,
-                          "Acq-Date:  " + self.get_date().strftime("%Y-%m-%d %H:%M:%S"),
-                          "Platform:  " + self.get_platform(),
-                          "Level:     " + self.get_level(),
-                          "Tile/Site: " + self.get_tile(),
+                          "Acq-Date:  " + self.date.strftime("%Y-%m-%d %H:%M:%S"),
+                          "Platform:  " + self.platform,
+                          "Level:     " + self.level,
+                          "Tile/Site: " + self.tile,
                           ""])
 
     def __repr__(self):
@@ -88,22 +88,22 @@ class MajaProduct(object):
             return Spot4Muscate(self.fpath)
         pass
 
-    def get_platform(self):
-        # TODO As property
+    @property
+    def platform(self):
         raise NotImplementedError
 
-    def get_tile(self):
-        # TODO As property
+    @property
+    def tile(self):
         raise NotImplementedError
 
-    def get_type(self):
-        # TODO As property
+    @property
+    def type(self):
         raise NotImplementedError
 
     @property
     def type_xml_maja(self):
-        platform = self.get_platform()
-        ptype = self.get_type()
+        platform = self.platform
+        ptype = self.type
         # Note that only s2, l8 and vns are supported:
         types = {"sentinel2": {"natif": "SENTINEL-2_", "muscate": "SENTINEL2_", "ssc": "SENTINEL-2_"},
                  "landsat8": {"lc1": "LANDSAT_8", "lc2": "LANDSAT_8", "muscate": "LANDSAT8"},
@@ -115,24 +115,24 @@ class MajaProduct(object):
         from Common.FileSystem import get_file
         return get_file(root=self.fpath, **kwargs)
 
-    def get_metadata_file(self):
-        # TODO As property
+    @property
+    def metadata_file(self):
         raise NotImplementedError
 
-    def get_level(self):
-        # TODO As property
+    @property
+    def level(self):
         raise NotImplementedError
 
-    def get_date(self):
-        # TODO As property
+    @property
+    def date(self):
         raise NotImplementedError
 
-    def is_valid(self):
-        # TODO As property
+    @property
+    def validity(self):
         raise NotImplementedError
 
-    def get_site(self):
-        # TODO As property
+    @property
+    def dem_site(self):
         raise NotImplementedError
 
     @property
@@ -141,16 +141,16 @@ class MajaProduct(object):
 
     def get_mnt(self, **kwargs):
         from prepare_mnt.mnt.MNTFactory import MNTFactory
-        return MNTFactory(site=self.get_site(), platform_id=self.get_platform(),
+        return MNTFactory(site=self.dem_site, platform_id=self.platform,
                           mission_field=self.type_xml_maja, resolutions=self.maja_mnt_resolutions,
                           **kwargs)
 
     def __lt__(self, other):
-        return self.get_date() < other.get_date()
+        return self.date < other.date
 
     def __eq__(self, other):
-        return self.get_date() == other.get_date() and \
-               self.get_level() == other.get_level() and \
-               self.get_metadata_file() == other.get_metadata_file() and \
-               self.get_tile() == other.get_tile() and \
-               self.get_platform() == other.get_platform()
+        return self.date == other.date and \
+               self.level == other.level and \
+               self.metadata_file == other.metadata_file and \
+               self.tile == other.tile and \
+               self.platform == other.platform

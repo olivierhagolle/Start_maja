@@ -76,13 +76,13 @@ class TestL8Product(unittest.TestCase):
         for prod, tile, date, level in zip(self.prod_l8_mus, tiles, dates, levels):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Landsat8Muscate)
-            self.assertEqual(p.get_level(), level)
-            self.assertEqual(p.get_platform(), "landsat8")
-            self.assertEqual(p.get_type(), "muscate")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.get_metadata_file()).endswith("_MTD_ALL.xml"))
-            self.assertTrue(path.exists(p.get_metadata_file()))
+            self.assertEqual(p.level, level)
+            self.assertEqual(p.platform, "landsat8")
+            self.assertEqual(p.type, "muscate")
+            self.assertEqual(p.tile, tile)
+            self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
+            self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
+            self.assertTrue(path.exists(p.metadata_file))
             self.assertEqual(p, p)
 
         # Other prods:
@@ -96,13 +96,13 @@ class TestL8Product(unittest.TestCase):
         for prod, tile, date in zip(self.prod_l8_nat, tiles, dates):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Landsat8Natif)
-            self.assertEqual(p.get_level(), "l1c")
-            self.assertEqual(p.get_platform(), "landsat8")
-            self.assertEqual(p.get_type(), "natif")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-            self.assertEqual(path.basename(p.get_metadata_file()), prod.split(".")[0] + ".HDR")
-            self.assertTrue(path.exists(p.get_metadata_file()))
+            self.assertEqual(p.level, "l1c")
+            self.assertEqual(p.platform, "landsat8")
+            self.assertEqual(p.type, "natif")
+            self.assertEqual(p.tile, tile)
+            self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
+            self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
+            self.assertTrue(path.exists(p.metadata_file))
             self.assertEqual(p, p)
 
         # Other prods:
@@ -117,13 +117,13 @@ class TestL8Product(unittest.TestCase):
         for prod, tile, date, level in zip(self.prod_l8_lc1, tiles, dates, levels):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Landsat8LC1)
-            self.assertEqual(p.get_level(), level)
-            self.assertEqual(p.get_platform(), "landsat8")
-            self.assertEqual(p.get_type(), "lc1")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-            self.assertEqual(path.basename(p.get_metadata_file()), prod.split(".")[0] + "_MTL.txt")
-            self.assertTrue(path.exists(p.get_metadata_file()))
+            self.assertEqual(p.level, level)
+            self.assertEqual(p.platform, "landsat8")
+            self.assertEqual(p.type, "lc1")
+            self.assertEqual(p.tile, tile)
+            self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
+            self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + "_MTL.txt")
+            self.assertTrue(path.exists(p.metadata_file))
             self.assertEqual(p, p)
 
         # Other prods:
@@ -138,13 +138,13 @@ class TestL8Product(unittest.TestCase):
         for prod, tile, date, level in zip(self.prod_l8_lc2, tiles, dates, levels):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Landsat8LC2)
-            self.assertEqual(p.get_level(), level)
-            self.assertEqual(p.get_platform(), "landsat8")
-            self.assertEqual(p.get_type(), "lc2")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-            self.assertEqual(path.basename(p.get_metadata_file()), prod.split(".")[0] + "_MTL.txt")
-            self.assertTrue(path.exists(p.get_metadata_file()))
+            self.assertEqual(p.level, level)
+            self.assertEqual(p.platform, "landsat8")
+            self.assertEqual(p.type, "lc2")
+            self.assertEqual(p.tile, tile)
+            self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
+            self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + "_MTL.txt")
+            self.assertTrue(path.exists(p.metadata_file))
             self.assertEqual(p, p)
 
         # Other prods:

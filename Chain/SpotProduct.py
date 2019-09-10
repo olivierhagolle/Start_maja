@@ -19,16 +19,21 @@ class Spot5Muscate(MajaProduct):
     """
     A Spot 5 muscate product
     """
-    def get_platform(self):
+
+    @property
+    def platform(self):
         return "spot5"
 
-    def get_type(self):
+    @property
+    def type(self):
         return "muscate"
 
-    def get_level(self):
+    @property
+    def level(self):
         return "l1c"
 
-    def get_tile(self):
+    @property
+    def tile(self):
         import re
         site = self.base.split("_")[-3]
         tile = re.search(self.reg_tile, site)
@@ -36,45 +41,52 @@ class Spot5Muscate(MajaProduct):
             return tile.group()[1:]
         return site
 
-    def get_metadata_file(self):
+    @property
+    def metadata_file(self):
         return self.get_file(filename="*MTD_ALL.xml")
 
-    def get_date(self):
+    @property
+    def date(self):
         str_date = self.base.split("_")[1]
         # Datetime has troubles parsing milliseconds, so it's removed:
         str_date_no_ms = str_date[:str_date.rfind("-")]
         return datetime.strptime(str_date_no_ms, "%Y%m%d-%H%M%S")
 
-    def is_valid(self):
-        if os.path.exists(self.get_metadata_file()):
+    @property
+    def validity(self):
+        if os.path.exists(self.metadata_file()):
             return True
         return False
 
-    def get_site(self):
-        from Common import ImageIO
+    @property
+    def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:
             raise e
-        driver = ImageIO.open_tiff(band_bx)
-        return Site.from_driver(self.get_tile(), driver)
+        return Site.from_raster(self.tile, band_bx)
 
 
 class Spot4Muscate(MajaProduct):
     """
     A Spot 4 muscate product
     """
-    def get_platform(self):
+
+    @property
+    def platform(self):
         return "spot4"
 
-    def get_type(self):
+    @property
+    def type(self):
         return "muscate"
 
-    def get_level(self):
+    @property
+    def level(self):
         return "l1c"
 
-    def get_tile(self):
+    @property
+    def tile(self):
         import re
         site = self.base.split("_")[-3]
         tile = re.search(self.reg_tile, site)
@@ -82,26 +94,28 @@ class Spot4Muscate(MajaProduct):
             return tile.group()[1:]
         return site
 
-    def get_metadata_file(self):
+    @property
+    def metadata_file(self):
         return self.get_file(filename="*MTD_ALL.xml")
 
-    def get_date(self):
+    @property
+    def date(self):
         str_date = self.base.split("_")[1]
         # Datetime has troubles parsing milliseconds, so it's removed:
         str_date_no_ms = str_date[:str_date.rfind("-")]
         return datetime.strptime(str_date_no_ms, "%Y%m%d-%H%M%S")
 
-    def is_valid(self):
-        if os.path.exists(self.get_metadata_file()):
+    @property
+    def validity(self):
+        if os.path.exists(self.metadata_file()):
             return True
         return False
 
-    def get_site(self):
-        from Common import ImageIO
+    @property
+    def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_bx = self.get_file(filename=r"*_B0?1*.tif")
         except IOError as e:
             raise e
-        driver = ImageIO.open_tiff(band_bx)
-        return Site.from_driver(self.get_tile(), driver)
+        return Site.from_raster(self.tile, band_bx)

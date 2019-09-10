@@ -20,53 +20,66 @@ class Sentinel2Natif(MajaProduct):
     """
     A Sentinel-2 natif product
     """
-    def get_platform(self):
+
+    @property
+    def platform(self):
         return "sentinel2"
 
-    def get_type(self):
+    @property
+    def type(self):
         return "natif"
 
-    def get_level(self):
+    @property
+    def level(self):
         return "l1c"
 
-    def get_tile(self):
+    @property
+    def tile(self):
         tile = re.search(self.reg_tile, self.base)
         if tile:
             return tile.group()[1:]
         raise ValueError("Cannot determine tile ID: %s" % self.base)
 
-    def get_metadata_file(self):
+    @property
+    def metadata_file(self):
         return self.get_file(filename="MTD_MSIL1C.xml")
 
-    def get_date(self):
+    @property
+    def date(self):
         str_date = self.base.split("_")[2]
         return datetime.strptime(str_date, "%Y%m%dT%H%M%S")
 
-    def is_valid(self):
-        if os.path.exists(self.get_metadata_file()):
+    @property
+    def validity(self):
+        if os.path.exists(self.metadata_file()):
             return True
         return False
 
-    def get_site(self):
+    @property
+    def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_b2 = self.get_file(filename=r"*B0?2*.jp2")
         except IOError as e:
             raise e
-        return Site.from_raster(self.get_tile(), band_b2)
+        return Site.from_raster(self.tile, band_b2)
 
 
 class Sentinel2Muscate(MajaProduct):
     """
     A Sentinel-2 muscate product
     """
-    def get_platform(self):
+
+    @property
+    def platform(self):
         return "sentinel2"
 
-    def get_type(self):
+    @property
+    def type(self):
         return "muscate"
 
-    def get_level(self):
+    @property
+    def level(self):
         if self.base.find("_L1C_") >= 0:
             return "l1c"
         elif self.base.find("_L2A_") >= 0:
@@ -75,26 +88,30 @@ class Sentinel2Muscate(MajaProduct):
             return "l3a"
         raise ValueError("Unknown product level for %s" % self.base)
 
-    def get_tile(self):
+    @property
+    def tile(self):
         tile = re.search(self.reg_tile, self.base)
         if tile:
             return tile.group()[1:]
         raise ValueError("Cannot determine tile ID: %s" % self.base)
 
-    def get_metadata_file(self):
+    @property
+    def metadata_file(self):
         return self.get_file(filename="*MTD_ALL.xml")
 
-    def get_date(self):
+    @property
+    def date(self):
         str_date = self.base.split("_")[1]
         # Datetime has troubles parsing milliseconds, so it's removed:
         str_date_no_ms = str_date[:str_date.rfind("-")]
         return datetime.strptime(str_date_no_ms, "%Y%m%d-%H%M%S")
 
-    def is_valid(self):
+    @property
+    def validity(self):
         from Common import FileSystem, XMLTools
-        if self.get_level() == "l1c" and os.path.exists(self.get_metadata_file()):
+        if self.level() == "l1c" and os.path.exists(self.metadata_file()):
             return True
-        if self.get_level() == "l2a":
+        if self.level() == "l2a":
             try:
                 jpi = FileSystem.find_single("*JPI_ALL.xml", self.fpath)
             except ValueError:
@@ -106,56 +123,66 @@ class Sentinel2Muscate(MajaProduct):
                 return True
         return False
 
-    def get_site(self):
+    @property
+    def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_b2 = self.get_file(filename=r"*B0?2*.tif")
         except IOError as e:
             raise e
-        return Site.from_raster(self.get_tile(), band_b2)
+        return Site.from_raster(self.tile, band_b2)
 
 
 class Sentinel2SSC(MajaProduct):
     """
     A Sentinel-2 ssc product
     """
-    def get_platform(self):
+
+    @property
+    def platform(self):
         return "sentinel2"
 
-    def get_type(self):
+    @property
+    def type(self):
         return "ssc"
 
-    def get_level(self):
+    @property
+    def level(self):
         if self.base.find("_L1VALD") >= 0:
             return "l1c"
         elif self.base.find("_L2VALD") >= 0:
             return "l2a"
         raise ValueError("Unknown product level for %s" % self.base)
 
-    def get_tile(self):
+    @property
+    def tile(self):
         tile = re.search(self.reg_tile[1:], self.base)
         if tile:
             return tile.group()
         raise ValueError("Cannot determine tile ID: %s" % self.base)
 
-    def get_metadata_file(self):
-        metadata_filename = "*" + self.get_tile() + "*" + self.get_date().strftime("%Y%m%d") + "*HDR"
+    @property
+    def metadata_file(self):
+        metadata_filename = "*" + self.tile + "*" + self.date.strftime("%Y%m%d") + "*HDR"
         return self.get_file(folders="../", filename=metadata_filename)
 
-    def get_date(self):
+    @property
+    def date(self):
         str_date = self.base.split(".")[0].split("_")[-1]
         # Add a timedelta of 12hrs in order to compensate for the missing H/M/S:
         return datetime.strptime(str_date, "%Y%m%d") + timedelta(hours=12)
 
-    def is_valid(self):
-        if os.path.exists(self.get_metadata_file()):
+    @property
+    def validity(self):
+        if os.path.exists(self.metadata_file()):
             return True
         return False
 
-    def get_site(self):
+    @property
+    def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
         try:
             band_b2 = self.get_file(filename=r"*B0?2*.DBL.TIF")
         except IOError as e:
             raise e
-        return Site.from_raster(self.get_tile(), band_b2)
+        return Site.from_raster(self.tile, band_b2)

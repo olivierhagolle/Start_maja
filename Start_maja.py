@@ -109,12 +109,12 @@ class StartMaja(object):
                                                                       self.__site_info,
                                                                       self.path_input_l2))
 
-        platform = list(set([prod.get_platform() for prod in self.avail_input_l1 + self.avail_input_l2]))
+        platform = list(set([prod.platform for prod in self.avail_input_l1 + self.avail_input_l2]))
         if len(platform) != 1:
             raise IOError("Cannot mix multiple platforms: %s" % platform)
         self.platform = platform[0]
 
-        ptype = list(set([prod.get_type() for prod in self.avail_input_l1 + self.avail_input_l2]))
+        ptype = list(set([prod.type for prod in self.avail_input_l1 + self.avail_input_l2]))
         if len(ptype) != 1:
             if self.platform == "sentinel2" and len(ptype) == 2:
                 pass
@@ -133,7 +133,7 @@ class StartMaja(object):
             else:
                 raise ValueError("Unknown date encountered: %s" % start)
         else:
-            dates = sorted([prod.get_date() for prod in self.avail_input_l1])
+            dates = sorted([prod.date for prod in self.avail_input_l1])
             self.start = dates[0]
 
         if end:
@@ -142,7 +142,7 @@ class StartMaja(object):
             else:
                 raise ValueError("Unknown date encountered: %s" % end)
         else:
-            dates = sorted([prod.get_date() for prod in self.avail_input_l1])
+            dates = sorted([prod.date prod in self.avail_input_l1])
             self.end = dates[-1]
 
         if self.start > self.end:
@@ -272,7 +272,7 @@ class StartMaja(object):
         avail_products = [Product.MajaProduct(f).factory() for f in avail_folders if p.isdir(f)]
         # Remove the ones that didn't work:
         avail_products = [prod for prod in avail_products if prod is not None]
-        return [prod for prod in avail_products if prod.get_level() == level.lower() and prod.get_tile() == tile]
+        return [prod for prod in avail_products if prod.level == level.lower() and prod.tile == tile]
 
     def get_dtm(self):
         """
@@ -340,7 +340,7 @@ class StartMaja(object):
 
         # Get actually usable L1 products:
         used_prod_l1 = [prod for prod in self.avail_input_l1
-                        if self.start <= prod.get_date() <= self.end]
+                        if self.start <= prod.date <= self.end]
 
         if not used_prod_l1:
             raise ValueError("No products available for the given start and end dates: %s -> %s"
@@ -350,7 +350,7 @@ class StartMaja(object):
         has_l2 = []
         for prod_l1 in used_prod_l1:
             for prod_l2 in self.avail_input_l2:
-                if abs(prod_l1.get_date() - prod_l2.get_date()) < max_product_difference:
+                if abs(prod_l1.date - prod_l2.date) < max_product_difference:
                     has_l2.append(prod_l1)
 
         # Setup workplans:
@@ -358,18 +358,18 @@ class StartMaja(object):
         # Process the first product separately:
         if used_prod_l1[0] not in has_l2 or self.overwrite:
             # Check if there is a recent L2 available for a nominal workplan
-            min_time = used_prod_l1[0].get_date() - max_l2_diff
+            min_time = used_prod_l1[0].date - max_l2_diff
             max_time = used_prod_l1[0]
-            has_closest_l2_prod = [prod for prod in self.avail_input_l2 if min_time <= prod.get_date() <= max_time]
+            has_closest_l2_prod = [prod for prod in self.avail_input_l2 if min_time <= prod.date <= max_time]
             if has_closest_l2_prod:
                 # Proceed with NOMINAL
                 workplans.append(Workplan.Nominal(wdir=self.rep_work,
                                                   outdir=self.path_input_l2,
                                                   l1=used_prod_l1[0],
-                                                  l2_date=used_prod_l1[0].get_date(),
+                                                  l2_date=used_prod_l1[0].date,
                                                   log_level=self.maja_log_level,
                                                   cams=self.filter_cams_by_product(self.cams_files,
-                                                                                   used_prod_l1[0].get_date())
+                                                                                   used_prod_l1[0].date)
                                                   ))
                 pass
             else:
@@ -381,7 +381,7 @@ class StartMaja(object):
                                                        l1_list=self.avail_input_l1[1:self.nbackward],
                                                        log_level=self.maja_log_level,
                                                        cams=self.filter_cams_by_product(self.cams_files,
-                                                                                        used_prod_l1[0].get_date())
+                                                                                        used_prod_l1[0].date)
                                                        ))
                     pass
                 else:
@@ -392,7 +392,7 @@ class StartMaja(object):
                                                    l1=used_prod_l1[0],
                                                    log_level=self.maja_log_level,
                                                    cams=self.filter_cams_by_product(self.cams_files,
-                                                                                    used_prod_l1[0].get_date())
+                                                                                    used_prod_l1[0].date)
                                                    ))
                     pass
                 pass
@@ -407,9 +407,9 @@ class StartMaja(object):
             workplans.append(Workplan.Nominal(wdir=self.rep_work,
                                               outdir=self.path_input_l2,
                                               l1=prod,
-                                              l2_date=prod.get_date(),
+                                              l2_date=prod.date,
                                               log_level=self.maja_log_level,
-                                              cams=self.filter_cams_by_product(self.cams_files, prod.get_date())
+                                              cams=self.filter_cams_by_product(self.cams_files, prod.date)
                                               ))
         
         # This should never happen:

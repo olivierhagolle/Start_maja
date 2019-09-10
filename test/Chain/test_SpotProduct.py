@@ -71,13 +71,13 @@ class TestSpotProduct(unittest.TestCase):
         for prod, tile, date, level in zip(self.prod_s4_mus, tiles, dates, levels):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Spot4Muscate)
-            self.assertEqual(p.get_level(), level)
-            self.assertEqual(p.get_platform(), "spot4")
-            self.assertEqual(p.get_type(), "muscate")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.get_metadata_file()).endswith("_MTD_ALL.xml"))
-            self.assertTrue(path.exists(p.get_metadata_file()))
+            self.assertEqual(p.level, level)
+            self.assertEqual(p.platform, "spot4")
+            self.assertEqual(p.type, "muscate")
+            self.assertEqual(p.tile, tile)
+            self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
+            self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
+            self.assertTrue(path.exists(p.metadata_file))
             self.assertEqual(p, p)
 
         # Other prods:
@@ -91,13 +91,13 @@ class TestSpotProduct(unittest.TestCase):
         for prod, tile, date in zip(self.prod_s5_mus, tiles, dates):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Spot5Muscate)
-            self.assertEqual(p.get_level(), "l1c")
-            self.assertEqual(p.get_platform(), "spot5")
-            self.assertEqual(p.get_type(), "muscate")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.get_metadata_file()).endswith("_MTD_ALL.xml"))
-            self.assertTrue(path.exists(p.get_metadata_file()))
+            self.assertEqual(p.level, "l1c")
+            self.assertEqual(p.platform, "spot5")
+            self.assertEqual(p.type, "muscate")
+            self.assertEqual(p.tile, tile)
+            self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
+            self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
+            self.assertTrue(path.exists(p.metadata_file))
             self.assertEqual(p, p)
 
         # Other prods:

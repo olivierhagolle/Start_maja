@@ -72,13 +72,13 @@ class TestVSProduct(unittest.TestCase):
         for prod, tile, date, level in zip(self.prod_vs_mus, tiles, dates, levels):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, VenusMuscate)
-            self.assertEqual(p.get_level(), level)
-            self.assertEqual(p.get_platform(), "venus")
-            self.assertEqual(p.get_type(), "muscate")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.get_metadata_file()).endswith("_MTD_ALL.xml"))
-            self.assertTrue(path.exists(p.get_metadata_file()))
+            self.assertEqual(p.level, level)
+            self.assertEqual(p.platform, "venus")
+            self.assertEqual(p.type, "muscate")
+            self.assertEqual(p.tile, tile)
+            self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
+            self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
+            self.assertTrue(path.exists(p.metadata_file))
             self.assertEqual(p, p)
 
         # Other prods:
@@ -92,13 +92,13 @@ class TestVSProduct(unittest.TestCase):
         for prod, tile, date in zip(self.prod_vs_nat, tiles, dates):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, VenusNatif)
-            self.assertEqual(p.get_level(), "l1c")
-            self.assertEqual(p.get_platform(), "venus")
-            self.assertEqual(p.get_type(), "natif")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-            self.assertEqual(path.basename(p.get_metadata_file()), prod.split(".")[0] + ".HDR")
-            self.assertTrue(path.exists(p.get_metadata_file()))
+            self.assertEqual(p.level, "l1c")
+            self.assertEqual(p.platform, "venus")
+            self.assertEqual(p.type, "natif")
+            self.assertEqual(p.tile, tile)
+            self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
+            self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
+            self.assertTrue(path.exists(p.metadata_file))
             self.assertEqual(p, p)
 
         # Other prods:

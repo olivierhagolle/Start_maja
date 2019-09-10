@@ -75,13 +75,13 @@ class TestS2Product(unittest.TestCase):
         for prod, tile, date, level in zip(self.prod_s2_mus, tiles, dates, levels):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Sentinel2Muscate)
-            self.assertEqual(p.get_level(), level)
-            self.assertEqual(p.get_platform(), "sentinel2")
-            self.assertEqual(p.get_type(), "muscate")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.get_metadata_file()).endswith("_MTD_ALL.xml"))
-            self.assertTrue(path.exists(p.get_metadata_file()))
+            self.assertEqual(p.level, level)
+            self.assertEqual(p.platform, "sentinel2")
+            self.assertEqual(p.type, "muscate")
+            self.assertEqual(p.tile, tile)
+            self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
+            self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
+            self.assertTrue(path.exists(p.metadata_file))
             self.assertEqual(p, p)
         # Other prods:
         for prod in self.prod_s2_prd + self.prod_s2_ssc + self.prod_s2_nat + self.prods_other:
@@ -94,13 +94,13 @@ class TestS2Product(unittest.TestCase):
         for prod, tile, date in zip(self.prod_s2_nat, tiles, dates):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Sentinel2Natif)
-            self.assertEqual(p.get_level(), "l1c")
-            self.assertEqual(p.get_platform(), "sentinel2")
-            self.assertEqual(p.get_type(), "natif")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.get_metadata_file()), "MTD_MSIL1C.xml")
-            self.assertTrue(path.exists(p.get_metadata_file()))
+            self.assertEqual(p.level, "l1c")
+            self.assertEqual(p.platform, "sentinel2")
+            self.assertEqual(p.type, "natif")
+            self.assertEqual(p.tile, tile)
+            self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
+            self.assertTrue(path.basename(p.metadata_file), "MTD_MSIL1C.xml")
+            self.assertTrue(path.exists(p.metadata_file))
             self.assertEqual(p, p)
 
         # Other prods:
@@ -115,13 +115,13 @@ class TestS2Product(unittest.TestCase):
         for prod, tile, date, level in zip(self.prod_s2_ssc, tiles, dates, levels):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Sentinel2SSC)
-            self.assertEqual(p.get_level(), level)
-            self.assertEqual(p.get_platform(), "sentinel2")
-            self.assertEqual(p.get_type(), "ssc")
-            self.assertEqual(p.get_tile(), tile)
-            self.assertEqual(p.get_date().strftime("%Y%m%dT%H%M%S"), date)
-            self.assertEqual(path.basename(p.get_metadata_file()), prod.split(".")[0] + ".HDR")
-            self.assertTrue(path.exists(p.get_metadata_file()))
+            self.assertEqual(p.level, level)
+            self.assertEqual(p.platform, "sentinel2")
+            self.assertEqual(p.type, "ssc")
+            self.assertEqual(p.tile, tile)
+            self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
+            self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
+            self.assertTrue(path.exists(p.metadata_file))
             self.assertEqual(p, p)
 
         # Other prods:
