@@ -29,7 +29,9 @@ class MajaProduct(object):
     reg_s4_mus = r"^SPOT4-HR\w+-XS_(\d{8})-\d{6}-\d{3}_L1C_\d{3}-\d{3}-\d_[DC]_V\d*-\d*$"
     reg_tile = r"T\d{2}[a-zA-Z]{3}"
 
-    def __init__(self, filepath):
+    base_resolution = (None, None)
+
+    def __init__(self, filepath, **kwargs):
         """
         Set the path to the root product folder
         :param filepath: The full path to the root product folder
@@ -37,6 +39,7 @@ class MajaProduct(object):
         from os import path as p
         self.fpath = p.realpath(filepath)
         self.base = p.basename(self.fpath)
+        self.mnt_resolution = kwargs.get("mnt_resolution", self.base_resolution)
         
     def __str__(self):
         return "\n".join(["Product:   " + self.base,
@@ -132,17 +135,17 @@ class MajaProduct(object):
         raise NotImplementedError
 
     @property
-    def dem_site(self):
+    def mnt_site(self):
         raise NotImplementedError
 
     @property
-    def maja_mnt_resolutions(self):
+    def mnt_resolutions_dict(self):
         raise NotImplementedError
 
     def get_mnt(self, **kwargs):
         from prepare_mnt.mnt.MNTFactory import MNTFactory
-        return MNTFactory(site=self.dem_site, platform_id=self.platform,
-                          mission_field=self.type_xml_maja, resolutions=self.maja_mnt_resolutions,
+        return MNTFactory(site=self.mnt_site, platform_id=self.platform,
+                          mission_field=self.type_xml_maja, resolutions=self.mnt_resolutions_dict,
                           **kwargs)
 
     def __lt__(self, other):

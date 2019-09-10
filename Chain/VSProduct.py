@@ -20,6 +20,8 @@ class VenusNatif(MajaProduct):
     A Venus natif product
     """
 
+    base_resolution = (5, -5)
+
     @property
     def platform(self):
         return "venus"
@@ -67,11 +69,18 @@ class VenusNatif(MajaProduct):
             raise e
         return Site.from_raster(self.tile, band_bx)
 
+    @property
+    def mnt_resolutions_dict(self):
+        return [{"name": "XS",
+                "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
+
 
 class VenusMuscate(MajaProduct):
     """
     A Venus muscate product
     """
+
+    base_resolution = (5, -5)
 
     @property
     def platform(self):
@@ -136,3 +145,8 @@ class VenusMuscate(MajaProduct):
         except IOError as e:
             raise e
         return Site.from_raster(self.tile, band_bx)
+
+    @property
+    def mnt_resolutions_dict(self):
+        return [{"name": "XS",
+                "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]

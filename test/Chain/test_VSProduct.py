@@ -79,6 +79,7 @@ class TestVSProduct(unittest.TestCase):
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
             self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
             self.assertTrue(path.exists(p.metadata_file))
+            self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '5 -5'}])
             self.assertEqual(p, p)
 
         # Other prods:
@@ -99,6 +100,7 @@ class TestVSProduct(unittest.TestCase):
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
             self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
             self.assertTrue(path.exists(p.metadata_file))
+            self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '5 -5'}])
             self.assertEqual(p, p)
 
         # Other prods:

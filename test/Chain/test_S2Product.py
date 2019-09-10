@@ -82,6 +82,8 @@ class TestS2Product(unittest.TestCase):
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
             self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
             self.assertTrue(path.exists(p.metadata_file))
+            self.assertEqual(p.mnt_resolutions_dict, [{"name": "R1", "val": "10 -10"},
+                                                      {"name": "R2", "val": "20 -20"}])
             self.assertEqual(p, p)
         # Other prods:
         for prod in self.prod_s2_prd + self.prod_s2_ssc + self.prod_s2_nat + self.prods_other:
@@ -101,6 +103,8 @@ class TestS2Product(unittest.TestCase):
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
             self.assertTrue(path.basename(p.metadata_file), "MTD_MSIL1C.xml")
             self.assertTrue(path.exists(p.metadata_file))
+            self.assertEqual(p.mnt_resolutions_dict, [{"name": "R1", "val": "10 -10"},
+                                                      {"name": "R2", "val": "20 -20"}])
             self.assertEqual(p, p)
 
         # Other prods:
@@ -122,6 +126,8 @@ class TestS2Product(unittest.TestCase):
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
             self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
             self.assertTrue(path.exists(p.metadata_file))
+            self.assertEqual(p.mnt_resolutions_dict, [{"name": "R1", "val": "10 -10"},
+                                                      {"name": "R2", "val": "20 -20"}])
             self.assertEqual(p, p)
 
         # Other prods:

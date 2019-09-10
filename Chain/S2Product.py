@@ -21,6 +21,8 @@ class Sentinel2Natif(MajaProduct):
     A Sentinel-2 natif product
     """
 
+    base_resolution = (10, -10)
+
     @property
     def platform(self):
         return "sentinel2"
@@ -64,11 +66,20 @@ class Sentinel2Natif(MajaProduct):
             raise e
         return Site.from_raster(self.tile, band_b2)
 
+    @property
+    def mnt_resolutions_dict(self):
+        return [{"name": "R1",
+                "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])},
+                {"name": "R2",
+                 "val": str(self.mnt_resolution[0] * 2) + " " + str(self.mnt_resolution[1] * 2)}]
+
 
 class Sentinel2Muscate(MajaProduct):
     """
     A Sentinel-2 muscate product
     """
+
+    base_resolution = (10, -10)
 
     @property
     def platform(self):
@@ -109,9 +120,9 @@ class Sentinel2Muscate(MajaProduct):
     @property
     def validity(self):
         from Common import FileSystem, XMLTools
-        if self.level() == "l1c" and os.path.exists(self.metadata_file()):
+        if self.level == "l1c" and os.path.exists(self.metadata_file()):
             return True
-        if self.level() == "l2a":
+        if self.level == "l2a":
             try:
                 jpi = FileSystem.find_single("*JPI_ALL.xml", self.fpath)
             except ValueError:
@@ -132,11 +143,20 @@ class Sentinel2Muscate(MajaProduct):
             raise e
         return Site.from_raster(self.tile, band_b2)
 
+    @property
+    def mnt_resolutions_dict(self):
+        return [{"name": "R1",
+                "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])},
+                {"name": "R2",
+                 "val": str(self.mnt_resolution[0] * 2) + " " + str(self.mnt_resolution[1] * 2)}]
+
 
 class Sentinel2SSC(MajaProduct):
     """
     A Sentinel-2 ssc product
     """
+
+    base_resolution = (10, -10)
 
     @property
     def platform(self):
@@ -186,3 +206,10 @@ class Sentinel2SSC(MajaProduct):
         except IOError as e:
             raise e
         return Site.from_raster(self.tile, band_b2)
+
+    @property
+    def mnt_resolutions_dict(self):
+        return [{"name": "R1",
+                "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])},
+                {"name": "R2",
+                 "val": str(self.mnt_resolution[0] * 2) + " " + str(self.mnt_resolution[1] * 2)}]

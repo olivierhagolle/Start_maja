@@ -11,7 +11,7 @@ Created on:     Sun Feb  3 17:15:00 2019
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from Chain.Product import MajaProduct
 
 
@@ -19,6 +19,8 @@ class Spot5Muscate(MajaProduct):
     """
     A Spot 5 muscate product
     """
+
+    base_resolution = (5, -5)
 
     @property
     def platform(self):
@@ -67,11 +69,18 @@ class Spot5Muscate(MajaProduct):
             raise e
         return Site.from_raster(self.tile, band_bx)
 
+    @property
+    def mnt_resolutions_dict(self):
+        return [{"name": "XS",
+                "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
+
 
 class Spot4Muscate(MajaProduct):
     """
     A Spot 4 muscate product
     """
+
+    base_resolution = (5, -5)
 
     @property
     def platform(self):
@@ -119,3 +128,8 @@ class Spot4Muscate(MajaProduct):
         except IOError as e:
             raise e
         return Site.from_raster(self.tile, band_bx)
+
+    @property
+    def mnt_resolutions_dict(self):
+        return [{"name": "XS",
+                "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]

@@ -20,6 +20,9 @@ class Landsat8Natif(MajaProduct):
     """
     A Landsat-8 natif product
     """
+
+    base_resolution = (30, -30)
+
     @property
     def platform(self):
         return "landsat8"
@@ -67,11 +70,18 @@ class Landsat8Natif(MajaProduct):
             raise e
         return Site.from_raster(self.tile, band_bx)
 
+    @property
+    def mnt_resolutions_dict(self):
+        return [{"name": "XS",
+                "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
+
 
 class Landsat8Muscate(MajaProduct):
     """
     A Landsat-8 muscate product
     """
+
+    base_resolution = (30, -30)
 
     @property
     def platform(self):
@@ -133,11 +143,18 @@ class Landsat8Muscate(MajaProduct):
             raise e
         return Site.from_raster(self.tile, band_bx)
 
+    @property
+    def mnt_resolutions_dict(self):
+        return [{"name": "XS",
+                "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
+
 
 class Landsat8LC1(MajaProduct):
     """
     A Landsat-8 ssc product
     """
+
+    base_resolution = (30, -30)
 
     @property
     def platform(self):
@@ -180,11 +197,18 @@ class Landsat8LC1(MajaProduct):
             raise e
         return Site.from_raster(self.tile, band_bx)
 
+    @property
+    def mnt_resolutions_dict(self):
+        return [{"name": "XS",
+                "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
+
 
 class Landsat8LC2(MajaProduct):
     """
     A Landsat-8 ssc product
     """
+
+    base_resolution = (30, -30)
 
     @property
     def platform(self):
@@ -226,3 +250,8 @@ class Landsat8LC2(MajaProduct):
         except IOError as e:
             raise e
         return Site.from_raster(self.tile, band_bx)
+
+    @property
+    def mnt_resolutions_dict(self):
+        return [{"name": "XS",
+                "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
