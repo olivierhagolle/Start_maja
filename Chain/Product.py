@@ -57,7 +57,6 @@ class MajaProduct(object):
         Detect the underlying product
         :return:
         """
-        # TODO Evtly as property ?
         import re
         from Chain.S2Product import Sentinel2SSC, Sentinel2Muscate, Sentinel2Natif
         from Chain.L8Product import Landsat8LC1, Landsat8LC2, Landsat8Muscate, Landsat8Natif
