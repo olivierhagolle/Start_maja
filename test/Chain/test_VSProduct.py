@@ -90,10 +90,11 @@ class TestVSProduct(unittest.TestCase):
     def test_reg_vs_natif(self):
         tiles = ["ISRAW906", "UNH"]
         dates = ["20180317T120000", "20180329T120000"]
-        for prod, tile, date in zip(self.prod_vs_nat, tiles, dates):
+        levels = ["l2a", "l1c"]
+        for prod, tile, date, level in zip(self.prod_vs_nat, tiles, dates, levels):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, VenusNatif)
-            self.assertEqual(p.level, "l1c")
+            self.assertEqual(p.level, level)
             self.assertEqual(p.platform, "venus")
             self.assertEqual(p.type, "natif")
             self.assertEqual(p.tile, tile)

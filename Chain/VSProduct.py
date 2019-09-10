@@ -32,8 +32,11 @@ class VenusNatif(MajaProduct):
 
     @property
     def level(self):
-        # TODO Correct this
-        return "l1c"
+        if self.base.find("_L1VALD") >= 0:
+            return "l1c"
+        elif self.base.find("_L2VALD") >= 0:
+            return "l2a"
+        raise ValueError("Unknown product level for %s" % self.base)
 
     @property
     def tile(self):
