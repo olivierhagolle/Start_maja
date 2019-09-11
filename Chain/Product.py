@@ -141,11 +141,19 @@ class MajaProduct(object):
     def mnt_resolutions_dict(self):
         raise NotImplementedError
 
+    @property
+    def platform_str(self):
+        platform_choices = {"sentinel2": "S2_",
+                            "landsat8": "L8",
+                            "venus": "VE"}
+        return platform_choices[self.platform]
+
     def get_mnt(self, **kwargs):
         from prepare_mnt.mnt.MNTFactory import MNTFactory
-        return MNTFactory(site=self.mnt_site, platform_id=self.platform,
-                          mission_field=self.type_xml_maja, resolutions=self.mnt_resolutions_dict,
+        return MNTFactory(site=self.mnt_site, platform_id=self.platform_str,
+                          mission_field=self.type_xml_maja, mnt_resolutions=self.mnt_resolutions_dict,
                           **kwargs).factory()
+
 
     def __lt__(self, other):
         return self.date < other.date
