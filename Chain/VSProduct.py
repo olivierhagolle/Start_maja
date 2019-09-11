@@ -67,7 +67,7 @@ class VenusNatif(MajaProduct):
     def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
         try:
-            band_bx = self.get_file(filename=r"*_B0?1*.tif")
+            band_bx = self.get_file(filename=r"*IMG*DBL.TIF")
         except IOError as e:
             raise e
         return Site.from_raster(self.tile, band_bx)
