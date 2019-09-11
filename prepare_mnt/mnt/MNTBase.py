@@ -33,7 +33,7 @@ class MNT(object):
             FileSystem.create_directory(self.dem_dir)
         self.wdir = kwargs.get("wdir", tempfile.mkdtemp(prefix="prepare_mnt_"))
         if not os.path.isdir(self.wdir):
-            FileSystem.create_directory(self.dem_dir)
+            FileSystem.create_directory(self.wdir)
         self.raw_dem = kwargs.get("raw_dem", tempfile.mkdtemp(prefix="raw_dem_"))
         if not os.path.exists(self.raw_dem):
             FileSystem.create_directory(self.raw_dem)
@@ -156,13 +156,13 @@ class MNT(object):
         image_bin = image > self.gsw_threshold
         ImageIO.write_geotiff_existing(image_bin, self.gsw_dst, drv)
 
-    def to_maja_format(self, platform_id, mission_field, coarse_res, resolutions):
+    def to_maja_format(self, platform_id, mission_field, mnt_resolutions, coarse_res):
         import os
         import tempfile
         from datetime import datetime
         from Common import ImageIO, XMLTools, FileSystem
         from prepare_mnt.mnt.DEMInfo import DEMInfo
-        assert len(resolutions) >= 1
+        assert len(mnt_resolutions) >= 1
         basename = str("%s_TEST_AUX_REFDE2_%s_%s" % (platform_id, self.site.nom, str(self.dem_version).zfill(4)))
         # Get water data
         self.prepare_water_data()
@@ -178,14 +178,14 @@ class MNT(object):
         grad_y, grad_x = self.calc_gradient(mnt_in)
         slope, aspect = self.calc_slope_aspect(grad_y, grad_x)
         # Full resolution:
-        write_resolution_name = True if len(resolutions) > 1 else False
+        write_resolution_name = True if len(mnt_resolutions) > 1 else False
         # Names for R1, R2 etc.
         rasters_written = []
         path_alt, path_asp, path_slp = "", "", ""
-        for res in resolutions:
+        for res in mnt_resolutions:
             # ALT:
             bname_alt = basename + "_ALT"
-            bname_alt += "_" + res["name"] if write_resolution_name else basename
+            bname_alt += "_" + str(res["name"]) if write_resolution_name else ""
             bname_alt += ".TIF"
             rel_alt = os.path.join(dbl_base, bname_alt)
             path_alt = os.path.join(self.dem_dir, rel_alt)
@@ -193,7 +193,7 @@ class MNT(object):
             rasters_written.append(rel_alt)
             # ASP:
             bname_asp = basename + "_ASP"
-            bname_asp += "_" + res["name"] if write_resolution_name else basename
+            bname_asp += "_" + res["name"] if write_resolution_name else ""
             bname_asp += ".TIF"
             rel_asp = os.path.join(dbl_base, bname_asp)
             tmp_asp = tempfile.mktemp(dir=self.wdir)
@@ -203,7 +203,7 @@ class MNT(object):
             rasters_written.append(rel_asp)
             # SLP:
             bname_slp = basename + "_SLP"
-            bname_slp += "_" + res["name"] if write_resolution_name else basename
+            bname_slp += "_" + res["name"] if write_resolution_name else ""
             bname_slp += ".TIF"
             rel_slp = os.path.join(dbl_base, bname_slp)
             tmp_slp = tempfile.mktemp(dir=self.wdir)
