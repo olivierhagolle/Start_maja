@@ -43,17 +43,11 @@ class DTMCreator:
         self.type_dem = type_dem
         self.coarse_res = int(coarse_res)
 
-    def run(self, outdir):
+    def run(self, outdir, tempdir):
         """
         Run the DTM Creation using the two modules tuilage_mnt_eau*py and lib_mnt.py
         :param outdir: Output directory
         """
-        # TODO Move this to the respective get_site() functions:
-        from osgeo import gdal
-        # Script runs fine with gdal >= 2.1.x
-        if int(gdal.VersionInfo()) <= 2010000:
-            raise ImportError("Please update your GDAL version to >2.1")
-
         # TODO:
         # - Write get_site() for each product type
         # - Write get_site() for kml
@@ -63,7 +57,7 @@ class DTMCreator:
         # - Put mnt into given mnt directory
         # - Interface new DTMCreation with new StartMaja
 
-        self.product.get_mnt(dem_dir=outdir, mnt_raw=self.dem_dir, gsw_dir=self.water_dir)
+        self.product.get_mnt(dem_dir=outdir, raw_dem=self.dem_dir, raw_gsw=self.water_dir, wdir=tempdir)
 
         print("Finished DTM creation for site/tile %s" % self.product.tile)
 
@@ -72,32 +66,32 @@ if __name__ == "__main__":
     import sys
     from osgeo import gdal
     assert sys.version_info >= (2, 7)
-    if int(gdal.VersionInfo()) == 2030000:
-        raise ImportError("prepare_mnt can not run on GDAL 2.3.0. Please select another version")
+    # Script runs fine with gdal >= 2.1.x
+    if int(gdal.VersionInfo()) <= 2010000:
+        raise ImportError("Please update your GDAL version to >2.1")
     import argparse
     parser = argparse.ArgumentParser()
-    tmp_dir = os.path.join("tmp", "prepare_mnt")
     parser.add_argument("-p", "--product",
                         help="The path to a Landsat-8, Venus or Sentinel-2 L1C/L2A product folder.",
                         required=True, type=str)
     parser.add_argument("-o", "--out_dir", help="Output directory. Default is the current directory.",
-                        default=os.getcwd(), required=True, type=str)
+                        default=os.getcwd(), required=False, type=str)
     parser.add_argument("-d", "--dem_dir",
                         help="The path to the folder containing the SRTM zip-archives."
-                             "If not existing, an attempt will be made to download them.",
-                        default=tmp_dir, required=False, type=str)
+                             "If not existing, an attempt will be made to download them.", required=False, type=str)
     parser.add_argument("-w", "--water_dir",
                         help="The path to the folder containing the GSW occurence .tif-files."
-                             "If not existing, an attempt will be made to download them.",
-                        default=tmp_dir, required=False, type=str)
-    parser.add_argument("-t", "--type_dem",
+                             "If not existing, an attempt will be made to download them.", required=False, type=str)
+    parser.add_argument("-t", "--temp_dir",
+                        help="The path to temp the folder."
+                             "If not existing, it is set to a /tmp/ location", required=False, type=str)
+    parser.add_argument("--type_dem",
                         help="DEM type. Default is 'SRTM'. Other options are:"
-                             "[TBD]",
-                        default="SRTM", required=False, type=str)
+                             "[TBD]", required=False, type=str)
+
+
     parser.add_argument("-c", "--coarse_res",
-                        help="Coarse resolution in meters. Default is 240",
-                        default=240, required=False, type=int)
-    # TODO Check the syntax for this:
+                        help="Coarse resolution in meters. Default is 240", default=240, required=False, type=int)
     parser.add_argument("--raw_resolution",
                         help="Do not round the product resolution to the next integer",
                         action="store", required=False, default=True)
@@ -108,4 +102,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     creator = DTMCreator(args.product, args.dem_dir, args.water_dir, args.type_dem, args.coarse_res)
-    creator.run(args.out_dir)
+    creator.run(args.out_dir, args.temp_dir)

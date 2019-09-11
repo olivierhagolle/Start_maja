@@ -15,12 +15,12 @@ class MNTFactory:
     """
     Create a given DEM in Maja format
     """
-    def __init__(self, site, platform_id, mission_field, resolutions, **kwargs):
+    def __init__(self, site, platform_id, mission_field, mnt_resolutions, **kwargs):
         self.mnt_type = kwargs.get("mnt_type", "srtm")
         self.site = site
         self.plaform_id = platform_id
         self.mission_field = mission_field
-        self.resolutions = resolutions
+        self.mnt_resolutions = mnt_resolutions
         self.coarse_res = kwargs.get("coarse_res", (240, -240))
         self.kwargs = kwargs
 
@@ -33,6 +33,8 @@ class MNTFactory:
         # TODO Add more options here: ALOS, TDX, EuDEM...
         if self.mnt_type == "srtm":
             return SRTM(site=self.site,
-                        **self.kwargs).to_maja_format(self.plaform_id, self.mission_field,
-                                                      self.resolutions, self.coarse_res)
+                        **self.kwargs).to_maja_format(platform_id=self.plaform_id,
+                                                      mission_field=self.mission_field,
+                                                      mnt_resolutions=self.mnt_resolutions,
+                                                      coarse_res=self.coarse_res)
         return None
