@@ -41,11 +41,19 @@ class VenusNatif(MajaProduct):
     @property
     def tile(self):
         import re
-        site = self.base.split("_")[4]
-        tile = re.search(self.reg_tile, site)
+        site_basic = self.base.split("_")[4]
+        # Try this more refined method.
+        # Helps to detect sites like "SUDOUE_5" which are split by another "_"
+        site_reg = r"^VE_\w{4}_VSC_L[12]VALD_(\w+)_\d{8}.DBL.DIR$"
+        site = re.search(site_reg, self.base)
+        tile = re.search(self.reg_tile, site_basic)
+        if site:
+            # Replace '_' by '-'
+            return site.group(1).replace("_", "-")
         if tile:
             return tile.group()[1:]
-        return site
+
+        return site_basic
 
     @property
     def metadata_file(self):
