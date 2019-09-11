@@ -57,6 +57,8 @@ def write_geotiff(img, dst, projection, coordinates, dtype=None):
     # Set output dtype if not specified. GDAL cannot write GTiff as binary files, so convert to uint8:
     if img.dtype == np.bool:
         dtype = gdal_array.NumericTypeCodeToGDALTypeCode(np.uint8)
+    if img.dtype == np.int64:
+        dtype = gdal_array.NumericTypeCodeToGDALTypeCode(np.int32)
     if not dtype:
         dtype = gdal_array.NumericTypeCodeToGDALTypeCode(img.dtype)
     dataset = driver.Create(dst, img.shape[1], img.shape[0], img.shape[2], dtype)
