@@ -145,7 +145,7 @@ class MajaProduct(object):
         from prepare_mnt.mnt.MNTFactory import MNTFactory
         return MNTFactory(site=self.mnt_site, platform_id=self.platform,
                           mission_field=self.type_xml_maja, resolutions=self.mnt_resolutions_dict,
-                          **kwargs)
+                          **kwargs).factory()
 
     def __lt__(self, other):
         return self.date < other.date
