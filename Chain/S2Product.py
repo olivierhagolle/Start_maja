@@ -202,10 +202,10 @@ class Sentinel2SSC(MajaProduct):
     def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
         try:
-            band_b2 = self.get_file(filename=r"*B0?2*.DBL.TIF")
+            band_bx = self.get_file(filename=r"*IMG*DBL.TIF")
         except IOError as e:
             raise e
-        return Site.from_raster(self.tile, band_b2)
+        return Site.from_raster(self.tile, band_bx, shape_index_y=1, shape_index_x=2)
 
     @property
     def mnt_resolutions_dict(self):
