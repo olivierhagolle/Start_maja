@@ -15,6 +15,7 @@ class DEMInfo:
     def __init__(self, site, dem_full_res):
         from Common import ImageIO
         import numpy as np
+        self.name = site.nom
         self.epsg = site.epsg_str
         self.ulx = site.ul[0]
         self.uly = site.ul[1]
