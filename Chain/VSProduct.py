@@ -48,8 +48,7 @@ class VenusNatif(MajaProduct):
         site = re.search(site_reg, self.base)
         tile = re.search(self.reg_tile, site_basic)
         if site:
-            # Replace '_' by '-'
-            return site.group(1).replace("_", "-")
+            return site.group(1)
         if tile:
             return tile.group()[1:]
 
@@ -78,7 +77,7 @@ class VenusNatif(MajaProduct):
             band_bx = self.get_file(filename=r"*IMG*DBL.TIF")
         except IOError as e:
             raise e
-        return Site.from_raster(self.tile, band_bx)
+        return Site.from_raster(self.tile, band_bx, shape_index_y=1, shape_index_x=2)
 
     @property
     def mnt_resolutions_dict(self):
