@@ -322,10 +322,12 @@ class MNT(object):
         ElementTree.SubElement(b2, "List_of_Extensions", count="0")
         b3 = ElementTree.SubElement(a, "Specific_Product_Header")
         b4 = ElementTree.SubElement(b3, "Instance_Id")
-        ElementTree.SubElement(b4, "Applicable_Site_Nick_Name").text = "Tile"
+        ElementTree.SubElement(b4, "Applicable_Site_Nick_Name").text = dem_info.name
         ElementTree.SubElement(b4, "File_Version").text = str(version).zfill(4)
-        b5 = ElementTree.SubElement(b3, "List_of_Applicable_SiteDefinition_Ids")
-        ElementTree.SubElement(b5, "List_of_Applicable_SiteDefinition_Ids", count="0")
+        b5 = ElementTree.SubElement(b3, "List_of_Applicable_SiteDefinition_Ids", count="1")
+        site_defintion_base = "_".join(basename_out.split("_")[:2])  # Get e.g. 'VE_TEST' or 'S2__TEST'
+        site_definiton_name = site_defintion_base + "_MPL_SITDEF_S_" + dem_info.name
+        ElementTree.SubElement(b5, "Applicable_SiteDefinition_Id", sn="1").text = site_definiton_name
         b6 = ElementTree.SubElement(b3, "DEM_Information")
         c1 = ElementTree.SubElement(b6, "Cartographic")
         d1 = ElementTree.SubElement(c1, "Coordinate_Reference_System")
@@ -338,8 +340,8 @@ class MNT(object):
         ElementTree.SubElement(d3, "By_Line", unit="m").text = str(dem_info.resx)
         ElementTree.SubElement(d3, "By_Column", unit="m").text = str(dem_info.resy)
         d4 = ElementTree.SubElement(c1, "Size")
-        ElementTree.SubElement(d4, "Lines").text = str(dem_info.lx)
-        ElementTree.SubElement(d4, "Columns").text = str(dem_info.ly)
+        ElementTree.SubElement(d4, "Lines").text = str(dem_info.ly)
+        ElementTree.SubElement(d4, "Columns").text = str(dem_info.lx)
         ElementTree.SubElement(b6, "Mean_Altitude_Over_L2_Coverage", unit="m").text = str(dem_info.mean_alt)
         ElementTree.SubElement(b6, "Altitude_Standard_Deviation_Over_L2_Coverage",
                                unit="m").text = str(dem_info.std_dev_alt)
