@@ -69,16 +69,21 @@ class Site:
         return dst_ds
 
     @staticmethod
-    def from_raster(name, raster):
+    def from_raster(name, raster, **kwargs):
         """
         Create site from a raster on disk
         :param name: The name of the site
         :param raster: The gdal raster
+        Optional arguments:
+        - shape_index_y: Select the band index for the Y-size
+        - shape_index_x: Select the band index for the X-size
         :return: A site class given the infos from the raster.
         """
         from Common import ImageIO
         raster, driver = ImageIO.tiff_to_array(raster, array_only=False)
-        nx, ny = raster.shape[:2]
+        shape_index_y = kwargs.get("shape_index_y", 0)
+        shape_index_x = kwargs.get("shape_index_x", 1)
+        ny, nx = raster.shape[shape_index_y], raster.shape[shape_index_x]
         epsg = ImageIO.get_epsg(driver)
         ul, lr = ImageIO.get_ul_lr(driver)
         xmin, xres, skx, ymax, sky, yres = driver.GetGeoTransform()
