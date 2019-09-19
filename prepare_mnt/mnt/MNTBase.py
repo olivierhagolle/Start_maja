@@ -325,6 +325,7 @@ class MNT(object):
         ElementTree.SubElement(b4, "Applicable_Site_Nick_Name").text = dem_info.name
         ElementTree.SubElement(b4, "File_Version").text = str(version).zfill(4)
         b5 = ElementTree.SubElement(b3, "List_of_Applicable_SiteDefinition_Ids", count="1")
+        # TODO Correct this:
         site_defintion_base = "_".join(basename_out.split("_")[:2])  # Get e.g. 'VE_TEST' or 'S2__TEST'
         site_definiton_name = site_defintion_base + "_MPL_SITDEF_S_" + dem_info.name
         ElementTree.SubElement(b5, "Applicable_SiteDefinition_Id", sn="1").text = site_definiton_name
