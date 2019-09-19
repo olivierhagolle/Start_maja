@@ -117,6 +117,7 @@ class StartMaja(object):
         ptype = list(set([prod.type for prod in self.avail_input_l1 + self.avail_input_l2]))
         if len(ptype) != 1:
             if self.platform == "sentinel2" and len(ptype) == 2:
+                # Case of S2A + S2B
                 pass
             else:
                 raise IOError("Cannot mix multiple plugin types: %s" % ptype)
@@ -142,7 +143,7 @@ class StartMaja(object):
             else:
                 raise ValueError("Unknown date encountered: %s" % end)
         else:
-            dates = sorted([prod.date prod in self.avail_input_l1])
+            dates = sorted([prod.date for prod in self.avail_input_l1])
             self.end = dates[-1]
 
         if self.start > self.end:
@@ -167,9 +168,8 @@ class StartMaja(object):
         logging.debug("Searching for DTM")
         try:
             self.dtm = self.get_dtm()
-        except OSError as e:
-            logging.debug("Cannot find DTM!")
-            logging.debug(e)
+        except OSError:
+            logging.debug("Cannot find DTM. Will attempt to download it...")
         else:
             logging.debug("Found DTM: %s" % self.dtm.hdr)
 
@@ -281,7 +281,7 @@ class StartMaja(object):
             *_AUX_REFDE2_TILEID_*DBL.DIR with TILEID e.g. T31TCH, KHUMBU ...
         A single .HDR file and an associated .DBL.DIR file
         has to be found. OSError is thrown otherwise.
-        :return: The full path to the hdr and dbl.dir
+        :return: The full path to the hdr and dbl.dir. Throws OSError if they're not found.
         """
         from Common import FileSystem
         regex = AuxFile.DTMFile.get_specifiable_regex() + r"T?" + self.tile + r"\w+.DBL.DIR"
@@ -430,6 +430,11 @@ class StartMaja(object):
             -   Create the output directory
             -   Run MAJA
         """
+        if not self.dtm:
+            # TODO Download MNT
+            self.dtm = self.avail_input_l1[0].get_mnt(dem_dir=self.rep_mnt,
+                                                      raw_dem=self.rep_dem,
+                                                      raw_gsw=self.rep_gsw)
         if not self.gipp.check_completeness():
             logging.debug("Downloading Gipp for %s %s" % (self.platform, self.ptype))
             self.gipp.download()
@@ -468,9 +473,9 @@ if __name__ == "__main__":
                                               "all products until the end date will be processed",
                         type=str, required=False, default="2000-01-01")
     parser.add_argument("-e", "--end", help="Start date for processing in format YYYY-MM-DD. If none is provided,"
-                                            "all products from the start date on will be processed",
+                                            "all products from the start date onwards will be processed",
                         type=str, required=False, default="3000-01-01")
-    parser.add_argument("-v", "--verbose", help="Provides detailed logging for Maja. Default is false",
+    parser.add_argument("-v", "--verbose", help="Provides detailed (DEBUG) logging for Maja. Default is false",
                         type=str, default="false")
     parser.add_argument("--nbackward", help="Number of products used to run in backward mode. Default is 8.",
                         type=int, default=int(8))
