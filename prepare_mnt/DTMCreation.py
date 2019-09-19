@@ -49,12 +49,6 @@ class DTMCreator:
         :param outdir: Output directory
         """
         # TODO:
-        # - Write get_site() for each product type
-        # - Write get_site() for kml
-        # - In main: Run get_site() for the given input (kml/product)
-        # - In run: Interface with libmnt + download the necessary srtm files
-        # - In run: Download the needed GSW tiles and prepare tiled water-mask
-        # - Put mnt into given mnt directory
         # - Interface new DTMCreation with new StartMaja
 
         self.product.get_mnt(dem_dir=outdir, raw_dem=self.dem_dir, raw_gsw=self.water_dir, wdir=tempdir)
@@ -88,8 +82,6 @@ if __name__ == "__main__":
     parser.add_argument("--type_dem",
                         help="DEM type. Default is 'SRTM'. Other options are:"
                              "[TBD]", required=False, type=str)
-
-
     parser.add_argument("-c", "--coarse_res",
                         help="Coarse resolution in meters. Default is 240", default=240, required=False, type=int)
     parser.add_argument("--raw_resolution",
