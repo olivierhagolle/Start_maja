@@ -184,8 +184,8 @@ class TestSRTM(unittest.TestCase):
         hdr, dbl = s.to_maja_format(platform_id="L8_",
                                     mission_field="LANDSAT8",
                                     coarse_res=(240, -240),
-                                    resolutions=[{"name": "R1",
-                                                  "val": "30 -30"}])
+                                    mnt_resolutions=[{"name": "R1",
+                                                     "val": "30 -30"}])
         self.assertTrue(os.path.exists(hdr))
         self.assertTrue(os.path.isdir(dbl))
 
@@ -203,10 +203,10 @@ class TestSRTM(unittest.TestCase):
         hdr, dbl = s.to_maja_format(platform_id="S2_",
                                     mission_field="SENTINEL-2_",
                                     coarse_res=(240, -240),
-                                    resolutions=[{"name": "R1",
-                                                  "val": "10 -10"},
-                                                 {"name": "R2",
-                                                  "val": "20 -20"}])
+                                    mnt_resolutions=[{"name": "R1",
+                                                     "val": "10 -10"},
+                                                    {"name": "R2",
+                                                     "val": "20 -20"}])
         self.assertTrue(os.path.exists(hdr))
         self.assertTrue(os.path.isdir(dbl))
 
