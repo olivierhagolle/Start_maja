@@ -47,12 +47,9 @@ class DTMCreator:
         """
         Run the DTM Creation using the two modules tuilage_mnt_eau*py and lib_mnt.py
         :param outdir: Output directory
+        :param tempdir: Temporary-/Working-directory
         """
-        # TODO:
-        # - Interface new DTMCreation with new StartMaja
-
         self.product.get_mnt(dem_dir=outdir, raw_dem=self.dem_dir, raw_gsw=self.water_dir, wdir=tempdir)
-
         print("Finished DTM creation for site/tile %s" % self.product.tile)
 
 
