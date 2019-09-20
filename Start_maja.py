@@ -475,12 +475,13 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--end", help="Start date for processing in format YYYY-MM-DD. If none is provided,"
                                             "all products from the start date onwards will be processed",
                         type=str, required=False, default="3000-01-01")
-    parser.add_argument("-v", "--verbose", help="Provides detailed (DEBUG) logging for Maja. Default is false",
+    parser.add_argument("--verbose", help="Provides detailed (DEBUG) logging for Maja. Default is false",
                         type=str, default="false")
     parser.add_argument("--nbackward", help="Number of products used to run in backward mode. Default is 8.",
                         type=int, default=int(8))
     parser.add_argument("--overwrite", help="Overwrite existing L2 products. Default is false.",
                         type=str, default="False")
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + str(StartMaja.version))
     # TODO Add optional platform parameter in order to distinguish between S2/L8/Vns for each site/tile
     # TODO Add "copy" parameter that copies files instead of symlink'n them.
     # TODO Add log level parameter for maja
