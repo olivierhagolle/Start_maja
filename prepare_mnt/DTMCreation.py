@@ -14,6 +14,8 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))  # Import relative modules
 
+__version__ = "4.0.1"
+
 
 class DTMCreator:
     """
@@ -87,7 +89,7 @@ if __name__ == "__main__":
     parser.add_argument("--nodownload",
                         help="Do not attempt any downloading of the files.",
                         action="store", required=False, default=False)
-
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + str(__version__))
     args = parser.parse_args()
 
     creator = DTMCreator(args.product, args.dem_dir, args.water_dir, args.type_dem, args.coarse_res)
