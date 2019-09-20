@@ -8,9 +8,8 @@
 #
 import os
 from ecmwfapi import ECMWFDataServer
-from convert_to_exo import process_one_file
+from convert_to_exo import RawCAMSArchive
 import datetime
-import timeit
 import optparse
 import sys
 
@@ -180,8 +179,8 @@ else :
 
 
 #Creation objets dates
-dt1 = datetime.datetime.strptime(options.start_date,'%Y%m%d')
-dt2 = datetime.datetime.strptime(options.end_date,'%Y%m%d')
+dt1 = datetime.datetime.strptime(options.start_date,'%Y-%m-%d')
+dt2 = datetime.datetime.strptime(options.end_date,'%Y-%m-%d')
 
 nb_days = (dt2-dt1).days + 1
 print '\nNumber of days =',nb_days
@@ -219,10 +218,10 @@ for i in range(nb_days):
         for t in range(len(time)):
             (nom_AOT,nom_RH,nom_MR)=download_files(dt,file_type,time[t],step,path_out)
             #conversion to MAJA DBL/HDR format
-            process_one_file(nom_AOT, nom_MR, nom_RH, path_out, options.archive_dir)
-            if not(options.keep):
-                os.remove(nom_AOT)
-                os.remove(nom_MR)
-                os.remove(nom_RH)
+            #process_one_file(nom_AOT, nom_MR, nom_RH, path_out, options.archive_dir)
+            # if not(options.keep):
+            #     os.remove(nom_AOT)
+            #     os.remove(nom_MR)
+            #     os.remove(nom_RH)
             
 
