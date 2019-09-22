@@ -12,28 +12,19 @@ from __future__ import print_function
 import argparse
 from datetime import datetime
 import os
+import sys
 import re
+
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))  # Import relative modules
 
 
 class RawCAMSArchive(object):
     """
     Converts a set of raw .nc files to the Maja format
     """
-    def __init__(self, input_dir, output_dir, sensor):
-        assert os.path.isdir(input_dir)
-        self.input_dir = input_dir
-        self.output_dir = output_dir
-        assert sensor in ['s2', 'l8', 've', 'gen']
-        self.sensor = sensor
-        self.cams_triplets = []
-        self.cams_files = self.get_list_of_cams_files()
-        for f in self.cams_files:
-            if self._get_raw_cams_date(f, cams_group="(AOT)"):
-                self.cams_triplets.append(self.get_raw_cams_triplet(f, self.cams_files))
-        # Sort out non-cams files:
-        self.cams_triplets = [c_file for c_file in self.cams_triplets if c_file is not None]
 
-    def _get_cams_root(self):
+    @staticmethod
+    def get_cams_root(sensor):
         """
         Create the root of a single cams file
         :return:
@@ -47,17 +38,17 @@ class RawCAMSArchive(object):
                             "gen": header_info("GEN_EXO_CAMS_CamsData.xsd", "1.00")}
         xmlns = "http://eop-cfi.esa.int/CFI"
         xsi = "http://www.w3.org/2001/XMLSchema-instance"
-        schema_location = "%s ./%s" % (xmlns, schema_by_sensor[self.sensor].schema_path)
+        schema_location = "%s ./%s" % (xmlns, schema_by_sensor[sensor].schema_path)
         type_xsi = "CAMS_Header_Type"
         root = ElementTree.Element("Earth_Explorer_Header",
                                    attrib={"xmlns": xmlns,
-                                           "schema_version": schema_by_sensor[self.sensor].schema_version,
+                                           "schema_version": schema_by_sensor[sensor].schema_version,
                                            "{" + xsi + "}schemaLocation": schema_location,
                                            "{" + xsi + "}type": type_xsi})
         return root
 
     @staticmethod
-    def _get_raw_cams_date(cams_file, cams_group="(AOT|MR|RH)"):
+    def get_raw_cams_date(cams_file, cams_group="(AOT|MR|RH)"):
         """
         Get the date from a file of the format CAMS_XXX_yyyymmddUTChhmmss.nc
         :param cams_file: The filename string of the cams file
@@ -172,9 +163,11 @@ class RawCAMSArchive(object):
         b4 = ElementTree.SubElement(b3, "ModelLevels")
         b4.text = " ".join(str(p) for p in press_levels)
 
-    def create_archive(self, netcdf, output_file_basename):
+    @staticmethod
+    def create_archive(output_dir, netcdf, output_file_basename):
         """
         Create the DBL.DIR folder
+        :param output_dir: The output directory
         :param netcdf: The list of netcdf files
         :param output_file_basename: The basename of the cams file of format .._EXO_CAMS_...
         :return: The DBL folder path as well as the relative path to the cams files.
@@ -182,23 +175,24 @@ class RawCAMSArchive(object):
         import shutil
         from Common import FileSystem
         destination_filename = "{}.DBL".format(output_file_basename)
-        destination_filepath = os.path.join(self.output_dir, destination_filename)
-        dbl_dir = os.path.join(self.output_dir, output_file_basename + ".DBL.DIR")
+        destination_filepath = os.path.join(output_dir, destination_filename)
+        dbl_dir = os.path.join(output_dir, output_file_basename + ".DBL.DIR")
         FileSystem.create_directory(dbl_dir)
         cams_file_to_return = []
-        for nc in netcdf:
-            shutil.copy(nc, os.path.join(dbl_dir, os.path.basename(nc)))
-            cams_file_to_return.append(os.path.join(destination_filename + ".DIR", os.path.basename(nc)))
+        for ncf in netcdf:
+            shutil.copy(ncf, os.path.join(dbl_dir, os.path.basename(ncf)))
+            cams_file_to_return.append(os.path.join(destination_filename + ".DIR", os.path.basename(ncf)))
         return destination_filepath, cams_file_to_return
 
-    def get_list_of_cams_files(self):
+    @staticmethod
+    def get_list_of_cams_files(input_dir):
         """
         Get all available cams files inside a directory tree sorting out the duplicates.
         :return: The list of available cams files.
         """
         from Common import FileSystem
         regex = r"CAMS_(AOT|MR|RH)_(\d{8}UTC\d{6})\.nc$"
-        raw_files = FileSystem.find(regex, self.input_dir)
+        raw_files = FileSystem.find(regex, input_dir)
         unique_files, basenames = [], []
         # Sort out duplicates by basename
         for i in raw_files:
@@ -208,7 +202,8 @@ class RawCAMSArchive(object):
                 unique_files.append(i)
         return unique_files
 
-    def get_raw_cams_triplet(self, aot_file, file_list):
+    @staticmethod
+    def get_raw_cams_triplet(aot_file, file_list):
         """
         Get the triplets of MR, AOT and RH CAMS files for the same date.
         :param aot_file: The AOT file of a given date.
@@ -219,11 +214,11 @@ class RawCAMSArchive(object):
         cams_file = {i: None for i in cams_types}
 
         # Start out using the date of a valid AOT file:
-        date_aot, _ = self._get_raw_cams_date(aot_file)
+        date_aot, _ = RawCAMSArchive.get_raw_cams_date(aot_file)
         input_dir = os.path.dirname(aot_file)
         for fl in file_list:
             # Find corresponding MR and RH files:
-            date_mr_rh, cams_type = self._get_raw_cams_date(fl)
+            date_mr_rh, cams_type = RawCAMSArchive.get_raw_cams_date(fl)
             if cams_type not in cams_types:
                 continue
             if date_mr_rh == date_aot and not cams_file[str(cams_type)]:
@@ -233,11 +228,14 @@ class RawCAMSArchive(object):
                 return None
         return list(cams_file.values())
 
-    def process_one_file(self, netcdf, acq_date, mission):
+    @staticmethod
+    def process_one_file(output_dir, aot_file, rh_file, mr_file, mission="s2"):
         """
         Process a single netcdf triplet
-        :param netcdf: The list of netcdf files
-        :param acq_date: The netcdf acquisition date. They all have the same date.
+        :param output_dir: The existing output directory
+        :param aot_file: The AOT .netcdf file
+        :param rh_file: The RH .netcdf file
+        :param mr_file: The MR .netcdf file
         :param mission: The desired mission.
         :return: Writes the DBL.DIR and HDR to the given output directory
         """
@@ -250,30 +248,25 @@ class RawCAMSArchive(object):
                            "gen": satellite("GENERIC", "GEN")}
         current_satellite = mission_choices[mission]
         date_end = datetime(year=2100, month=1, day=1)
+        acq_date = RawCAMSArchive.get_raw_cams_date(aot_file)[0]
+
+        if not acq_date:
+            raise ValueError("Cannot get Acquisition date for CAMS file %s " % aot_file)
 
         output_file_basename = "{}_OPER_EXO_CAMS_{}_{}".format(current_satellite.short_name,
                                                                acq_date.strftime("%Y%m%dT%H%M%S"),
                                                                date_end.strftime("%Y%m%dT%H%M%S"))
 
         # Create archive
-        dbl_filename, cams = self.create_archive(netcdf, output_file_basename)
+        netcdf = [aot_file, rh_file, mr_file]
+        dbl_filename, cams = RawCAMSArchive.create_archive(output_dir, netcdf, output_file_basename)
 
         # Create hdr
-        output_filename = os.path.join(self.output_dir, output_file_basename + ".HDR")
+        output_filename = os.path.join(output_dir, output_file_basename + ".HDR")
         basename_out = os.path.basename(os.path.splitext(output_filename)[0])
-        print(basename_out)
-        root = self._get_cams_root()
-        self._update_nodes(root, current_satellite.full_name, basename_out, date_end, acq_date, cams)
+        root = RawCAMSArchive.get_cams_root(mission)
+        RawCAMSArchive._update_nodes(root, current_satellite.full_name, basename_out, date_end, acq_date, cams)
         XMLTools.write_xml(root, output_filename)
-
-    def convert_to_exo(self):
-        """
-        Process all netcdf files to Maja format.
-        :return: Writes a set of DBL.DIR and HDR files to the given output directory
-        """
-        for nc_files in self.cams_triplets:
-            cams_date, _ = self._get_raw_cams_date(nc_files[0])
-            self.process_one_file(nc_files, cams_date, self.sensor)
 
 
 if __name__ == "__main__":
@@ -286,6 +279,13 @@ if __name__ == "__main__":
     required_arguments.add_argument('-s', "--sensor", choices=['s2', 'l8', 've', 'gen'], required=True)
 
     args = argParser.parse_args()
-
-    c = RawCAMSArchive(args.input_dir, args.output_dir, args.sensor)
-    c.convert_to_exo()
+    cams_triplets = []
+    cams_files = RawCAMSArchive.get_list_of_cams_files(args.input_dir)
+    for f in cams_files:
+        if RawCAMSArchive.get_raw_cams_date(f, cams_group="(AOT)"):
+            cams_triplets.append(RawCAMSArchive.get_raw_cams_triplet(f, cams_files))
+    # Sort out non-cams files:
+    cams_triplets = [c_file for c_file in cams_triplets if c_file is not None]
+    for nc in cams_triplets:
+        aot, rh, mr = nc[0], nc[1], nc[2]
+        RawCAMSArchive.process_one_file(args.output_dir, aot, rh, mr, args.sensor)
