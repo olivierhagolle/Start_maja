@@ -79,14 +79,14 @@ class Workplan(object):
         :param gipps: The GIPP object
         :return: The full path to the created input directory
         """
-        from Common.FileSystem import create_directory, remove_directory, symlink
+        from Common.FileSystem import create_directory, remove_directory
         # Try to remove the directory before proceeding:
         remove_directory(self.input_dir)
         create_directory(self.input_dir)
         create_directory(self.wdir)
         if not os.path.isdir(self.input_dir) or not os.path.isdir(self.wdir):
             raise OSError("Cannot create temp directory %s, %s" % (self.input_dir, self.wdir))
-        symlink(self.l1.fpath, os.path.join(self.input_dir, self.l1.base))
+        self.l1.link(self.input_dir)
         for f in self.aux_files:
             f.link(self.input_dir)
         dtm.link(self.input_dir)
@@ -162,11 +162,11 @@ class Backward(Workplan):
         :param conf: The full path to the userconf folder
         :return: The return code of the Maja app
         """
-        from Common.FileSystem import symlink, remove_directory
+        from Common.FileSystem import remove_directory
         self.create_working_dir(dtm, gipp)
         # Link additional L1 products:
         for prod in self.l1_list:
-            symlink(prod.fpath, os.path.join(self.input_dir, prod.base))
+            prod.link(self.input_dir)
         return_code = self.launch_maja(maja, wdir=self.wdir, inputdir=self.input_dir, outdir=self.outdir, conf=conf)
         remove_directory(self.input_dir)
         return return_code
@@ -213,8 +213,8 @@ class Nominal(Workplan):
             logging.info("%s products found for date %s" % (len(l2_prods), self.date))
         # Take the first product:
         self.l2 = l2_prods[0]
-        # Link additional L1 products:
-        symlink(self.l2.fpath, os.path.join(self.input_dir, self.l2.base))
+        # Link additional L2 products:
+        self.l2.link(self.input_dir)
         return_code = self.launch_maja(maja, wdir=self.wdir, inputdir=self.input_dir, outdir=self.outdir, conf=conf)
         remove_directory(self.input_dir)
         return return_code

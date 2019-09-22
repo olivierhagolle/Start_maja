@@ -62,7 +62,7 @@ class Spot5Muscate(MajaProduct):
 
     def link(self, link_dir):
         from Common.FileSystem import symlink
-        symlink(self.fpath, link_dir)
+        symlink(self.fpath, os.path.join(link_dir, self.base))
 
     @property
     def mnt_site(self):
@@ -126,7 +126,7 @@ class Spot4Muscate(MajaProduct):
 
     def link(self, link_dir):
         from Common.FileSystem import symlink
-        symlink(self.fpath, link_dir)
+        symlink(self.fpath, os.path.join(link_dir, self.base))
 
     @property
     def mnt_site(self):

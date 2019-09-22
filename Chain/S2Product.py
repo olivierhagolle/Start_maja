@@ -59,7 +59,7 @@ class Sentinel2Natif(MajaProduct):
 
     def link(self, link_dir):
         from Common.FileSystem import symlink
-        symlink(self.fpath, link_dir)
+        symlink(self.fpath, os.path.join(link_dir, self.base))
 
     @property
     def mnt_site(self):
@@ -141,7 +141,7 @@ class Sentinel2Muscate(MajaProduct):
 
     def link(self, link_dir):
         from Common.FileSystem import symlink
-        symlink(self.fpath, link_dir)
+        symlink(self.fpath, os.path.join(link_dir, self.base))
 
     @property
     def mnt_site(self):
@@ -209,8 +209,9 @@ class Sentinel2SSC(MajaProduct):
 
     def link(self, link_dir):
         from Common.FileSystem import symlink
-        symlink(self.fpath, link_dir)
-        symlink(self.metadata_file, link_dir)
+        symlink(self.fpath, os.path.join(link_dir, self.base))
+        mtd_file = self.metadata_file
+        symlink(mtd_file, os.path.join(link_dir, os.path.basename(mtd_file)))
 
     @property
     def mnt_site(self):

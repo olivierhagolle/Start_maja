@@ -57,8 +57,9 @@ class Landsat8Natif(MajaProduct):
 
     def link(self, link_dir):
         from Common.FileSystem import symlink
-        symlink(self.fpath, link_dir)
-        symlink(self.metadata_file, link_dir)
+        symlink(self.fpath, os.path.join(link_dir, self.base))
+        mtd_file = self.metadata_file
+        symlink(mtd_file, os.path.join(link_dir, os.path.basename(mtd_file)))
 
     @property
     def date(self):
@@ -141,7 +142,7 @@ class Landsat8Muscate(MajaProduct):
 
     def link(self, link_dir):
         from Common.FileSystem import symlink
-        symlink(self.fpath, link_dir)
+        symlink(self.fpath, os.path.join(link_dir, self.base))
 
     @property
     def mnt_site(self):
@@ -196,6 +197,10 @@ class Landsat8LC1(MajaProduct):
         if os.path.exists(self.metadata_file()):
             return True
         return False
+
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, os.path.join(link_dir, self.base))
 
     @property
     def mnt_site(self):
@@ -253,7 +258,7 @@ class Landsat8LC2(MajaProduct):
 
     def link(self, link_dir):
         from Common.FileSystem import symlink
-        symlink(self.fpath, link_dir)
+        symlink(self.fpath, os.path.join(link_dir, self.base))
 
     @property
     def mnt_site(self):
