@@ -494,7 +494,7 @@ class StartMaja(object):
 
 
 if __name__ == "__main__":
-    assert sys.version_info >= (3, 4)
+    assert sys.version_info >= (3, 5)
 
     import argparse
     parser = argparse.ArgumentParser()
