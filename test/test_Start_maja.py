@@ -83,6 +83,7 @@ class TestStartMaja(unittest.TestCase):
 
         cls.folders_file = os.path.join(cls.root, "test_working_folders_file.txt")
         modify_folders_file(cls.template_folders_file, new_file=cls.folders_file,
+                            exeMaja=os.getcwd(),
                             repWork=os.getcwd(),
                             repGIPP=os.getcwd(),
                             repL1=os.getcwd(),
