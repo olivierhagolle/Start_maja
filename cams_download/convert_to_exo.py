@@ -12,7 +12,10 @@ from __future__ import print_function
 import argparse
 from datetime import datetime
 import os
+import sys
 import re
+
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))  # Import relative modules
 
 
 class RawCAMSArchive(object):
@@ -177,7 +180,7 @@ class RawCAMSArchive(object):
         FileSystem.create_directory(dbl_dir)
         cams_file_to_return = []
         for ncf in netcdf:
-            shutil.copy(nc, os.path.join(dbl_dir, os.path.basename(ncf)))
+            shutil.copy(ncf, os.path.join(dbl_dir, os.path.basename(ncf)))
             cams_file_to_return.append(os.path.join(destination_filename + ".DIR", os.path.basename(ncf)))
         return destination_filepath, cams_file_to_return
 
@@ -226,7 +229,7 @@ class RawCAMSArchive(object):
         return list(cams_file.values())
 
     @staticmethod
-    def process_one_file(output_dir, aot_file, rh_file, mr_file, mission):
+    def process_one_file(output_dir, aot_file, rh_file, mr_file, mission="s2"):
         """
         Process a single netcdf triplet
         :param output_dir: The existing output directory
@@ -245,7 +248,8 @@ class RawCAMSArchive(object):
                            "gen": satellite("GENERIC", "GEN")}
         current_satellite = mission_choices[mission]
         date_end = datetime(year=2100, month=1, day=1)
-        acq_date = RawCAMSArchive.get_raw_cams_date(aot_file)
+        acq_date = RawCAMSArchive.get_raw_cams_date(aot_file)[0]
+
         if not acq_date:
             raise ValueError("Cannot get Acquisition date for CAMS file %s " % aot_file)
 
@@ -260,7 +264,6 @@ class RawCAMSArchive(object):
         # Create hdr
         output_filename = os.path.join(output_dir, output_file_basename + ".HDR")
         basename_out = os.path.basename(os.path.splitext(output_filename)[0])
-        print(basename_out)
         root = RawCAMSArchive.get_cams_root(mission)
         RawCAMSArchive._update_nodes(root, current_satellite.full_name, basename_out, date_end, acq_date, cams)
         XMLTools.write_xml(root, output_filename)
