@@ -133,6 +133,9 @@ class MajaProduct(object):
     def validity(self):
         raise NotImplementedError
 
+    def link(self, link_dir):
+        raise NotImplementedError
+
     @property
     def mnt_site(self):
         raise NotImplementedError
@@ -153,7 +156,6 @@ class MajaProduct(object):
         return MNTFactory(site=self.mnt_site, platform_id=self.platform_str,
                           mission_field=self.type_xml_maja, mnt_resolutions=self.mnt_resolutions_dict,
                           **kwargs).factory()
-
 
     def __lt__(self, other):
         return self.date < other.date

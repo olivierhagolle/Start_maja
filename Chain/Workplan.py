@@ -20,24 +20,24 @@ class Workplan(object):
     """
     mode = "INIT"
 
-    def __init__(self, root, outdir, l1, log_level="INFO", **kwargs):
+    def __init__(self, wdir, outdir, l1, log_level="INFO", **kwargs):
         supported_params = {
             param
             for param in ("cams", "meteo", )
             if kwargs.get(param, None) is not None
         }
         # Check if the directories exist:
-        assert os.path.isdir(root)
+        assert os.path.isdir(wdir)
         assert os.path.isdir(outdir)
         self.l1 = l1
         self.outdir = outdir
 
-        self.root = root
+        self.root = wdir
         self.input_dir = os.path.join(self.root, "Start_maja_" + self.get_dirname(self.l1.base))
         self.wdir = os.path.join(self.input_dir, "maja_working_directory")
 
-        self.tile = self.l1.get_tile()
-        self.date = self.l1.get_date()
+        self.tile = self.l1.tile
+        self.date = self.l1.date
         self.log_level = log_level if log_level.upper() in ['INFO', 'PROGRESS', 'WARNING', 'DEBUG', 'ERROR'] else "INFO"
         self.aux_files = []
         for key in supported_params:
@@ -203,8 +203,8 @@ class Nominal(Workplan):
         avail_input_l2 = StartMaja.get_available_products(self.outdir, "l2a", self.tile)
         # Get only products which are close to the desired l2 date and before the l1 date:
         l2_prods = [prod for prod in avail_input_l2
-                    if abs(prod.get_date() - self.l2_date) < StartMaja.max_l2_diff and
-                    prod.get_date() < self.date and prod.is_valid()]
+                    if abs(prod.date - self.l2_date) < StartMaja.max_l2_diff and
+                    prod.date < self.date and prod.is_valid()]
         if not l2_prods:
             # TODO Pass on mode backward/init here.
             raise ValueError("Cannot find previous L2 product for date %s in %s"

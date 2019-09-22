@@ -70,6 +70,11 @@ class VenusNatif(MajaProduct):
             return True
         return False
 
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, link_dir)
+        symlink(self.metadata_file, link_dir)
+
     @property
     def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
@@ -146,6 +151,10 @@ class VenusMuscate(MajaProduct):
             if "L2VALD" in validity_flags:
                 return True
         return False
+
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, link_dir)
 
     @property
     def mnt_site(self):

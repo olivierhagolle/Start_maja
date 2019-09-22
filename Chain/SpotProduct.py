@@ -60,6 +60,10 @@ class Spot5Muscate(MajaProduct):
             return True
         return False
 
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, link_dir)
+
     @property
     def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
@@ -119,6 +123,10 @@ class Spot4Muscate(MajaProduct):
         if os.path.exists(self.metadata_file()):
             return True
         return False
+
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, link_dir)
 
     @property
     def mnt_site(self):

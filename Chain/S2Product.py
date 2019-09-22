@@ -57,11 +57,16 @@ class Sentinel2Natif(MajaProduct):
             return True
         return False
 
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, link_dir)
+
     @property
     def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
+        from Common import FileSystem
         try:
-            band_b2 = self.get_file(filename=r"*B0?2*.jp2")
+            band_b2 = FileSystem.find_single(pattern=r"*B0?2*.jp2", path=self.fpath)
         except IOError as e:
             raise e
         return Site.from_raster(self.tile, band_b2)
@@ -134,6 +139,10 @@ class Sentinel2Muscate(MajaProduct):
                 return True
         return False
 
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, link_dir)
+
     @property
     def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
@@ -197,6 +206,11 @@ class Sentinel2SSC(MajaProduct):
         if os.path.exists(self.metadata_file()):
             return True
         return False
+
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, link_dir)
+        symlink(self.metadata_file, link_dir)
 
     @property
     def mnt_site(self):

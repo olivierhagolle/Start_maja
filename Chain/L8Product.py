@@ -55,6 +55,11 @@ class Landsat8Natif(MajaProduct):
             return True
         return False
 
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, link_dir)
+        symlink(self.metadata_file, link_dir)
+
     @property
     def date(self):
         str_date = self.base.split(".")[0].split("_")[-1]
@@ -134,6 +139,10 @@ class Landsat8Muscate(MajaProduct):
                 return True
         return False
 
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, link_dir)
+
     @property
     def mnt_site(self):
         from prepare_mnt.mnt.SiteInfo import Site
@@ -162,7 +171,7 @@ class Landsat8LC1(MajaProduct):
 
     @property
     def type(self):
-        return "lc1"
+        return "natif"
 
     @property
     def level(self):
@@ -216,7 +225,7 @@ class Landsat8LC2(MajaProduct):
 
     @property
     def type(self):
-        return "lc2"
+        return "natif"
 
     @property
     def level(self):
@@ -241,6 +250,10 @@ class Landsat8LC2(MajaProduct):
         if os.path.exists(self.metadata_file()):
             return True
         return False
+
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, link_dir)
 
     @property
     def mnt_site(self):
