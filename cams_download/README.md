@@ -51,6 +51,7 @@ The user can choose the following parameters with the command line:
  - w: path to folder where netcdf data are stored (can be considered as a temporary file)
  - a: path to folder where DBL/HDR files are stored
  - k: to keep the netcdf files
+ - p: The platform identifier
 
 Other parameters could be accessed within the code :
 
@@ -76,6 +77,13 @@ duaod550	  Dust Aerosol Optical Depth at 550nm
 omaod550	  OrganicMatter Aerosol Optical Depth at 550nm
 ```
 
+From 2019/07/10 onwards, the format changed. The follwing AOT models were added:
+```
+Variable name     Description
+niaod550          Nitrate Aerosol Optical Depth at 550nm
+amaod550          Ammonium Aerosol Optical Depth at 550nm
+```
+
  - Model files: mass Mixing Ratios (MR: expressed in kg of aerosol per kg of dry air [kg/kg]) of the aerosol models at 60 different altitude levels (model levels).
 ```
 Variable name	  Description
@@ -90,6 +98,14 @@ aermr08		  Hydrophilic Organic Matter Aerosol Mixing Ratio
 aermr09		  Hydrophobic Black Carbon Aerosol Mixing Ratio
 aermr10		  Hydrophilic Black Carbon Aerosol Mixing Ratio
 aermr11		  Sulphate Aerosol Mixing Ratio
+```
+
+From 2019/07/10 onwards, the format changed. The follwing mixing ratios were added:
+```
+Variable name     Description
+aermr16           Nitrate fine mode aerosol mass mixing ratio
+aermr17           Nitrate coarse mode aerosol mass mixing ratio
+aermr18           Ammonium aerosol mass mixing ratio
 ```
 
  - Pressure files: Relative Humidity (RH: expressed in %) at 22 different altitude levels (pressure levels).
