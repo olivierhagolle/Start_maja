@@ -30,4 +30,5 @@ install:
 # command to run tests
 script:
   - conda env list
+  - conda list
   - pytest -v
