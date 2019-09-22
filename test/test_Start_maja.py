@@ -15,7 +15,7 @@ from Start_maja import StartMaja
 import sys
 import os
 from datetime import datetime
-sys.path.append(os.path.join(StartMaja.current_dir, "Common"))  # Replaces __init__.py
+sys.path.append(StartMaja.current_dir)  # Replaces __init__.py
 
 
 def modify_folders_file(root, new_file, **kwargs):
@@ -61,9 +61,10 @@ class TestStartMaja(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        import DummyFiles
+        from Common import DummyFiles
+        from Common import FileSystem
         cls.product_root = os.path.join(cls.root, cls.tile)
-        os.makedirs(cls.product_root)
+        FileSystem.create_directory(cls.product_root)
         DummyFiles.L1Generator(cls.product_root,
                                tile=cls.tile,
                                date=cls.start_product,
@@ -100,13 +101,13 @@ class TestStartMaja(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        import shutil
+        from Common import FileSystem
         # In case there's duplicates, remove them:
-        shutil.rmtree(cls.product_root)
-        os.remove(cls.folders_file)
-        shutil.rmtree(cls.cams)
-        shutil.rmtree(cls.mnt.dbl[0])
-        os.remove(cls.mnt.hdr[0])
+        FileSystem.remove_directory(cls.product_root)
+        FileSystem.remove_file(cls.folders_file)
+        FileSystem.remove_directory(cls.cams)
+        FileSystem.remove_directory(cls.mnt.dbl[0])
+        FileSystem.remove_file(cls.mnt.hdr[0])
 
     def test_dates_and_products(self):
         start_maja = StartMaja(self.folders_file,
@@ -123,7 +124,7 @@ class TestStartMaja(unittest.TestCase):
         self.assertEqual(start_maja.end, self.end_product)
 
     def test_parasite_l2a_product(self):
-        import DummyFiles
+        from Common import DummyFiles
         prod = DummyFiles.L2Generator(self.product_root,
                                       platform="VE",
                                       tile="T31TCH")
