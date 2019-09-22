@@ -24,8 +24,8 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION gdal numpy scipy nose coverage
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION gdal numpy scipy coverage
   - conda activate test-environment
 # command to run tests
 script:
-  - nosetests --with-xunit --with-coverage --cover-inclusive --cover-xml test/* -v
+  - pytest -v
