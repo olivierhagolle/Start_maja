@@ -3,11 +3,13 @@ python:
   - 3.6
 
 before_install:
-  - sudo apt-get install libgdal-dev
+  - sudo apt-get install libgdal-dev gdal-bin
 # command to install dependencies
 install:
+  # Now install Python binding for GDAL
+  - export CPLUS_INCLUDE_PATH=/usr/include/gdal
+  - export C_INCLUDE_PATH=/usr/include/gdal
   - pip install -r requirements.txt
-  - pip install --global-option=build_ext --global-option="-I/usr/include/gdal" GDAL
 # command to run tests
 script:
   - pytest
