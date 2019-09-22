@@ -1,9 +1,9 @@
 language: python
 python:
   # We don't actually use the Travis Python, but this keeps it organized.
-  - "2.7"
-  - "3.5"
+  - "3.4"
   - "3.6"
+  - "3.7"
 before_install:
   - sudo apt-get install libgdal-dev gdal-bin
 install:
@@ -24,14 +24,7 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION gdal numpy scipy coverage pytest
   - conda activate test-environment
-  - conda install gdal numpy scipy coverage pytest
-# command to run tests
 script:
-  - conda env list
-  - conda list
-  - python -c "import sys; print(sys.path)"
-  - python -c "from osgeo import gdal; print(gdal.VersionInfo())"
-  - which pytest
   - pytest -v
