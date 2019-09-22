@@ -403,19 +403,50 @@ class StartMaja(object):
         else:
             logging.info("Skipping L1 product %s because it was already processed!" % used_prod_l1[0].base)
 
-        # For the rest: Setup NOMINAL
-        for prod in used_prod_l1[1:]:
+        # For the rest: Setup NOMINAL.
+        # Except: The time series is 'stopped' - The gap between two products is too large.
+        # In this case, proceed with a re-init.
+        for i, prod in enumerate(used_prod_l1[1:]):
             if prod in has_l2 or self.overwrite:
                 logging.info("Skipping L1 product %s because it was already processed!" % prod.base)
                 continue
-            workplans.append(Workplan.Nominal(wdir=self.rep_work,
-                                              outdir=self.path_input_l2,
-                                              l1=prod,
-                                              l2_date=prod.date,
-                                              log_level=self.maja_log_level,
-                                              cams=self.filter_cams_by_product(self.cams_files, prod.date)
-                                              ))
-        
+            # Note: i, in this case is the previous product -> Not the current one
+            date_gap = prod.date - used_prod_l1[i].date
+            if date_gap >= max_l2_diff:
+                logging.info("Will not continue time-series. Date gap too large between products %s vs. %s" %
+                             (prod.date, used_prod_l1[i].date))
+                if len(self.avail_input_l1[(i + 1):]) >= self.nbackward:
+                    # Proceed with BACKWARD
+                    workplans.append(Workplan.Backward(wdir=self.rep_work,
+                                                       outdir=self.path_input_l2,
+                                                       l1=prod,
+                                                       l1_list=self.avail_input_l1[(i+1):self.nbackward],
+                                                       log_level=self.maja_log_level,
+                                                       cams=self.filter_cams_by_product(self.cams_files,
+                                                                                        prod.date)
+                                                       ))
+                    pass
+                else:
+                    # Proceed with INIT
+                    logging.info("Not enough L1 products available for a BACKWARD mode. Continuing with INIT...")
+                    workplans.append(Workplan.Init(wdir=self.rep_work,
+                                                   outdir=self.path_input_l2,
+                                                   l1=prod,
+                                                   log_level=self.maja_log_level,
+                                                   cams=self.filter_cams_by_product(self.cams_files,
+                                                                                    prod.date)
+                                                   ))
+                    pass
+                pass
+            else:
+                workplans.append(Workplan.Nominal(wdir=self.rep_work,
+                                                  outdir=self.path_input_l2,
+                                                  l1=prod,
+                                                  l2_date=prod.date,
+                                                  log_level=self.maja_log_level,
+                                                  cams=self.filter_cams_by_product(self.cams_files, prod.date)
+                                                  ))
+
         # This should never happen:
         if not workplans:
             raise ValueError("No workplans created!")
@@ -452,8 +483,6 @@ class StartMaja(object):
         try:
             if sys.version >= (3, 0):
                 input("Press Enter to continue...\n")
-            else:
-                raw_input("Press Enter to continue...\n")
         except TypeError:
             input("Press Enter to continue...\n")
         for wp in workplans:
@@ -465,7 +494,7 @@ class StartMaja(object):
 
 
 if __name__ == "__main__":
-    assert sys.version_info >= (2, 7)
+    assert sys.version_info >= (3, 4)
 
     import argparse
     parser = argparse.ArgumentParser()
