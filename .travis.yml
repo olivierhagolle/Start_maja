@@ -29,4 +29,5 @@ install:
   - conda install gdal numpy scipy coverage
 # command to run tests
 script:
-  - conda activate test-environment && pytest -v
+  - conda env list
+  - pytest -v
