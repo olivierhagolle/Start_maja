@@ -36,9 +36,9 @@ class StartMaja(object):
         """
         Init the instance using the old start_maja parameters
         """
-        from Common import DateConverter, ParameterConverter
+        from Common import DateConverter
         self.verbose = verbose
-        logging_level = logging.DEBUG if ParameterConverter.str2bool(self.verbose) else logging.INFO
+        logging_level = logging.DEBUG if self.verbose else logging.INFO
         self.__init_loggers(msg_level=logging_level)
         logging.info("=============This is Start_Maja v%s==============" % self.version)
         self.userconf = p.realpath(p.join(self.current_dir, "userconf"))
@@ -162,13 +162,14 @@ class StartMaja(object):
         # TODO See main for parameter todos
         # TODO Add here: Output plugin override, gipp re-download
 
-        self.overwrite = ParameterConverter.str2bool(overwrite)
+        self.overwrite = overwrite
         self.maja_log_level = "PROGRESS"
 
         logging.debug("Searching for DTM")
         try:
             self.dtm = self.get_dtm()
         except OSError:
+            self.dtm = None
             logging.debug("Cannot find DTM. Will attempt to download it...")
         else:
             logging.debug("Found DTM: %s" % self.dtm.hdr)
@@ -285,7 +286,10 @@ class StartMaja(object):
         """
         from Common import FileSystem
         regex = AuxFile.DTMFile.get_specifiable_regex() + r"T?" + self.tile + r"\w+.DBL.DIR"
-        mnt_folders = FileSystem.find(regex, self.rep_mnt)
+        try:
+            mnt_folders = FileSystem.find(regex, self.rep_mnt)
+        except ValueError:
+            raise OSError("Cannot find DTM.")
         mnts = [AuxFile.DTMFile(mnt) for mnt in mnt_folders]
         mnts = [mnt for mnt in mnts if mnt is not None]
         return mnts[0]
@@ -359,7 +363,7 @@ class StartMaja(object):
         if used_prod_l1[0] not in has_l2 or self.overwrite:
             # Check if there is a recent L2 available for a nominal workplan
             min_time = used_prod_l1[0].date - max_l2_diff
-            max_time = used_prod_l1[0]
+            max_time = used_prod_l1[0].date
             has_closest_l2_prod = [prod for prod in self.avail_input_l2 if min_time <= prod.date <= max_time]
             if has_closest_l2_prod:
                 # Proceed with NOMINAL
@@ -431,10 +435,10 @@ class StartMaja(object):
             -   Run MAJA
         """
         if not self.dtm:
-            # TODO Download MNT
-            self.dtm = self.avail_input_l1[0].get_mnt(dem_dir=self.rep_mnt,
-                                                      raw_dem=self.rep_dem,
-                                                      raw_gsw=self.rep_gsw)
+            logging.info("Attempting to download DTM...")
+            self.avail_input_l1[0].get_mnt(dem_dir=self.rep_mnt)
+            self.dtm = self.get_dtm()
+            logging.info("DTM Creation succeeded.")
         if not self.gipp.check_completeness():
             logging.debug("Downloading Gipp for %s %s" % (self.platform, self.ptype))
             self.gipp.download()
@@ -445,10 +449,13 @@ class StartMaja(object):
         for wp in workplans:
             print(wp)
         # TODO Make this line skippable as param
-        if sys.version >= (3, 0):
+        try:
+            if sys.version >= (3, 0):
+                input("Press Enter to continue...\n")
+            else:
+                raw_input("Press Enter to continue...\n")
+        except TypeError:
             input("Press Enter to continue...\n")
-        else:
-            raw_input("Press Enter to continue...\n")
         for wp in workplans:
             # TODO Add some more logging info here.
             wp.execute(self.maja, self.dtm, self.gipp, self.userconf)
@@ -476,11 +483,11 @@ if __name__ == "__main__":
                                             "all products from the start date onwards will be processed",
                         type=str, required=False, default="3000-01-01")
     parser.add_argument("--verbose", help="Provides detailed (DEBUG) logging for Maja. Default is false",
-                        type=str, default="false")
+                        default=False, action="store_true")
     parser.add_argument("--nbackward", help="Number of products used to run in backward mode. Default is 8.",
                         type=int, default=int(8))
     parser.add_argument("--overwrite", help="Overwrite existing L2 products. Default is false.",
-                        type=str, default="False")
+                        default=False, action="store_true")
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + str(StartMaja.version))
     # TODO Add optional platform parameter in order to distinguish between S2/L8/Vns for each site/tile
     # TODO Add "copy" parameter that copies files instead of symlink'n them.
