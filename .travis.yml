@@ -31,4 +31,7 @@ install:
 script:
   - conda env list
   - conda list
+  - python -c "import sys; print(sys.path)"
+  - python -c "from osgeo import gdal; print(gdal.VersionInfo())"
+  - which pytest
   - pytest -v
