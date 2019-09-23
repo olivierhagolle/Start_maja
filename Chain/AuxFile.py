@@ -67,8 +67,10 @@ class EarthExplorer(object):
         :return:
         """
         from Common import FileSystem
-        FileSystem.symlink(self.hdr, os.path.join(dest, os.path.basename(self.hdr)))
-        FileSystem.symlink(self.dbl, os.path.join(dest, os.path.basename(self.dbl)))
+        hdr_realpath = os.path.realpath(os.path.expanduser(self.hdr))
+        dbl_realpath = os.path.realpath(os.path.expanduser(self.dbl))
+        FileSystem.symlink(hdr_realpath, os.path.join(dest, os.path.basename(hdr_realpath)))
+        FileSystem.symlink(dbl_realpath, os.path.join(dest, os.path.basename(dbl_realpath)))
 
 
 class CAMSFile(EarthExplorer):

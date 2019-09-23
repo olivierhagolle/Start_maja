@@ -236,24 +236,24 @@ class StartMaja(object):
         config.read(cfg_file)
     
         # get cfg parameters
-        rep_work = config.get("PATH", "repWork")
+        rep_work = os.path.realpath(os.path.expanduser(config.get("PATH", "repWork")))
         if not p.isdir(rep_work):
             create_directory(rep_work)
-        rep_gipp = config.get("PATH", "repGipp")
+        rep_gipp = os.path.realpath(os.path.expanduser(config.get("PATH", "repGipp")))
         if not p.isdir(rep_gipp):
             create_directory(rep_gipp)
-        rep_l1 = self.__read_config_param(config, "PATH", "repL1")
-        rep_l2 = config.get("PATH", "repL2")
+        rep_l1 = os.path.realpath(os.path.expanduser(self.__read_config_param(config, "PATH", "repL1")))
+        rep_l2 = os.path.realpath(os.path.expanduser(config.get("PATH", "repL2")))
         if not p.isdir(rep_l2):
             create_directory(rep_l2)
-        rep_mnt = config.get("PATH", "repMNT")
+        rep_mnt = os.path.realpath(os.path.expanduser(config.get("PATH", "repMNT")))
         if not p.isdir(rep_mnt):
             create_directory(rep_mnt)
-        exe_maja = self.__read_config_param(config, "PATH", "exeMaja")
+        exe_maja = os.path.realpath(os.path.expanduser(self.__read_config_param(config, "PATH", "exeMaja")))
 
         # CAMS is optional:
         try:
-            rep_cams = config.get("PATH", "repCAMS")
+            rep_cams = os.path.realpath(os.path.expanduser(config.get("PATH", "repCAMS")))
         except cfg.NoOptionError:
             logging.warning("repCAMS is missing. Processing without CAMS")
             rep_cams = None
