@@ -204,7 +204,7 @@ class Nominal(Workplan):
         # Get only products which are close to the desired l2 date and before the l1 date:
         l2_prods = [prod for prod in avail_input_l2
                     if abs(prod.date - self.l2_date) < StartMaja.max_l2_diff and
-                    prod.date < self.date and prod.is_valid()]
+                    prod.date < self.date and prod.validity]
         if not l2_prods:
             # TODO Pass on mode backward/init here.
             raise ValueError("Cannot find previous L2 product for date %s in %s"
