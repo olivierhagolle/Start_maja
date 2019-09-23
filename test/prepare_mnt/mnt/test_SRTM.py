@@ -90,6 +90,7 @@ class TestSRTM(unittest.TestCase):
                         [335, 302, 319, 311, 265, 234, 262, 251, 236, 259, 250]]
         self.assertEqual(ImageIO.get_resolution(drv), (resx, resy))
         self.assertEqual(img_read.shape, (site.py, site.px))
+        print(img_read)
         np.testing.assert_equal(expected_img, img_read)
         FileSystem.remove_directory(dem_dir)
 
@@ -128,6 +129,7 @@ class TestSRTM(unittest.TestCase):
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 54]]
         self.assertEqual(ImageIO.get_resolution(drv), (resx, resy))
         self.assertEqual(img_read.shape, (site.py, site.px))
+        print(img_read)
         np.testing.assert_equal(expected_img, img_read)
         FileSystem.remove_directory(dem_dir)
 
@@ -167,6 +169,7 @@ class TestSRTM(unittest.TestCase):
 
         self.assertEqual(ImageIO.get_resolution(drv), (resx, resy))
         self.assertEqual(img_read.shape, (site.py, site.px))
+        print(img_read)
         np.testing.assert_equal(expected_img, img_read)
         FileSystem.remove_directory(dem_dir)
 
