@@ -116,9 +116,9 @@ class TestStartMaja(unittest.TestCase):
                                self.site,
                                self.start,
                                self.end,
-                               self.nbackward,
-                               self.overwrite,
-                               self.verbose)
+                               nbackward=self.nbackward,
+                               overwrite=self.overwrite,
+                               verbose=self.verbose)
         self.assertGreaterEqual(self.n_dummies + 2, len(start_maja.avail_input_l1))
         self.assertGreaterEqual(self.n_dummies, len(start_maja.avail_input_l2))
         self.assertEqual(start_maja.start, self.start_product)
@@ -136,9 +136,9 @@ class TestStartMaja(unittest.TestCase):
                       self.site,
                       self.start,
                       self.end,
-                      self.nbackward,
-                      self.overwrite,
-                      self.verbose)
+                      nbackward=self.nbackward,
+                      overwrite=self.overwrite,
+                      verbose=self.verbose)
         import shutil
         shutil.rmtree(prod.prod)
         self.assertFalse(os.path.exists(prod.prod))
@@ -153,9 +153,9 @@ class TestStartMaja(unittest.TestCase):
                       self.site,
                       self.start,
                       self.end,
-                      self.nbackward,
-                      self.overwrite,
-                      self.verbose)
+                      nbackward=self.nbackward,
+                      overwrite=self.overwrite,
+                      verbose=self.verbose)
 
         os.remove(folders_path)
         self.assertFalse(os.path.exists(folders_path))
@@ -168,9 +168,9 @@ class TestStartMaja(unittest.TestCase):
                       self.site,
                       start.strftime("%Y-%m-%d"),
                       end.strftime("%Y-%m-%d"),
-                      self.nbackward,
-                      self.overwrite,
-                      self.verbose)
+                      nbackward=self.nbackward,
+                      overwrite=self.overwrite,
+                      verbose=self.verbose)
 
         self.assertEqual(s.start, start)
         self.assertEqual(s.end, end)
