@@ -13,6 +13,8 @@ Created on:     Fri Jan 11 16:57:37 2019
 import os
 import logging
 
+logger = logging.getLogger("root")
+
 
 class Workplan(object):
     """
@@ -185,6 +187,8 @@ class Nominal(Workplan):
         assert isinstance(l2_date, datetime.datetime)
         self.l2_date = l2_date
         self.l2 = None
+        self.remaining_l1 = kwargs.get("remaining_l1", [])
+        self.nbackward = kwargs.get("nbackward", int(8))
         super(Nominal, self).__init__(wdir, outdir, l1, log_level, **kwargs)
 
     def execute(self, maja, dtm, gipp, conf):
@@ -206,11 +210,17 @@ class Nominal(Workplan):
                     if abs(prod.date - self.l2_date) < StartMaja.max_l2_diff and
                     prod.date < self.date and prod.validity]
         if not l2_prods:
-            # TODO Pass on mode backward/init here.
-            raise ValueError("Cannot find previous L2 product for date %s in %s"
-                             % (self.date, self.outdir))
+            logger.error("Cannot find previous L2 product for date %s in %s" % (self.date, self.outdir))
+            if len(self.remaining_l1) >= self.nbackward:
+                logging.info("Setting up a BACKWARD execution instead.")
+                backup_wp = Backward(self.wdir, self.outdir, self.l1, l1_list=self.remaining_l1,
+                                     log_level=self.log_level, cams=self.aux_files)
+            else:
+                logging.info("Setting up an INIT execution instead.")
+                backup_wp = Init(self.wdir, self.outdir, self.l1, self.log_level, cams=self.aux_files)
+            return backup_wp.execute(maja, dtm, gipp, conf)
         if len(l2_prods) > 1:
-            logging.info("%s products found for date %s" % (len(l2_prods), self.date))
+            logger.info("%s products found for date %s" % (len(l2_prods), self.date))
         # Take the first product:
         self.l2 = l2_prods[0]
         # Link additional L2 products:

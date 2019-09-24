@@ -192,7 +192,7 @@ class Sentinel2SSC(MajaProduct):
 
     @property
     def metadata_file(self):
-        metadata_filename = "*" + self.tile + "*" + self.date.strftime("%Y%m%d") + "*HDR"
+        metadata_filename = self.base.split(".")[0] + ".HDR"
         return self.get_file(folders="../", filename=metadata_filename)
 
     @property
