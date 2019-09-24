@@ -56,7 +56,7 @@ class VenusNatif(MajaProduct):
 
     @property
     def metadata_file(self):
-        metadata_filename = "*" + self.tile + "*" + self.date.strftime("%Y%m%d") + "*HDR"
+        metadata_filename = self.base.split(".")[0] + ".HDR"
         return self.get_file(folders="../", filename=metadata_filename)
 
     @property
@@ -66,9 +66,15 @@ class VenusNatif(MajaProduct):
 
     @property
     def validity(self):
-        if os.path.exists(self.metadata_file()):
+        if os.path.exists(self.metadata_file):
             return True
         return False
+
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, os.path.join(link_dir, self.base))
+        mtd_file = self.metadata_file
+        symlink(mtd_file, os.path.join(link_dir, os.path.basename(mtd_file)))
 
     @property
     def mnt_site(self):
@@ -133,7 +139,7 @@ class VenusMuscate(MajaProduct):
     @property
     def validity(self):
         from Common import FileSystem, XMLTools
-        if self.level == "l1c" and os.path.exists(self.metadata_file()):
+        if self.level == "l1c" and os.path.exists(self.metadata_file):
             return True
         if self.level == "l2a":
             try:
@@ -146,6 +152,10 @@ class VenusMuscate(MajaProduct):
             if "L2VALD" in validity_flags:
                 return True
         return False
+
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, os.path.join(link_dir, self.base))
 
     @property
     def mnt_site(self):

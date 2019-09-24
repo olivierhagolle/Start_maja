@@ -15,7 +15,7 @@ from Start_maja import StartMaja
 import sys
 import os
 from datetime import datetime
-sys.path.append(os.path.join(StartMaja.current_dir, "Common"))  # Replaces __init__.py
+sys.path.append(StartMaja.current_dir)  # Replaces __init__.py
 
 
 def modify_folders_file(root, new_file, **kwargs):
@@ -61,9 +61,10 @@ class TestStartMaja(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        import DummyFiles
+        from Common import DummyFiles
+        from Common import FileSystem
         cls.product_root = os.path.join(cls.root, cls.tile)
-        os.makedirs(cls.product_root)
+        FileSystem.create_directory(cls.product_root)
         DummyFiles.L1Generator(cls.product_root,
                                tile=cls.tile,
                                date=cls.start_product,
@@ -82,6 +83,7 @@ class TestStartMaja(unittest.TestCase):
 
         cls.folders_file = os.path.join(cls.root, "test_working_folders_file.txt")
         modify_folders_file(cls.template_folders_file, new_file=cls.folders_file,
+                            exeMaja=os.getcwd(),
                             repWork=os.getcwd(),
                             repGIPP=os.getcwd(),
                             repL1=os.getcwd(),
@@ -100,13 +102,13 @@ class TestStartMaja(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        import shutil
+        from Common import FileSystem
         # In case there's duplicates, remove them:
-        shutil.rmtree(cls.product_root)
-        os.remove(cls.folders_file)
-        shutil.rmtree(cls.cams)
-        shutil.rmtree(cls.mnt.dbl[0])
-        os.remove(cls.mnt.hdr[0])
+        FileSystem.remove_directory(cls.product_root)
+        FileSystem.remove_file(cls.folders_file)
+        FileSystem.remove_directory(cls.cams)
+        FileSystem.remove_directory(cls.mnt.dbl[0])
+        FileSystem.remove_file(cls.mnt.hdr[0])
 
     def test_dates_and_products(self):
         start_maja = StartMaja(self.folders_file,
@@ -114,16 +116,16 @@ class TestStartMaja(unittest.TestCase):
                                self.site,
                                self.start,
                                self.end,
-                               self.nbackward,
-                               self.overwrite,
-                               self.verbose)
+                               nbackward=self.nbackward,
+                               overwrite=self.overwrite,
+                               verbose=self.verbose)
         self.assertGreaterEqual(self.n_dummies + 2, len(start_maja.avail_input_l1))
         self.assertGreaterEqual(self.n_dummies, len(start_maja.avail_input_l2))
         self.assertEqual(start_maja.start, self.start_product)
         self.assertEqual(start_maja.end, self.end_product)
 
     def test_parasite_l2a_product(self):
-        import DummyFiles
+        from Common import DummyFiles
         prod = DummyFiles.L2Generator(self.product_root,
                                       platform="VE",
                                       tile="T31TCH")
@@ -134,9 +136,9 @@ class TestStartMaja(unittest.TestCase):
                       self.site,
                       self.start,
                       self.end,
-                      self.nbackward,
-                      self.overwrite,
-                      self.verbose)
+                      nbackward=self.nbackward,
+                      overwrite=self.overwrite,
+                      verbose=self.verbose)
         import shutil
         shutil.rmtree(prod.prod)
         self.assertFalse(os.path.exists(prod.prod))
@@ -151,9 +153,9 @@ class TestStartMaja(unittest.TestCase):
                       self.site,
                       self.start,
                       self.end,
-                      self.nbackward,
-                      self.overwrite,
-                      self.verbose)
+                      nbackward=self.nbackward,
+                      overwrite=self.overwrite,
+                      verbose=self.verbose)
 
         os.remove(folders_path)
         self.assertFalse(os.path.exists(folders_path))
@@ -166,9 +168,9 @@ class TestStartMaja(unittest.TestCase):
                       self.site,
                       start.strftime("%Y-%m-%d"),
                       end.strftime("%Y-%m-%d"),
-                      self.nbackward,
-                      self.overwrite,
-                      self.verbose)
+                      nbackward=self.nbackward,
+                      overwrite=self.overwrite,
+                      verbose=self.verbose)
 
         self.assertEqual(s.start, start)
         self.assertEqual(s.end, end)

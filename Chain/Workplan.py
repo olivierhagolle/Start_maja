@@ -13,6 +13,8 @@ Created on:     Fri Jan 11 16:57:37 2019
 import os
 import logging
 
+logger = logging.getLogger("root")
+
 
 class Workplan(object):
     """
@@ -20,24 +22,24 @@ class Workplan(object):
     """
     mode = "INIT"
 
-    def __init__(self, root, outdir, l1, log_level="INFO", **kwargs):
+    def __init__(self, wdir, outdir, l1, log_level="INFO", **kwargs):
         supported_params = {
             param
             for param in ("cams", "meteo", )
             if kwargs.get(param, None) is not None
         }
         # Check if the directories exist:
-        assert os.path.isdir(root)
+        assert os.path.isdir(wdir)
         assert os.path.isdir(outdir)
         self.l1 = l1
         self.outdir = outdir
 
-        self.root = root
+        self.root = wdir
         self.input_dir = os.path.join(self.root, "Start_maja_" + self.get_dirname(self.l1.base))
         self.wdir = os.path.join(self.input_dir, "maja_working_directory")
 
-        self.tile = self.l1.get_tile()
-        self.date = self.l1.get_date()
+        self.tile = self.l1.tile
+        self.date = self.l1.date
         self.log_level = log_level if log_level.upper() in ['INFO', 'PROGRESS', 'WARNING', 'DEBUG', 'ERROR'] else "INFO"
         self.aux_files = []
         for key in supported_params:
@@ -79,14 +81,14 @@ class Workplan(object):
         :param gipps: The GIPP object
         :return: The full path to the created input directory
         """
-        from Common.FileSystem import create_directory, remove_directory, symlink
+        from Common.FileSystem import create_directory, remove_directory
         # Try to remove the directory before proceeding:
         remove_directory(self.input_dir)
         create_directory(self.input_dir)
         create_directory(self.wdir)
         if not os.path.isdir(self.input_dir) or not os.path.isdir(self.wdir):
             raise OSError("Cannot create temp directory %s, %s" % (self.input_dir, self.wdir))
-        symlink(self.l1.fpath, os.path.join(self.input_dir, self.l1.base))
+        self.l1.link(self.input_dir)
         for f in self.aux_files:
             f.link(self.input_dir)
         dtm.link(self.input_dir)
@@ -162,11 +164,11 @@ class Backward(Workplan):
         :param conf: The full path to the userconf folder
         :return: The return code of the Maja app
         """
-        from Common.FileSystem import symlink, remove_directory
+        from Common.FileSystem import remove_directory
         self.create_working_dir(dtm, gipp)
         # Link additional L1 products:
         for prod in self.l1_list:
-            symlink(prod.fpath, os.path.join(self.input_dir, prod.base))
+            prod.link(self.input_dir)
         return_code = self.launch_maja(maja, wdir=self.wdir, inputdir=self.input_dir, outdir=self.outdir, conf=conf)
         remove_directory(self.input_dir)
         return return_code
@@ -185,6 +187,8 @@ class Nominal(Workplan):
         assert isinstance(l2_date, datetime.datetime)
         self.l2_date = l2_date
         self.l2 = None
+        self.remaining_l1 = kwargs.get("remaining_l1", [])
+        self.nbackward = kwargs.get("nbackward", int(8))
         super(Nominal, self).__init__(wdir, outdir, l1, log_level, **kwargs)
 
     def execute(self, maja, dtm, gipp, conf):
@@ -203,18 +207,24 @@ class Nominal(Workplan):
         avail_input_l2 = StartMaja.get_available_products(self.outdir, "l2a", self.tile)
         # Get only products which are close to the desired l2 date and before the l1 date:
         l2_prods = [prod for prod in avail_input_l2
-                    if abs(prod.get_date() - self.l2_date) < StartMaja.max_l2_diff and
-                    prod.get_date() < self.date and prod.is_valid()]
+                    if abs(prod.date - self.l2_date) < StartMaja.max_l2_diff and
+                    prod.date < self.date and prod.validity]
         if not l2_prods:
-            # TODO Pass on mode backward/init here.
-            raise ValueError("Cannot find previous L2 product for date %s in %s"
-                             % (self.date, self.outdir))
+            logger.error("Cannot find previous L2 product for date %s in %s" % (self.date, self.outdir))
+            if len(self.remaining_l1) >= self.nbackward:
+                logging.info("Setting up a BACKWARD execution instead.")
+                backup_wp = Backward(self.wdir, self.outdir, self.l1, l1_list=self.remaining_l1,
+                                     log_level=self.log_level, cams=self.aux_files)
+            else:
+                logging.info("Setting up an INIT execution instead.")
+                backup_wp = Init(self.wdir, self.outdir, self.l1, self.log_level, cams=self.aux_files)
+            return backup_wp.execute(maja, dtm, gipp, conf)
         if len(l2_prods) > 1:
-            logging.info("%s products found for date %s" % (len(l2_prods), self.date))
+            logger.info("%s products found for date %s" % (len(l2_prods), self.date))
         # Take the first product:
         self.l2 = l2_prods[0]
-        # Link additional L1 products:
-        symlink(self.l2.fpath, os.path.join(self.input_dir, self.l2.base))
+        # Link additional L2 products:
+        self.l2.link(self.input_dir)
         return_code = self.launch_maja(maja, wdir=self.wdir, inputdir=self.input_dir, outdir=self.outdir, conf=conf)
         remove_directory(self.input_dir)
         return return_code

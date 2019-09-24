@@ -90,7 +90,7 @@ class TestSRTM(unittest.TestCase):
                         [335, 302, 319, 311, 265, 234, 262, 251, 236, 259, 250]]
         self.assertEqual(ImageIO.get_resolution(drv), (resx, resy))
         self.assertEqual(img_read.shape, (site.py, site.px))
-        np.testing.assert_equal(expected_img, img_read)
+        np.testing.assert_allclose(expected_img, img_read, atol=1.5)
         FileSystem.remove_directory(dem_dir)
 
     def test_srtm_prepare_mnt_vns_maccanw2(self):
@@ -128,7 +128,7 @@ class TestSRTM(unittest.TestCase):
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 54]]
         self.assertEqual(ImageIO.get_resolution(drv), (resx, resy))
         self.assertEqual(img_read.shape, (site.py, site.px))
-        np.testing.assert_equal(expected_img, img_read)
+        np.testing.assert_allclose(expected_img, img_read, atol=1.5)
         FileSystem.remove_directory(dem_dir)
 
     def test_srtm_prepare_mnt_l8_tls(self):
@@ -167,7 +167,7 @@ class TestSRTM(unittest.TestCase):
 
         self.assertEqual(ImageIO.get_resolution(drv), (resx, resy))
         self.assertEqual(img_read.shape, (site.py, site.px))
-        np.testing.assert_equal(expected_img, img_read)
+        np.testing.assert_allclose(expected_img, img_read, atol=1.5)
         FileSystem.remove_directory(dem_dir)
 
     def test_srtm_get_maja_format_tls_l8(self):

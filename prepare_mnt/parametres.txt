@@ -1,4 +1,0 @@
-INDIR_MNT =/home/alexia/Maja/Maja_folders/srtm_base/
-OUTDIR_MNT=/home/alexia/Maja/Maja_folders/PREPARE_MNT/mnt/
-INDIR_EAU=/home/alexia/Maja/Maja_folders/WB/
-OUTDIR_EAU =/home/alexia/Maja/Maja_folders/PREPARE_MNT/mnt/

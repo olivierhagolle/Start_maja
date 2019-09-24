@@ -56,9 +56,13 @@ class Spot5Muscate(MajaProduct):
 
     @property
     def validity(self):
-        if os.path.exists(self.metadata_file()):
+        if os.path.exists(self.metadata_file):
             return True
         return False
+
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, os.path.join(link_dir, self.base))
 
     @property
     def mnt_site(self):
@@ -116,9 +120,13 @@ class Spot4Muscate(MajaProduct):
 
     @property
     def validity(self):
-        if os.path.exists(self.metadata_file()):
+        if os.path.exists(self.metadata_file):
             return True
         return False
+
+    def link(self, link_dir):
+        from Common.FileSystem import symlink
+        symlink(self.fpath, os.path.join(link_dir, self.base))
 
     @property
     def mnt_site(self):
