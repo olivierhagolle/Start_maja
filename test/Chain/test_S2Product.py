@@ -121,7 +121,7 @@ class TestS2Product(unittest.TestCase):
             self.assertIsInstance(p, Sentinel2SSC)
             self.assertEqual(p.level, level)
             self.assertEqual(p.platform, "sentinel2")
-            self.assertEqual(p.type, "ssc")
+            self.assertEqual(p.type, "natif")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
             self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
