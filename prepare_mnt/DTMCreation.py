@@ -79,16 +79,9 @@ if __name__ == "__main__":
                         help="The path to temp the folder."
                              "If not existing, it is set to a /tmp/ location", required=False, type=str)
     parser.add_argument("--type_dem",
-                        help="DEM type. Default is 'SRTM'. Other options are:"
-                             "[TBD]", required=False, type=str)
+                        help="DEM type. Default is 'SRTM'.", required=False, type=str)
     parser.add_argument("-c", "--coarse_res",
                         help="Coarse resolution in meters. Default is 240", default=240, required=False, type=int)
-    parser.add_argument("--raw_resolution",
-                        help="Do not round the product resolution to the next integer",
-                        action="store", required=False, default=True)
-    parser.add_argument("--nodownload",
-                        help="Do not attempt any downloading of the files.",
-                        action="store", required=False, default=False)
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + str(__version__))
     args = parser.parse_args()
 
