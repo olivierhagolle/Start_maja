@@ -53,7 +53,7 @@ class Sentinel2Natif(MajaProduct):
 
     @property
     def validity(self):
-        if os.path.exists(self.metadata_file()):
+        if os.path.exists(self.metadata_file):
             return True
         return False
 
@@ -125,7 +125,7 @@ class Sentinel2Muscate(MajaProduct):
     @property
     def validity(self):
         from Common import FileSystem, XMLTools
-        if self.level == "l1c" and os.path.exists(self.metadata_file()):
+        if self.level == "l1c" and os.path.exists(self.metadata_file):
             return True
         if self.level == "l2a":
             try:
@@ -173,7 +173,7 @@ class Sentinel2SSC(MajaProduct):
 
     @property
     def type(self):
-        return "ssc"
+        return "natif"
 
     @property
     def level(self):
@@ -203,7 +203,7 @@ class Sentinel2SSC(MajaProduct):
 
     @property
     def validity(self):
-        if os.path.exists(self.metadata_file()):
+        if os.path.exists(self.metadata_file):
             return True
         return False
 

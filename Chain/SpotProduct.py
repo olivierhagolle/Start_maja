@@ -56,7 +56,7 @@ class Spot5Muscate(MajaProduct):
 
     @property
     def validity(self):
-        if os.path.exists(self.metadata_file()):
+        if os.path.exists(self.metadata_file):
             return True
         return False
 
@@ -120,7 +120,7 @@ class Spot4Muscate(MajaProduct):
 
     @property
     def validity(self):
-        if os.path.exists(self.metadata_file()):
+        if os.path.exists(self.metadata_file):
             return True
         return False
 

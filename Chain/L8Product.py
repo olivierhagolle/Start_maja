@@ -51,7 +51,7 @@ class Landsat8Natif(MajaProduct):
 
     @property
     def validity(self):
-        if os.path.exists(self.metadata_file()):
+        if os.path.exists(self.metadata_file):
             return True
         return False
 
@@ -126,7 +126,7 @@ class Landsat8Muscate(MajaProduct):
     @property
     def validity(self):
         from Common import FileSystem, XMLTools
-        if self.level == "l1c" and os.path.exists(self.metadata_file()):
+        if self.level == "l1c" and os.path.exists(self.metadata_file):
             return True
         if self.level == "l2a":
             try:
@@ -194,7 +194,7 @@ class Landsat8LC1(MajaProduct):
 
     @property
     def validity(self):
-        if os.path.exists(self.metadata_file()):
+        if os.path.exists(self.metadata_file):
             return True
         return False
 
@@ -252,7 +252,7 @@ class Landsat8LC2(MajaProduct):
 
     @property
     def validity(self):
-        if os.path.exists(self.metadata_file()):
+        if os.path.exists(self.metadata_file):
             return True
         return False
 
