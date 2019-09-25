@@ -31,13 +31,19 @@ class MNT(object):
         self.dem_dir = kwargs.get("dem_dir", os.path.join(tempfile.gettempdir(), "maja_dem_files"))
         if not os.path.isdir(self.dem_dir):
             FileSystem.create_directory(self.dem_dir)
-        self.wdir = kwargs.get("wdir", tempfile.mkdtemp(prefix="prepare_mnt_"))
+        self.wdir = kwargs.get("wdir", None)
+        if not self.wdir:
+            self.wdir = tempfile.mkdtemp(prefix="prepare_mnt_")
         if not os.path.isdir(self.wdir):
             FileSystem.create_directory(self.wdir)
-        self.raw_dem = kwargs.get("raw_dem", tempfile.mkdtemp(prefix="raw_dem_"))
+        self.raw_dem = kwargs.get("raw_dem", None)
+        if not self.raw_dem:
+            self.raw_dem = tempfile.mkdtemp(prefix="raw_dem_")
         if not os.path.exists(self.raw_dem):
             FileSystem.create_directory(self.raw_dem)
-        self.raw_gsw = kwargs.get("raw_gsw", tempfile.mkdtemp(prefix="raw_gsw_"))
+        self.raw_gsw = kwargs.get("raw_gsw", None)
+        if not self.raw_gsw:
+            self.raw_gsw = tempfile.mkdtemp(prefix="raw_gsw_")
         if not os.path.exists(self.raw_gsw):
             FileSystem.create_directory(self.raw_gsw)
         self.gsw_codes = self.get_gsw_codes(self.site)
