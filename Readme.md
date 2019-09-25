@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.com/petket-5/Start_maja_int.svg?branch=181205_start_maja_reprog)](https://travis-ci.com/petket-5/Start_maja_int)
+[![Coverage Status](https://coveralls.io/repos/github/petket-5/Start_maja_int/badge.svg)](https://coveralls.io/github/petket-5/Start_maja_int)
+
 <img  title="logo CNES" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_cnes.jpg" alt="" width="130"  /> <img  title="logo CESBIO" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_cesbio.png" alt="" width="110"  /> <img  title="logo DLR" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_DLR.jpg" alt="" width="90"  /> <img  title="logo MAJA" src="http://www.cesbio.ups-tlse.fr/multitemp/wp-content/uploads/2015/11/logo_maja.png" alt="" width="80"  /> 
 
 
