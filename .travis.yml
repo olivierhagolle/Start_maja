@@ -26,6 +26,8 @@ install:
   # Replace dep1 dep2 ... with your dependencies
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
   - conda activate test-environment
-  - conda install gdal numpy scipy coverage pytest
+  - conda install gdal numpy scipy coverage pytest coveralls
 script:
-  - pytest -v
+  - coverage run -m py.test
+after_success:
+  - coveralls
