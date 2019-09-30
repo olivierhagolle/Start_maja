@@ -77,7 +77,7 @@ class CAMSFile(EarthExplorer):
     """
     Stores a single CAMS file
     """
-    regex = r"\w{3}_(TEST|PROD)_EXO_CAMS_\w+"
+    regex = r"(VE|S2_|L8)_(TEST|PROD)_EXO_CAMS_\d{8}T\d{6}_\d{8}T\d{6}.DBL.DIR"
 
     @classmethod
     def check_regex(cls, dbl):
