@@ -107,10 +107,12 @@ class Landsat8Muscate(MajaProduct):
 
     @property
     def tile(self):
+        import re
+        site_basic = self.base.split("_")[3]
         tile = re.search(self.reg_tile, self.base)
         if tile:
             return tile.group()[1:]
-        raise ValueError("Cannot determine tile ID: %s" % self.base)
+        return site_basic
 
     @property
     def metadata_file(self):
