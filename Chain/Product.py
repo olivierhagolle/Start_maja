@@ -21,12 +21,12 @@ class MajaProduct(object):
     reg_s2_prd = r"^S2[AB]_OPER_PRD_MSIL1C_PDMC_\w+_R\d+_V\w+.SAFE$"
     reg_l8_lc1 = r"^LC8\w+$"
     reg_l8_lc2 = r"^LC08_L\w+$"
-    reg_l8_mus = r"^LANDSAT8[\w-]*_[-\d]+_L(1C|2A)_T\d{2}[a-zA-Z]{3}_\w_V[\d-]+$"
+    reg_l8_mus = r"^LANDSAT8(-OLITIRS|OLI-TIRS)?_(\d{8})-\d{6}-\d{3}_L(1C|2A)_T?\w+_[DC]_V\d*-\d*$"
     reg_l8_nat = r"^L8_\w{4}_L8C_L[12]VALD_[\d_]+.DBL.DIR$"
     reg_vs_mus = r"^VENUS(-XS)?_\d{8}-\d{6}-\d{3}_L(1C|2A|3A)_\w+_[DC]_V\d*-\d*$"
     reg_vs_nat = r"^VE_\w{4}_VSC_L[12]VALD_\w+.DBL.DIR$"
-    reg_s5_mus = r"^SPOT5-HR\w+-XS_(\d{8})-\d{6}-\d{3}_L1C_\d{3}-\d{3}-\d_[DC]_V\d*-\d*$"
-    reg_s4_mus = r"^SPOT4-HR\w+-XS_(\d{8})-\d{6}-\d{3}_L1C_\d{3}-\d{3}-\d_[DC]_V\d*-\d*$"
+    reg_s5_mus = r"^SPOT5-HR\w+-XS_(\d{8})-\d{6}-\d{3}_L(1C|2A)_\w+_[DC]_V\d*-\d*$"
+    reg_s4_mus = r"^SPOT4-HR\w+-XS_(\d{8})-\d{6}-\d{3}_L(1C|2A)_\w+_[DC]_V\d*-\d*$"
     reg_tile = r"T\d{2}[a-zA-Z]{3}"
 
     base_resolution = (None, None)
