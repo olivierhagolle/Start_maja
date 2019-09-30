@@ -91,6 +91,8 @@ class TestS2Product(unittest.TestCase):
             self.assertEqual(p.mnt_resolutions_dict, [{"name": "R1", "val": "10 -10"},
                                                       {"name": "R2", "val": "20 -20"}])
             self.assertEqual(p, p)
+            FileSystem.remove_directory(link_dir)
+
         # Other prods:
         for prod in self.prod_s2_prd + self.prod_s2_ssc + self.prod_s2_nat + self.prods_other:
             p = MajaProduct(prod).factory()
@@ -117,6 +119,7 @@ class TestS2Product(unittest.TestCase):
             self.assertEqual(p.mnt_resolutions_dict, [{"name": "R1", "val": "10 -10"},
                                                       {"name": "R2", "val": "20 -20"}])
             self.assertEqual(p, p)
+            FileSystem.remove_directory(link_dir)
 
         # Other prods:
         for prod in self.prod_s2_prd + self.prod_s2_ssc + self.prod_s2_mus + self.prods_other:
@@ -146,6 +149,7 @@ class TestS2Product(unittest.TestCase):
             self.assertEqual(p.mnt_resolutions_dict, [{"name": "R1", "val": "10 -10"},
                                                       {"name": "R2", "val": "20 -20"}])
             self.assertEqual(p, p)
+            FileSystem.remove_directory(link_dir)
 
         # Other prods:
         for prod in self.prod_s2_prd + self.prod_s2_nat + self.prod_s2_mus:

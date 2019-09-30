@@ -85,6 +85,7 @@ class TestSpotProduct(unittest.TestCase):
             self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '5 -5'}])
             self.assertEqual(p, p)
+            FileSystem.remove_directory(link_dir)
 
         # Other prods:
         for prod in self.prod_s5_mus + self.prods_other:
@@ -111,6 +112,7 @@ class TestSpotProduct(unittest.TestCase):
             self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '5 -5'}])
             self.assertEqual(p, p)
+            FileSystem.remove_directory(link_dir)
 
         # Other prods:
         for prod in self.prod_s4_mus + self.prods_other:

@@ -91,6 +91,7 @@ class TestL8Product(unittest.TestCase):
             self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '30 -30'}])
             self.assertEqual(p, p)
+            FileSystem.remove_directory(link_dir)
 
         # Other prods:
         for prod in self.prod_l8_lc1 + self.prod_l8_lc2 + self.prod_l8_nat + self.prods_other:
@@ -117,6 +118,7 @@ class TestL8Product(unittest.TestCase):
             self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '30 -30'}])
             self.assertEqual(p, p)
+            FileSystem.remove_directory(link_dir)
 
         # Other prods:
         for prod in self.prod_l8_lc2 + self.prod_l8_lc1 + self.prod_l8_mus + self.prods_other:
@@ -144,6 +146,7 @@ class TestL8Product(unittest.TestCase):
             self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '30 -30'}])
             self.assertEqual(p, p)
+            FileSystem.remove_directory(link_dir)
 
         # Other prods:
         for prod in self.prod_l8_lc2 + self.prod_l8_nat + self.prod_l8_mus + self.prods_other:
@@ -171,6 +174,7 @@ class TestL8Product(unittest.TestCase):
             self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '30 -30'}])
             self.assertEqual(p, p)
+            FileSystem.remove_directory(link_dir)
 
         # Other prods:
         for prod in self.prod_l8_lc1 + self.prod_l8_nat + self.prod_l8_mus + self.prods_other:
