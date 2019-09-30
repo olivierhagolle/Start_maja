@@ -270,6 +270,9 @@ class TestImageIO(unittest.TestCase):
         if sys.version_info >= (3, 6):
             np.testing.assert_array_almost_equal(expected, img_read)
         else:
+            # gdal_retile for python 3.5 is producing the following image:
+            # [[87, 89], [97, 99]].
+            # To account for this, a maximum absolute error of 1.0 is allowed during testing
             np.testing.assert_allclose(expected, img_read, atol=1.0)
 
         # Untile
@@ -280,6 +283,7 @@ class TestImageIO(unittest.TestCase):
         if sys.version_info >= (3, 6):
             np.testing.assert_array_almost_equal(img, img_combined)
         else:
+            # Same as the comment above
             np.testing.assert_allclose(img, img_combined, atol=1.0)
 
         FileSystem.remove_file(path)
