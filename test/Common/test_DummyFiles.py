@@ -8,7 +8,7 @@ import os
 
 class TestDummyFiles(unittest.TestCase):
     root = os.path.join(os.getcwd(), "DummyFiles")
-    platforms = ["S2", "L8", "VE"]
+    platforms = ["sentinel2", "landsat8", "venus"]
 
     @classmethod
     def setUpClass(cls):
@@ -65,8 +65,8 @@ class TestDummyFiles(unittest.TestCase):
         gen.generate()
         self.assertTrue(gen.platform in self.platforms)
 
-        lengths_hdr = {"VE": 35, "L8": 35, "S2": 69}
-        lengths_dbl = {"VE": 30, "L8": 30, "S2": 60}
+        lengths_hdr = {"venus": 35, "landsat8": 35, "sentinel2": 69}
+        lengths_dbl = {"venus": 30, "landsat8": 30, "sentinel2": 60}
 
         self.assertEqual(len(gen.hdr), lengths_hdr[gen.platform])
         self.assertEqual(len(gen.dbl), lengths_dbl[gen.platform])
@@ -100,8 +100,8 @@ class TestDummyFiles(unittest.TestCase):
         gen.generate(cams=False)
         self.assertTrue(gen.platform in self.platforms)
 
-        lengths_hdr = {"VE": 10, "L8": 10, "S2": 19}
-        lengths_dbl = {"VE": 5, "L8": 5, "S2": 10}
+        lengths_hdr = {"venus": 10, "landsat8": 10, "sentinel2": 19}
+        lengths_dbl = {"venus": 5, "landsat8": 5, "sentinel2": 10}
 
         self.assertEqual(len(gen.hdr), lengths_hdr[gen.platform])
         self.assertEqual(len(gen.dbl), lengths_dbl[gen.platform])
@@ -135,8 +135,8 @@ class TestDummyFiles(unittest.TestCase):
         gen.generate(mission="tm")
         self.assertTrue(gen.platform in self.platforms)
 
-        lengths_hdr = {"S2": 75}
-        lengths_dbl = {"S2": 60}
+        lengths_hdr = {"sentinel2": 75}
+        lengths_dbl = {"sentinel2": 60}
 
         self.assertEqual(len(gen.hdr), lengths_hdr[gen.platform])
         self.assertEqual(len(gen.dbl), lengths_dbl[gen.platform])
@@ -171,52 +171,51 @@ class TestDummyFiles(unittest.TestCase):
 
     def test_s2_l1_generation(self):
         import shutil
-        gen = DummyFiles.L1Generator(self.root, platform="S2")
-        gen.generate()
+        gen = DummyFiles.L1Generator(self.root, platform="sentinel2")
+        prod = gen.generate()
         self.assertTrue(os.path.exists(gen.mtd))
         self.assertTrue(os.path.exists(gen.prod))
         self.assertTrue("MTD_MSIL1C.xml" in os.path.basename(gen.mtd))
         self.assertTrue("MSIL1C" in gen.prod)
-
+        self.assertEqual(prod, prod)
         shutil.rmtree(gen.prod)
         self.assertFalse(os.path.exists(gen.prod))
 
     def test_spot4_l1_generation(self):
         import shutil
-        gen = DummyFiles.L1Generator(self.root, platform="SPOT4")
-        gen.generate()
+        gen = DummyFiles.L1Generator(self.root, platform="spot4")
+        prod = gen.generate()
         self.assertTrue(os.path.exists(gen.mtd))
         self.assertTrue(os.path.exists(gen.prod))
-        self.assertTrue("MTD_MSIL1C.xml" in os.path.basename(gen.mtd))
+        self.assertTrue("MTD_ALL.xml" in os.path.basename(gen.mtd))
         self.assertTrue("SPOT4" in gen.prod)
-
+        self.assertEqual(prod, prod)
         shutil.rmtree(gen.prod)
         self.assertFalse(os.path.exists(gen.prod))
 
     def test_spot5_l1_generation(self):
         import shutil
-        gen = DummyFiles.L1Generator(self.root, platform="SPOT5")
-        gen.generate()
+        gen = DummyFiles.L1Generator(self.root, platform="spot5")
+        prod = gen.generate()
         self.assertTrue(os.path.exists(gen.mtd))
         self.assertTrue(os.path.exists(gen.prod))
-        self.assertTrue("MTD_MSIL1C.xml" in os.path.basename(gen.mtd))
+        self.assertTrue("MTD_ALL.xml" in os.path.basename(gen.mtd))
         self.assertTrue("SPOT5" in gen.prod)
-
+        self.assertEqual(prod, prod)
         shutil.rmtree(gen.prod)
         self.assertFalse(os.path.exists(gen.prod))
 
     def test_l2_generation(self):
         import shutil
         gen = DummyFiles.L2Generator(self.root)
-        gen.generate()
+        prod = gen.generate()
         self.assertTrue(os.path.exists(gen.mtd))
         self.assertTrue(os.path.exists(gen.prod))
         self.assertTrue("_MTD_ALL.xml" in os.path.basename(gen.mtd))
         self.assertTrue(os.path.dirname(gen.mtd), gen.prod)
-
+        self.assertEqual(prod, prod)
         shutil.rmtree(gen.prod)
         self.assertFalse(os.path.exists(gen.prod))
-
 
 
 if __name__ == '__main__':

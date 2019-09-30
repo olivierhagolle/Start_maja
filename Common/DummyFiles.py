@@ -8,9 +8,10 @@ Created on Thu Jul  5 17:42:44 2018
 import os
 
 
-def random_tile(platform="S2"):
+def random_tile(platform="sentinel2"):
     """
-    Create a random tile string for a given platform. For 'S2': T12ABC, for 'L8': 192820, for 'VE': ABCDE
+    Create a random tile string for a given platform.
+    For 'sentinel2': T12ABC, for 'landsat8': 192820, for 'venus': ABCDE
     :param platform: Return a tile corresponding to the given platform
     :return: String compliant with the given platform
     """
@@ -19,17 +20,17 @@ def random_tile(platform="S2"):
 
     letters = string.ascii_uppercase
     tile = "T" + str(random.randint(0, 99)).zfill(2) + ''.join(random.choice(letters) for _ in range(3))
-    if platform == "S2":
+    if platform == "sentinel2":
         return tile
-    elif platform == "L8":
+    elif platform == "landsat8":
         number = str(random.randint(0, 999999)).zfill(6)
         return random.choice([number, tile])
-    elif platform == "VE":
+    elif platform == "venus":
         return ''.join(random.choice(letters) for _ in range(5))
     elif "SPOT" in platform:
         tile_id_1 = str(random.randint(0, 999)).zfill(3)
         tile_id_2 = str(random.randint(0, 999)).zfill(3)
-        tile_id_3 = str(random.randint(0, 999)).zfill(1)
+        tile_id_3 = str(random.randint(0, 9)).zfill(1)
         return "-".join([tile_id_1, tile_id_2, tile_id_3])
 
     return tile
@@ -38,8 +39,8 @@ def random_tile(platform="S2"):
 def random_platform(product_level=None):
     import random
     if product_level == "L1C":
-        return random.choice(["S2", "SPOT4", "SPOT5"])
-    return random.choice(["S2", "VE", "L8"])
+        return random.choice(["sentinel2", "spot4", "spot5"])
+    return random.choice(["sentinel2", "venus", "landsat8"])
 
 
 def random_date():
@@ -62,16 +63,16 @@ class DummyGenerator(object):
             self.date = random_date()
         else:
             self.date = date
-        if platform[:2].upper() == "S2":
-            self.platform = "S2"
-        elif platform[:2].upper() == "L8":
-            self.platform = "L8"
-        elif platform[:2].upper() == "VE":
-            self.platform = "VE"
-        elif platform.upper() == "SPOT4":
-            self.platform = "SPOT4"
-        elif platform.upper() == "SPOT5":
-            self.platform = "SPOT5"
+        if platform.lower() == "sentinel2":
+            self.platform = "sentinel2"
+        elif platform.lower() == "landsat8":
+            self.platform = "landsat8"
+        elif platform.lower() == "venus":
+            self.platform = "venus"
+        elif platform.lower() == "spot4":
+            self.platform = "spot4"
+        elif platform.lower() == "spot5":
+            self.platform = "spot5"
         else:
             raise ValueError("Unknown platform found: %s" % platform)
         if not tile:
@@ -88,11 +89,17 @@ class DummyEarthExplorer(DummyGenerator):
     Base class for all EarthExplorer-like files
     """
 
-    mission_choices = {"tm": {"S2": "SENTINEL-2"},
-                       "muscate": {"S2": "SENTINEL2", "L8": "LANDSAT8", "VE": "VENUS",
-                                   "SPOT4": "SPOT4", "SPOT5": "SPOT5"},
-                       "natif": {"S2": "SENTINEL-2", "L8": "LANDSAT_8", "VE": "VENuS"}
+    mission_choices = {"tm": {"sentinel2": "SENTINEL-2"},
+                       "muscate": {"sentinel2": "SENTINEL2", "landsat8": "LANDSAT8", "venus": "VENUS",
+                                   "spot4": "SPOT4", "spot5": "SPOT5"},
+                       "natif": {"sentinel2": "SENTINEL-2", "landsat8": "LANDSAT_8", "venus": "VENuS"}
                        }
+
+    mission_short = {"sentinel2": "S2_",
+                     "venus": "VE",
+                     "landsat8": "L8",
+                     "spot4": "SPOT4",
+                     "spot5": "SPOT5"}
 
     def __init__(self, root, date=None, tile=None, platform=random_platform()):
         super(DummyEarthExplorer, self).__init__(root, date, tile, platform)
@@ -116,11 +123,11 @@ class DummyEarthExplorer(DummyGenerator):
         """
         import random
         from xml.etree import ElementTree
-        platform_hdr = {"S2": random.choice(["SENTINEL2_", "SENTINEL-2_"]),
-                        "VE": random.choice(["VENUS", "VENuS"]),
-                        "L8": random.choice(["LANDSAT8", "LANDSAT_8"]),
-                        "SPOT4": "SPOT4",
-                        "SPOT5": "SPOT5"}
+        platform_hdr = {"sentinel2": random.choice(["SENTINEL2_", "SENTINEL-2_"]),
+                        "venus": random.choice(["VENUS", "VENuS"]),
+                        "landsat8": random.choice(["LANDSAT8", "LANDSAT_8"]),
+                        "spot4": "SPOT4",
+                        "spot5": "SPOT5"}
         mission = mission if mission else platform_hdr[self.platform]
         root = ElementTree.Element("Earth_Explorer_Header")
         sub = ElementTree.SubElement(root, "Fixed_Header")
@@ -142,8 +149,8 @@ class MNTGenerator(DummyEarthExplorer):
         import random
         from Common import FileSystem
         mission_param = kwargs.get("mission", self.get_mission())
-        mission_specifier = "_" if self.platform == "S2" else ""
-        basename = "_".join([self.platform + mission_specifier,
+        mission_specifier = "_" if self.platform == "sentinel2" else ""
+        basename = "_".join([self.mission_short[self.platform] + mission_specifier,
                              "TEST", "AUX", "REFDE2", self.tile,
                              str(random.randint(0, 1000)).zfill(4)])
         self.dbl.append(os.path.join(self.root, basename + ".DBL.DIR"))
@@ -159,10 +166,11 @@ class CAMSGenerator(DummyEarthExplorer):
     def generate(self, **kwargs):
         from datetime import datetime
         from Common import FileSystem
+        from Chain.AuxFile import CAMSFile
         end_date = datetime(2099, 1, 1, 23, 59, 59)
         mission_param = kwargs.get("mission", self.get_mission())
-        mission_specifier = "_" if self.platform == "S2" else ""
-        basename = "_".join([self.platform + mission_specifier,
+        mission_specifier = "_" if self.platform == "sentinel2" else ""
+        basename = "_".join([self.mission_short[self.platform],
                              "TEST", "EXO", "CAMS",
                              self.date.strftime("%Y%m%dT%H%M%S"),
                              end_date.strftime("%Y%m%dT%H%M%S")])
@@ -170,11 +178,12 @@ class CAMSGenerator(DummyEarthExplorer):
         self.hdr.append(os.path.join(self.root, basename + ".HDR"))
         FileSystem.create_directory(self.dbl[-1])
         self.create_dummy_hdr(self.hdr[-1], mission=mission_param + mission_specifier)
+        return CAMSFile(self.dbl[-1])
 
 
 class GippGenerator(DummyEarthExplorer):
     """
-    Class to create a single dummy CAMS file.
+    Class to create a single dummy GIPP set.
     """
     def _create_hdr(self, sat, name, start_date, version, model, mission, file_type):
         """
@@ -202,11 +211,12 @@ class GippGenerator(DummyEarthExplorer):
         from datetime import datetime
         import random
         from Common import FileSystem
+        from Chain.GippFile import GippSet
         mission_param = kwargs.get("mission", random.choice(["muscate", "natif"]))
         if mission_param == "tm":
-            self.platform = "S2"
+            self.platform = "sentinel2"
         mission = self.mission_choices[mission_param][self.platform]
-        satellites = [self.platform] if self.platform != "S2" else ["S2A", "S2B"]
+        satellites = [self.mission_short[self.platform]] if self.platform != "sentinel2" else ["S2A", "S2B"]
         with_cams = kwargs.get("cams", True)
         if with_cams:
             models = ["CONTINEN"] + ["ORGANICM", "BLACKCAR", "DUST", "SEASALT", "SULPHATE"]
@@ -235,15 +245,16 @@ class GippGenerator(DummyEarthExplorer):
                 tm_mission = "SENTINEL2"
                 tm_version_str = str(version + 10000).zfill(5)
                 self._create_hdr(sat, name, start_date, tm_version_str, allsites, tm_mission, ".EEF")
+        return GippSet(self.root, self.platform, mission_param)
 
 
 class ProductGenerator(DummyGenerator):
-    platform_options = {"L1C": {"S2": ["S2A", "S2B"],
-                                "SPOT4": ["SPOT4-HRG2-XS"],
-                                "SPOT5": ["SPOT5-HRG2-XS"]},
-                        "L2A": {"S2": ["SENTINEL2B", "SENTINEL2A"],
-                                "L8": ["LANDSAT8-OLITIRS"],
-                                "VE": ["VENUS-XS"]}}
+    platform_options = {"L1C": {"sentinel2": ["S2A", "S2B"],
+                                "spot4": ["SPOT4-HRG2-XS"],
+                                "spot5": ["SPOT5-HRG2-XS"]},
+                        "L2A": {"sentinel2": ["SENTINEL2B", "SENTINEL2A"],
+                                "landsat8": ["LANDSAT8-OLITIRS"],
+                                "venus": ["VENUS-XS"]}}
 
     def __init__(self, root, date=None, tile=None, platform=random_platform()):
         super(ProductGenerator, self).__init__(root, date, tile, platform)
@@ -263,12 +274,13 @@ class L1Generator(ProductGenerator):
 
     def generate(self, **kwargs):
         import random
+        from Chain import Product
         from Common import TestFunctions, FileSystem
         platform_specifier = random.choice(self.platform_options["L1C"][self.platform])
-        date_str = self.date.strftime("%Y%m%dT%H%M%S")
         orbit = kwargs.get("orbit", random.randint(0, 999))
         version_orbit = kwargs.get("version", random.randint(0, 9))
-        if "S2" in self.platform:
+        if "sentinel2" in self.platform:
+            date_str = self.date.strftime("%Y%m%dT%H%M%S")
             product_name = "_".join([platform_specifier,
                                      "MSIL1C",
                                      date_str,
@@ -276,19 +288,24 @@ class L1Generator(ProductGenerator):
                                      "R" + str(version_orbit).zfill(3),
                                      self.tile,
                                      date_str + ".SAFE"])
+            product_path = os.path.join(self.root, product_name)
+            metadata_path = os.path.join(product_path, "MTD_MSIL1C.xml")
         else:
+            date_str = self.date.strftime("%Y%m%d-%H%M%S")
             product_name = "_".join([platform_specifier,
                                      date_str + "-000",
                                      "L2A",
                                      self.tile,
                                      random.choice("DC"),
                                      "V" + str(version_orbit) + "-" + str(version_orbit)])
-        product_path = os.path.join(self.root, product_name)
+            product_path = os.path.join(self.root, product_name)
+            metadata_path = os.path.join(product_path, product_name + "_MTD_ALL.xml")
+
         self.prod = product_path
-        metadata_path = os.path.join(product_path, "MTD_MSIL1C.xml")
         self.mtd = metadata_path
         FileSystem.create_directory(product_path)
         TestFunctions.touch(metadata_path)
+        return Product.MajaProduct(self.prod).factory()
 
 
 class L2Generator(ProductGenerator):
@@ -300,6 +317,7 @@ class L2Generator(ProductGenerator):
 
     def generate(self, **kwargs):
         import random
+        from Chain import Product
         from Common import TestFunctions, FileSystem
         platform_specifier = random.choice(self.platform_options["L2A"][self.platform])
         ms = kwargs.get("ms", random.randint(0, 999))
@@ -317,3 +335,4 @@ class L2Generator(ProductGenerator):
         self.mtd = metadata_path
         FileSystem.create_directory(product_path)
         TestFunctions.touch(metadata_path)
+        return Product.MajaProduct(self.prod).factory()
