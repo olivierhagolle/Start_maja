@@ -275,3 +275,30 @@ def gdal_calc(dst, calc, *src, **options):
     # Append overwrite by default in order to avoid writing errors:
     options_list += ["--overwrite"]
     return FileSystem.run_external_app("gdal_calc.py", options_list + file_list)
+
+
+def gdal_retile(dst, *src, **options):
+    """
+    Tile a raster and write the individual files to the given dst folder.
+    :param dst: The destination directory
+    :param src: The source raster
+    :param options: Optional arguments
+    :return: Tuple: Return code & The list of files created
+    """
+    import os
+    from Common import FileSystem
+    if not os.path.exists(dst):
+        FileSystem.create_directory(dst)
+
+    file_list = ["-targetDir", dst] + [*src]
+    options_list = []
+    [options_list.extend(["-" + k, v])
+     if type(v) is not bool else
+     options_list.extend(["-" + k])
+     for k, v in options.items()]
+    return_code = FileSystem.run_external_app("gdal_retile.py", options_list + file_list)
+    # Get the list of newly created tiles
+    bnames = [os.path.basename(s).split(".")[0] for s in src]
+    tiles = [FileSystem.find(pattern=bname + "*", path=dst) for bname in bnames]
+    tiles = sorted([item for t in tiles for item in t])
+    return return_code, tiles

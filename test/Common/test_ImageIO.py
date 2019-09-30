@@ -238,6 +238,45 @@ class TestImageIO(unittest.TestCase):
         FileSystem.remove_file(path)
         FileSystem.remove_file(scaled)
 
+    def test_gdal_calc(self):
+        from Common import FileSystem
+        img = np.arange(0, 16).reshape((4, 4))
+        path = os.path.join(os.getcwd(), "test_gdal_calc.tif")
+        multiplied = os.path.join(os.getcwd(), "test_gdal_calc_multiplied.tif")
+        ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
+        self.assertTrue(os.path.exists(path))
+        ImageIO.gdal_calc(multiplied, "A*B", path, path)
+        self.assertTrue(os.path.exists(multiplied))
+        img_read, _ = ImageIO.tiff_to_array(multiplied)
+        np.testing.assert_array_almost_equal(img ** 2, img_read)
+        FileSystem.remove_file(multiplied)
+        FileSystem.remove_file(path)
+
+    def test_gdal_tile_untile(self):
+        from Common import FileSystem
+        img = np.arange(0., 100.).reshape((10, 10))
+        path = os.path.join(os.getcwd(), "test_gdal_retile.tif")
+        tile_folder = os.path.join(os.getcwd(), "tiled")
+        ImageIO.write_geotiff(img, path, self.projection, self.coordinates)
+        self.assertTrue(os.path.exists(path))
+        _, tiles = ImageIO.gdal_retile(tile_folder, path, ps="2 2")
+        self.assertTrue(os.path.isdir(tile_folder))
+        self.assertEqual(len(tiles), 25)
+        img_read, _ = ImageIO.tiff_to_array(tiles[-1])
+        expected = np.array([[88, 89],
+                             [98, 99]])
+        np.testing.assert_array_almost_equal(expected, img_read)
+
+        # Untile
+        untiled = os.path.join(os.getcwd(), "test_gdal_untile.tif")
+        ImageIO.gdal_merge(untiled, *tiles)
+        self.assertTrue(os.path.exists(untiled))
+        img_combined, _ = ImageIO.tiff_to_array(untiled)
+        np.testing.assert_array_almost_equal(img, img_combined)
+        FileSystem.remove_file(path)
+        FileSystem.remove_file(untiled)
+        FileSystem.remove_directory(tile_folder)
+
 
 if __name__ == '__main__':
     unittest.main()
