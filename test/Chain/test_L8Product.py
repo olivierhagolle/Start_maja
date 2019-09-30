@@ -11,10 +11,10 @@ Created on:     Tue Dec  5 10:26:05 2018
 """
 
 import unittest
-from Common import TestFunctions
+from Common import TestFunctions, FileSystem
 from Chain.Product import MajaProduct
 from Chain.L8Product import Landsat8Natif, Landsat8Muscate, Landsat8LC1, Landsat8LC2
-from os import path
+import os
 
 
 class TestL8Product(unittest.TestCase):
@@ -47,11 +47,11 @@ class TestL8Product(unittest.TestCase):
         import os
         for root in cls.prod_l8_lc1 + cls.prod_l8_lc2:
             os.makedirs(root)
-            metadata = path.join(root, root.split(".")[0] + "_MTL.txt")
+            metadata = os.path.join(root, root.split(".")[0] + "_MTL.txt")
             TestFunctions.touch(metadata)
         for root in cls.prod_l8_mus:
             os.makedirs(root)
-            metadata = path.join(root, root + "_MTD_ALL.xml")
+            metadata = os.path.join(root, root + "_MTD_ALL.xml")
             TestFunctions.touch(metadata)
         for root in cls.prod_l8_nat:
             os.makedirs(root)
@@ -73,7 +73,8 @@ class TestL8Product(unittest.TestCase):
         tiles = ["31TCH", "31TCH"]
         levels = ["l1c", "l2a"]
         dates = ["20170501T103532", "20170501T103532"]
-        for prod, tile, date, level in zip(self.prod_l8_mus, tiles, dates, levels):
+        validity = [True, False]
+        for prod, tile, date, level, valid in zip(self.prod_l8_mus, tiles, dates, levels, validity):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Landsat8Muscate)
             self.assertEqual(p.level, level)
@@ -81,8 +82,13 @@ class TestL8Product(unittest.TestCase):
             self.assertEqual(p.type, "muscate")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
-            self.assertTrue(path.exists(p.metadata_file))
+            self.assertTrue(os.path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
+            self.assertTrue(os.path.exists(p.metadata_file))
+            self.assertEqual(p.validity, valid)
+            link_dir = "linkdir"
+            FileSystem.create_directory(link_dir)
+            p.link(link_dir)
+            self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '30 -30'}])
             self.assertEqual(p, p)
 
@@ -102,8 +108,13 @@ class TestL8Product(unittest.TestCase):
             self.assertEqual(p.type, "natif")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
-            self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
-            self.assertTrue(path.exists(p.metadata_file))
+            self.assertEqual(os.path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
+            self.assertTrue(os.path.exists(p.metadata_file))
+            self.assertEqual(p.validity, True)
+            link_dir = "linkdir"
+            FileSystem.create_directory(link_dir)
+            p.link(link_dir)
+            self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '30 -30'}])
             self.assertEqual(p, p)
 
@@ -124,8 +135,13 @@ class TestL8Product(unittest.TestCase):
             self.assertEqual(p.type, "natif")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
-            self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + "_MTL.txt")
-            self.assertTrue(path.exists(p.metadata_file))
+            self.assertEqual(os.path.basename(p.metadata_file), prod.split(".")[0] + "_MTL.txt")
+            self.assertTrue(os.path.exists(p.metadata_file))
+            self.assertEqual(p.validity, True)
+            link_dir = "linkdir"
+            FileSystem.create_directory(link_dir)
+            p.link(link_dir)
+            self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '30 -30'}])
             self.assertEqual(p, p)
 
@@ -146,8 +162,13 @@ class TestL8Product(unittest.TestCase):
             self.assertEqual(p.type, "natif")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
-            self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + "_MTL.txt")
-            self.assertTrue(path.exists(p.metadata_file))
+            self.assertEqual(os.path.basename(p.metadata_file), prod.split(".")[0] + "_MTL.txt")
+            self.assertTrue(os.path.exists(p.metadata_file))
+            self.assertEqual(p.validity, True)
+            link_dir = "linkdir"
+            FileSystem.create_directory(link_dir)
+            p.link(link_dir)
+            self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '30 -30'}])
             self.assertEqual(p, p)
 

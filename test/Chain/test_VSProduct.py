@@ -11,10 +11,10 @@ Created on:     Tue Dec  5 10:26:05 2018
 """
 
 import unittest
-from Common import TestFunctions
+from Common import TestFunctions, FileSystem
 from Chain.Product import MajaProduct
 from Chain.VSProduct import VenusMuscate, VenusNatif
-from os import path
+import os
 
 
 class TestVSProduct(unittest.TestCase):
@@ -51,7 +51,7 @@ class TestVSProduct(unittest.TestCase):
             TestFunctions.touch(metadata)
         for root in cls.prod_vs_mus:
             os.makedirs(root)
-            metadata = path.join(root, root + "_MTD_ALL.xml")
+            metadata = os.path.join(root, root + "_MTD_ALL.xml")
             TestFunctions.touch(metadata)
 
     @classmethod
@@ -69,7 +69,8 @@ class TestVSProduct(unittest.TestCase):
         tiles = ["KHUMBU", "KHUMBU", "KHUMBU"]
         levels = ["l1c", "l2a", "l3a"]
         dates = ["20180201T051359", "20180201T051359", "20180201T000000"]
-        for prod, tile, date, level in zip(self.prod_vs_mus, tiles, dates, levels):
+        validity = [True, False, False]
+        for prod, tile, date, level, valid in zip(self.prod_vs_mus, tiles, dates, levels, validity):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, VenusMuscate)
             self.assertEqual(p.level, level)
@@ -77,8 +78,13 @@ class TestVSProduct(unittest.TestCase):
             self.assertEqual(p.type, "muscate")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
-            self.assertTrue(path.exists(p.metadata_file))
+            self.assertTrue(os.path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
+            self.assertTrue(os.path.exists(p.metadata_file))
+            self.assertEqual(p.validity, valid)
+            link_dir = "linkdir"
+            FileSystem.create_directory(link_dir)
+            p.link(link_dir)
+            self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '5 -5'}])
             self.assertEqual(p, p)
 
@@ -99,8 +105,13 @@ class TestVSProduct(unittest.TestCase):
             self.assertEqual(p.type, "natif")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
-            self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
-            self.assertTrue(path.exists(p.metadata_file))
+            self.assertEqual(os.path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
+            self.assertTrue(os.path.exists(p.metadata_file))
+            self.assertEqual(p.validity, True)
+            link_dir = "linkdir"
+            FileSystem.create_directory(link_dir)
+            p.link(link_dir)
+            self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '5 -5'}])
             self.assertEqual(p, p)
 

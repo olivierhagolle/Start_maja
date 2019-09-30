@@ -11,10 +11,10 @@ Created on:     Tue Dec  5 10:26:05 2018
 """
 
 import unittest
-from Common import TestFunctions
+from Common import TestFunctions, FileSystem
 from Chain.Product import MajaProduct
 from Chain.SpotProduct import Spot4Muscate, Spot5Muscate
-from os import path
+import os
 
 
 class TestSpotProduct(unittest.TestCase):
@@ -51,11 +51,11 @@ class TestSpotProduct(unittest.TestCase):
         import os
         for root in cls.prod_s4_mus:
             os.makedirs(root)
-            metadata = path.join(root, root + "_MTD_ALL.xml")
+            metadata = os.path.join(root, root + "_MTD_ALL.xml")
             TestFunctions.touch(metadata)
         for root in cls.prod_s5_mus:
             os.makedirs(root)
-            metadata = path.join(root, root + "_MTD_ALL.xml")
+            metadata = os.path.join(root, root + "_MTD_ALL.xml")
             TestFunctions.touch(metadata)
 
     @classmethod
@@ -76,8 +76,13 @@ class TestSpotProduct(unittest.TestCase):
             self.assertEqual(p.type, "muscate")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
-            self.assertTrue(path.exists(p.metadata_file))
+            self.assertTrue(os.path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
+            self.assertTrue(os.path.exists(p.metadata_file))
+            self.assertEqual(p.validity, True)
+            link_dir = "linkdir"
+            FileSystem.create_directory(link_dir)
+            p.link(link_dir)
+            self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '5 -5'}])
             self.assertEqual(p, p)
 
@@ -97,8 +102,13 @@ class TestSpotProduct(unittest.TestCase):
             self.assertEqual(p.type, "muscate")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
-            self.assertTrue(path.exists(p.metadata_file))
+            self.assertTrue(os.path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
+            self.assertTrue(os.path.exists(p.metadata_file))
+            self.assertEqual(p.validity, True)
+            link_dir = "linkdir"
+            FileSystem.create_directory(link_dir)
+            p.link(link_dir)
+            self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '5 -5'}])
             self.assertEqual(p, p)
 

@@ -11,10 +11,10 @@ Created on:     Tue Dec  5 10:26:05 2018
 """
 
 import unittest
-from Common import TestFunctions
+from Common import TestFunctions, FileSystem
 from Chain.Product import MajaProduct
 from Chain.S2Product import Sentinel2Natif, Sentinel2Muscate, Sentinel2SSC
-from os import path
+import os
 
 
 class TestS2Product(unittest.TestCase):
@@ -50,11 +50,11 @@ class TestS2Product(unittest.TestCase):
             TestFunctions.touch(metadata)
         for root in cls.prod_s2_mus:
             os.makedirs(root)
-            metadata = path.join(root, root + "_MTD_ALL.xml")
+            metadata = os.path.join(root, root + "_MTD_ALL.xml")
             TestFunctions.touch(metadata)
         for root in cls.prod_s2_nat:
             os.makedirs(root)
-            metadata = path.join(root, "MTD_MSIL1C.xml")
+            metadata = os.path.join(root, "MTD_MSIL1C.xml")
             TestFunctions.touch(metadata)
 
     @classmethod
@@ -72,7 +72,8 @@ class TestS2Product(unittest.TestCase):
         tiles = ["31TCH", "31TCH", "31UFR"]
         levels = ["l1c", "l2a", "l3a"]
         dates = ["20171008T105012", "20161206T105012", "20190415T000000"]
-        for prod, tile, date, level in zip(self.prod_s2_mus, tiles, dates, levels):
+        validity = [True, False, False]
+        for prod, tile, date, level, valid in zip(self.prod_s2_mus, tiles, dates, levels, validity):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Sentinel2Muscate)
             self.assertEqual(p.level, level)
@@ -80,8 +81,13 @@ class TestS2Product(unittest.TestCase):
             self.assertEqual(p.type, "muscate")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
-            self.assertTrue(path.exists(p.metadata_file))
+            self.assertTrue(os.path.basename(p.metadata_file).endswith("_MTD_ALL.xml"))
+            self.assertTrue(os.path.exists(p.metadata_file))
+            self.assertEqual(p.validity, valid)
+            link_dir = "linkdir"
+            FileSystem.create_directory(link_dir)
+            p.link(link_dir)
+            self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{"name": "R1", "val": "10 -10"},
                                                       {"name": "R2", "val": "20 -20"}])
             self.assertEqual(p, p)
@@ -101,8 +107,13 @@ class TestS2Product(unittest.TestCase):
             self.assertEqual(p.type, "natif")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
-            self.assertTrue(path.basename(p.metadata_file), "MTD_MSIL1C.xml")
-            self.assertTrue(path.exists(p.metadata_file))
+            self.assertTrue(os.path.basename(p.metadata_file), "MTD_MSIL1C.xml")
+            self.assertTrue(os.path.exists(p.metadata_file))
+            self.assertEqual(p.validity, True)
+            link_dir = "linkdir"
+            FileSystem.create_directory(link_dir)
+            p.link(link_dir)
+            self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{"name": "R1", "val": "10 -10"},
                                                       {"name": "R2", "val": "20 -20"}])
             self.assertEqual(p, p)
@@ -116,7 +127,8 @@ class TestS2Product(unittest.TestCase):
         tiles = ["36JTT", "21MXT"]
         dates = ["20160914T120000", "20180925T120000"]
         levels = ["l2a", "l1c"]
-        for prod, tile, date, level in zip(self.prod_s2_ssc, tiles, dates, levels):
+        validity = [True, True]
+        for prod, tile, date, level, valid in zip(self.prod_s2_ssc, tiles, dates, levels, validity):
             p = MajaProduct(prod).factory()
             self.assertIsInstance(p, Sentinel2SSC)
             self.assertEqual(p.level, level)
@@ -124,8 +136,13 @@ class TestS2Product(unittest.TestCase):
             self.assertEqual(p.type, "natif")
             self.assertEqual(p.tile, tile)
             self.assertEqual(p.date.strftime("%Y%m%dT%H%M%S"), date)
-            self.assertEqual(path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
-            self.assertTrue(path.exists(p.metadata_file))
+            self.assertEqual(os.path.basename(p.metadata_file), prod.split(".")[0] + ".HDR")
+            self.assertTrue(os.path.exists(p.metadata_file))
+            self.assertEqual(p.validity, valid)
+            link_dir = "linkdir"
+            FileSystem.create_directory(link_dir)
+            p.link(link_dir)
+            self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
             self.assertEqual(p.mnt_resolutions_dict, [{"name": "R1", "val": "10 -10"},
                                                       {"name": "R2", "val": "20 -20"}])
             self.assertEqual(p, p)
