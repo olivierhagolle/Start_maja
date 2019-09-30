@@ -253,6 +253,7 @@ class TestImageIO(unittest.TestCase):
         FileSystem.remove_file(path)
 
     def test_gdal_tile_untile(self):
+        import sys
         from Common import FileSystem
         img = np.arange(0., 100.).reshape((10, 10))
         path = os.path.join(os.getcwd(), "test_gdal_retile.tif")
@@ -265,14 +266,22 @@ class TestImageIO(unittest.TestCase):
         img_read, _ = ImageIO.tiff_to_array(tiles[-1])
         expected = np.array([[88, 89],
                              [98, 99]])
-        np.testing.assert_array_almost_equal(expected, img_read)
+
+        if sys.version_info >= (3, 6):
+            np.testing.assert_array_almost_equal(expected, img_read)
+        else:
+            np.testing.assert_allclose(expected, img_read, atol=1.0)
 
         # Untile
         untiled = os.path.join(os.getcwd(), "test_gdal_untile.tif")
         ImageIO.gdal_merge(untiled, *tiles)
         self.assertTrue(os.path.exists(untiled))
         img_combined, _ = ImageIO.tiff_to_array(untiled)
-        np.testing.assert_array_almost_equal(img, img_combined)
+        if sys.version_info >= (3, 6):
+            np.testing.assert_array_almost_equal(img, img_combined)
+        else:
+            np.testing.assert_allclose(img, img_combined, atol=1.0)
+
         FileSystem.remove_file(path)
         FileSystem.remove_file(untiled)
         FileSystem.remove_directory(tile_folder)
