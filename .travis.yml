@@ -28,6 +28,7 @@ install:
   - conda activate test-environment
   - conda install gdal numpy scipy coverage pytest coveralls
 script:
+  - coverage run -m py.test -v test/Chain/test_GippFile.py
   - coverage run -m py.test -v
 after_success:
   - coveralls
