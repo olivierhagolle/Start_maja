@@ -135,7 +135,9 @@ class TestGippFile(unittest.TestCase):
         n_extl = len(FileSystem.find("*EEF", g.out_path))
         self.assertEqual(n_extl, 5)
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
-
+        FileSystem.remove_directory(g.out_path)
+        self.assertFalse(os.path.expanduser(g.out_path))
+    
     def test_download_vs_muscate_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "venus", "muscate")
