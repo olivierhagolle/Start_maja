@@ -28,7 +28,6 @@ install:
   - conda activate test-environment
   - conda install gdal numpy scipy coverage pytest coveralls
 script:
-  - coverage run -m py.test -v test/Chain/test_GippFile.py::TestGippFile::test_download_l8_muscate_nocams
   - coverage run -m py.test -v
 after_success:
   - coveralls
