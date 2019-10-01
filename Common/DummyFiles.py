@@ -103,8 +103,8 @@ class DummyEarthExplorer(DummyGenerator):
 
     def __init__(self, root, date=None, tile=None, platform=random_platform()):
         super(DummyEarthExplorer, self).__init__(root, date, tile, platform)
-        self.hdr = []
-        self.dbl = []
+        self.hdr = None
+        self.dbl = None
 
     def get_mission(self):
         """
@@ -148,15 +148,17 @@ class MNTGenerator(DummyEarthExplorer):
     def generate(self, **kwargs):
         import random
         from Common import FileSystem
+        from Chain.AuxFile import DTMFile
         mission_param = kwargs.get("mission", self.get_mission())
         mission_specifier = "_" if self.platform == "sentinel2" else ""
         basename = "_".join([self.mission_short[self.platform] + mission_specifier,
                              "TEST", "AUX", "REFDE2", self.tile,
                              str(random.randint(0, 1000)).zfill(4)])
-        self.dbl.append(os.path.join(self.root, basename + ".DBL.DIR"))
-        self.hdr.append(os.path.join(self.root, basename + ".HDR"))
-        FileSystem.create_directory(self.dbl[-1])
-        self.create_dummy_hdr(self.hdr[-1], mission=mission_param + mission_specifier)
+        self.dbl = os.path.join(self.root, basename + ".DBL.DIR")
+        self.hdr = os.path.join(self.root, basename + ".HDR")
+        FileSystem.create_directory(self.dbl)
+        self.create_dummy_hdr(self.hdr, mission=mission_param + mission_specifier)
+        return DTMFile(self.dbl)
 
 
 class CAMSGenerator(DummyEarthExplorer):
@@ -174,11 +176,11 @@ class CAMSGenerator(DummyEarthExplorer):
                              "TEST", "EXO", "CAMS",
                              self.date.strftime("%Y%m%dT%H%M%S"),
                              end_date.strftime("%Y%m%dT%H%M%S")])
-        self.dbl.append(os.path.join(self.root, basename + ".DBL.DIR"))
-        self.hdr.append(os.path.join(self.root, basename + ".HDR"))
-        FileSystem.create_directory(self.dbl[-1])
-        self.create_dummy_hdr(self.hdr[-1], mission=mission_param + mission_specifier)
-        return CAMSFile(self.dbl[-1])
+        self.dbl = os.path.join(self.root, basename + ".DBL.DIR")
+        self.hdr = os.path.join(self.root, basename + ".HDR")
+        FileSystem.create_directory(self.dbl)
+        self.create_dummy_hdr(self.hdr, mission=mission_param + mission_specifier)
+        return CAMSFile(self.dbl)
 
 
 class GippGenerator(DummyEarthExplorer):
@@ -203,7 +205,6 @@ class GippGenerator(DummyEarthExplorer):
                              version, start_date.strftime("%Y%m%dT%H%M%S"),
                              self.date.strftime("%Y%m%dT%H%M%S")])
         hdr_name = os.path.join(self.root, basename + file_type)
-        self.hdr.append(hdr_name)
         self.create_dummy_hdr(hdr_name, mission=mission + mission_specifier)
         return basename
 
@@ -236,7 +237,6 @@ class GippGenerator(DummyEarthExplorer):
                 for model in models:
                     basename = self._create_hdr(sat, name, start_date, version_str, model, mission, ".HDR")
                     dbl_name = os.path.join(self.root, basename + ".DBL.DIR")
-                    self.dbl.append(dbl_name)
                     FileSystem.create_directory(dbl_name)
             # For TM: Add an additional set of COMM, EXTL and QLTL files with muscate mission:
             for name in tm_types:
