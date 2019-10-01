@@ -18,7 +18,7 @@ import os
 class TestGippFile(unittest.TestCase):
     root = os.getcwd()
 
-    subdir_prefix = os.path.join(root, "CAMS")
+    cams_dir = os.path.join(root, "CAMS")
     n_cams = 3
     tiles = ["T31TCH", "T12SQE", "SO2", "12949"]
     mnt = []
@@ -80,8 +80,6 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 4)
         n_extl = len(FileSystem.find("*EEF", g.out_path))
         self.assertEqual(n_extl, 15)
-        FileSystem.remove_directory(g.out_path)
-        self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
     def atest_download_s2_muscate_nocams(self):
@@ -98,8 +96,6 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 2)
         n_extl = len(FileSystem.find("*EEF", g.out_path))
         self.assertEqual(n_extl, 9)
-        FileSystem.remove_directory(g.out_path)
-        self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
     def atest_download_s2_natif_nocams(self):
@@ -116,8 +112,6 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 2)
         n_extl = len(FileSystem.find("*EEF", g.out_path))
         self.assertEqual(n_extl, 9)
-        FileSystem.remove_directory(g.out_path)
-        self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
     def atest_download_l8_muscate_nocams(self):
@@ -134,8 +128,6 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 1)
         n_extl = len(FileSystem.find("*EEF", g.out_path))
         self.assertEqual(n_extl, 5)
-        FileSystem.remove_directory(g.out_path)
-        self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
     def atest_download_vs_muscate_nocams(self):
@@ -152,8 +144,6 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 1)
         n_extl = len(FileSystem.find("*EEF", g.out_path))
         self.assertEqual(n_extl, 5)
-        FileSystem.remove_directory(g.out_path)
-        self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
     def atest_download_l8_natif_nocams(self):
@@ -170,8 +160,6 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 1)
         n_extl = len(FileSystem.find("*EEF", g.out_path))
         self.assertEqual(n_extl, 5)
-        FileSystem.remove_directory(g.out_path)
-        self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
     def atest_download_vs_natif_nocams(self):
@@ -188,8 +176,6 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 1)
         n_extl = len(FileSystem.find("*EEF", g.out_path))
         self.assertEqual(n_extl, 5)
-        FileSystem.remove_directory(g.out_path)
-        self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
     def test_symlink(self):
@@ -206,8 +192,6 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(len(FileSystem.find("*EEF", symlink_dir)), 15)
         FileSystem.remove_directory(symlink_dir)
         self.assertFalse(os.path.isdir(symlink_dir))
-        FileSystem.remove_directory(g.out_path)
-        self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
     def test_get_models_nocams(self):
@@ -220,8 +204,6 @@ class TestGippFile(unittest.TestCase):
         self.assertTrue(g.check_completeness())
         models_expected = ["continen"]
         self.assertEqual(g.get_models(), models_expected)
-        FileSystem.remove_directory(g.out_path)
-        self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
     def test_get_models_cams(self):
@@ -234,8 +216,6 @@ class TestGippFile(unittest.TestCase):
         self.assertTrue(g.check_completeness())
         models_expected = sorted(["continen", "dust", "blackcar", "sulphate", "seasalt", "organicm"])
         self.assertEqual(g.get_models(), models_expected)
-        FileSystem.remove_directory(g.out_path)
-        self.assertFalse(os.path.isdir(g.out_path))
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
 
