@@ -66,7 +66,7 @@ class TestGippFile(unittest.TestCase):
         for gipp in gipp_vns + gipp_l8 + gipp_s2:
             self.assertTrue(re.search(GIPPFile.regex, gipp))
 
-    def atest_download_s2_tm_nocams(self):
+    def test_download_s2_tm_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "sentinel2", "tm")
         self.assertFalse(g.check_completeness())
@@ -82,7 +82,7 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 15)
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def atest_download_s2_muscate_nocams(self):
+    def test_download_s2_muscate_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "sentinel2", "muscate")
         self.assertFalse(g.check_completeness())
@@ -98,7 +98,7 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 9)
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def atest_download_s2_natif_nocams(self):
+    def test_download_s2_natif_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "sentinel2", "natif")
         self.assertFalse(g.check_completeness())
@@ -114,7 +114,7 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 9)
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def atest_download_l8_muscate_nocams(self):
+    def test_download_l8_muscate_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "landsat8", "muscate")
         self.assertFalse(g.check_completeness())
@@ -130,7 +130,7 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 5)
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def atest_download_vs_muscate_nocams(self):
+    def test_download_vs_muscate_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "venus", "muscate")
         self.assertFalse(g.check_completeness())
@@ -146,7 +146,7 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 5)
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def atest_download_l8_natif_nocams(self):
+    def test_download_l8_natif_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "landsat8", "natif")
         self.assertFalse(g.check_completeness())
@@ -162,7 +162,7 @@ class TestGippFile(unittest.TestCase):
         self.assertEqual(n_extl, 5)
         FileSystem.remove_file(os.path.join(self.root, "wget-log"))
 
-    def atest_download_vs_natif_nocams(self):
+    def test_download_vs_natif_nocams(self):
         from Common import FileSystem
         g = GippSet(self.root, "venus", "natif")
         self.assertFalse(g.check_completeness())
@@ -181,8 +181,8 @@ class TestGippFile(unittest.TestCase):
     def test_symlink(self):
         from Common import FileSystem
         g = GippSet(self.root, "sentinel2", "tm")
-        self.assertFalse(g.check_completeness())
-        g.download()
+        #self.assertFalse(g.check_completeness())
+        #g.download()
         self.assertTrue(g.check_completeness())
         symlink_dir = os.path.join(self.root, "symlinks")
         FileSystem.create_directory(symlink_dir)
