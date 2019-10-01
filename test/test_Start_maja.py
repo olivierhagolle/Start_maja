@@ -68,18 +68,18 @@ class TestStartMaja(unittest.TestCase):
         DummyFiles.L1Generator(cls.product_root,
                                tile=cls.tile,
                                date=cls.start_product,
-                               platform="S2").generate()
+                               platform="sentinel2").generate()
         DummyFiles.L1Generator(cls.product_root,
                                tile=cls.tile,
                                date=cls.end_product,
-                               platform="S2").generate()
+                               platform="sentinel2").generate()
         for d in set([DummyFiles.random_date() for _ in range(cls.n_dummies)]):
-            DummyFiles.L1Generator(cls.product_root, tile=cls.tile, date=d, platform="S2").generate()
-            DummyFiles.L2Generator(cls.product_root, tile=cls.tile, date=d, platform="S2").generate()
+            DummyFiles.L1Generator(cls.product_root, tile=cls.tile, date=d, platform="sentinel2").generate()
+            DummyFiles.L2Generator(cls.product_root, tile=cls.tile, date=d, platform="sentinel2").generate()
 
         for d in set([DummyFiles.random_date() for _ in range(cls.n_not_used)]):
-            DummyFiles.L1Generator(cls.product_root, date=d, platform="S2").generate()
-            DummyFiles.L2Generator(cls.product_root, date=d, platform="S2").generate()
+            DummyFiles.L1Generator(cls.product_root, date=d, platform="sentinel2").generate()
+            DummyFiles.L2Generator(cls.product_root, date=d, platform="sentinel2").generate()
 
         cls.folders_file = os.path.join(cls.root, "test_working_folders_file.txt")
         modify_folders_file(cls.template_folders_file, new_file=cls.folders_file,
@@ -89,7 +89,7 @@ class TestStartMaja(unittest.TestCase):
                             repL1=os.getcwd(),
                             repL2=os.getcwd(),
                             repMNT=os.getcwd())
-        cls.mnt = DummyFiles.MNTGenerator(root=cls.root, tile=cls.tile, platform="S2")
+        cls.mnt = DummyFiles.MNTGenerator(root=cls.root, tile=cls.tile, platform="sentinel2")
         cls.mnt.generate()
         cls.cams = os.path.join(cls.root, "CAMS")
         os.makedirs(cls.cams)
@@ -127,7 +127,7 @@ class TestStartMaja(unittest.TestCase):
     def test_parasite_l2a_product(self):
         from Common import DummyFiles
         prod = DummyFiles.L2Generator(self.product_root,
-                                      platform="VE",
+                                      platform="venus",
                                       tile="T31TCH")
         prod.generate()
         with self.assertRaises(IOError):
