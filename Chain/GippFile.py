@@ -163,10 +163,10 @@ class GippSet(object):
             raise OSError("Cannot find 'LUTs' folder in %s" % self.temp_folder)
         for f in os.listdir(lut_folder):
             shutil.move(os.path.join(lut_folder, f), platform_folder)
-        FileSystem.remove_directory(lut_folder)
         if os.path.isdir(self.out_path):
             FileSystem.remove_directory(self.out_path)
         shutil.move(platform_folder, self.out_path)
+        FileSystem.remove_directory(lut_folder)
         self.__clean_up()
 
     def link(self, dest):
@@ -189,8 +189,9 @@ class GippSet(object):
         """
         from Common import FileSystem
         import re
-        hdrs = FileSystem.find(GIPPFile.regex, self.out_path)
-        raw_models = [re.search(GIPPFile.regex, h).group(3).replace("_", "").lower() for h in hdrs]
+        hdr_reg = os.path.splitext(GIPPFile.regex)[0] + ".HDR"
+        hdrs = FileSystem.find(hdr_reg, self.out_path)
+        raw_models = [re.search(hdr_reg, h).group(3).replace("_", "").lower() for h in hdrs]
         models = list(set(raw_models))
         return sorted(models)
 
