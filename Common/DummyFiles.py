@@ -202,8 +202,8 @@ class GippGenerator(DummyEarthExplorer):
             prefix = "CK"
         basename = "_".join([sat, "TEST", "GIP", prefix + name, "L",
                              "{s:_^8}".format(s=model),
-                             version, start_date.strftime("%Y%m%dT%H%M%S"),
-                             self.date.strftime("%Y%m%dT%H%M%S")])
+                             version, start_date.strftime("%Y%m%d"),
+                             self.date.strftime("%Y%m%d")])
         hdr_name = os.path.join(self.root, basename + file_type)
         self.create_dummy_hdr(hdr_name, mission=mission + mission_specifier)
         return basename
