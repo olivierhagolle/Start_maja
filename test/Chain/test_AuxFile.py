@@ -20,7 +20,7 @@ from datetime import datetime
 class TestAuxFile(unittest.TestCase):
     root = os.getcwd()
 
-    subdir_prefix = os.path.join(root, "CAMS")
+    cams_dir = os.path.join(root, "CAMS")
     n_cams = 3
     tiles = ["T31TCH", "T12SQE", "SO2", "12949"]
     mnt = []
@@ -33,9 +33,9 @@ class TestAuxFile(unittest.TestCase):
         :return:
         """
         from Common import DummyFiles
-        os.makedirs(cls.subdir_prefix)
+        os.makedirs(cls.cams_dir)
         for i in range(cls.n_cams):
-            DummyFiles.CAMSGenerator(cls.subdir_prefix).generate()
+            DummyFiles.CAMSGenerator(cls.cams_dir).generate()
 
         for tile in cls.tiles:
             cls.mnt += [DummyFiles.MNTGenerator(cls.root, tile=tile).generate()]
@@ -43,7 +43,7 @@ class TestAuxFile(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         import shutil
-        shutil.rmtree(cls.subdir_prefix)
+        shutil.rmtree(cls.cams_dir)
         for m in cls.mnt:
             shutil.rmtree(m.dbl)
             os.remove(m.hdr)
@@ -66,7 +66,7 @@ class TestAuxFile(unittest.TestCase):
     def test_cams_creation(self):
         from Common import FileSystem
 
-        dbl = FileSystem.find("DBL.DIR", self.subdir_prefix)[0]
+        dbl = FileSystem.find("DBL.DIR", self.cams_dir)[0]
         c = CAMSFile(dbl)
         self.assertIsNotNone(c)
         base = os.path.basename(dbl).split(".")[0]
@@ -82,7 +82,7 @@ class TestAuxFile(unittest.TestCase):
     def test_cams_date(self):
         from Common import FileSystem
 
-        dbl = FileSystem.find("*EXO_CAMS*DBL.DIR", self.subdir_prefix)[0]
+        dbl = FileSystem.find("*EXO_CAMS*DBL.DIR", self.cams_dir)[0]
         c = CAMSFile(dbl)
         base = os.path.basename(dbl).split(".")[0]
         date = datetime.strptime(base.split("_")[-2], "%Y%m%dT%H%M%S")
@@ -97,7 +97,7 @@ class TestAuxFile(unittest.TestCase):
 
     def test_wrong_mnt_creation(self):
         from Common import FileSystem
-        dbl = FileSystem.find("DBL.DIR", self.subdir_prefix)[0]
+        dbl = FileSystem.find("DBL.DIR", self.cams_dir)[0]
         self.assertIsNone(DTMFile(dbl))
 
 
