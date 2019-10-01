@@ -21,6 +21,12 @@ class GIPPFile(EarthExplorer):
             r"(L2ALBD|L2DIFT|L2DIRT|L2TOCR|L2WATV|L2COMM|L2SITE|L2SMAC|CKEXTL|CKQLTL)_" \
             r"\w_(\w+)_\d{5}_\d{8}_\d{8}\.(HDR|EEF)"
 
+    regex_dbl = r"\w+_" \
+                r"(TEST|PROD)_" \
+                r"GIP_" \
+                r"(L2ALBD|L2DIFT|L2DIRT|L2TOCR|L2WATV|L2COMM|L2SITE|L2SMAC|CKEXTL|CKQLTL)_" \
+                r"\w_(\w+)_\d{5}_\d{8}_\d{8}\.DBL(.DIR)?"
+
     @staticmethod
     def get_mission(hdr):
         """
@@ -170,8 +176,8 @@ class GippSet(object):
         :return:
         """
         from Common import FileSystem
-        eefs = FileSystem.find("*.(EEF|HDR)", self.out_path)
-        dbls = FileSystem.find("*.DBL.DIR", self.out_path)
+        eefs = FileSystem.find(GIPPFile.regex, self.out_path)
+        dbls = FileSystem.find(GIPPFile.regex_dbl, self.out_path)
         for f in eefs + dbls:
             base = os.path.basename(f)
             FileSystem.symlink(f, os.path.join(dest, base))
