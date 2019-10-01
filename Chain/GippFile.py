@@ -139,6 +139,7 @@ class GippSet(object):
         """
         import shutil
         from Common import FileSystem
+        self.out_path = os.path.join(self.fpath, self.gipp_folder_name)
         FileSystem.download_file(self.url, self.gipp_archive, self.log_level)
         FileSystem.unzip(self.gipp_archive, self.temp_folder)
         gipp_maja_git = os.path.join(self.temp_folder, "gipp_maja.git")
@@ -167,7 +168,6 @@ class GippSet(object):
             FileSystem.remove_directory(self.out_path)
         shutil.move(platform_folder, self.out_path)
         self.__clean_up()
-        self.out_path = os.path.join(self.fpath, self.gipp_folder_name)
 
     def link(self, dest):
         """
