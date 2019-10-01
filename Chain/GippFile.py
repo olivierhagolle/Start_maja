@@ -112,7 +112,7 @@ class GippSet(object):
         self.lut_archive = os.path.join(self.fpath, "lut_archive.zip")
         self.temp_folder = os.path.join(self.fpath, "tempdir")
         self.gipp_folder_name = "%s_%s" % (self.platform.upper(), self.gtype.upper()) + self.cams_suffix
-        self.out_path = os.path.join(self.fpath, self.gipp_folder_name)
+        self.out_path = self.fpath
 
     def __clean_up(self):
         """
@@ -161,6 +161,7 @@ class GippSet(object):
             FileSystem.remove_directory(self.out_path)
         shutil.move(platform_folder, self.out_path)
         self.__clean_up()
+        self.out_path = os.path.join(self.fpath, self.gipp_folder_name)
 
     def link(self, dest):
         """
