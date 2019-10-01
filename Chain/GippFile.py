@@ -19,7 +19,7 @@ class GIPPFile(EarthExplorer):
             r"(TEST|PROD)_" \
             r"GIP_" \
             r"(L2ALBD|L2DIFT|L2DIRT|L2TOCR|L2WATV|L2COMM|L2SITE|L2SMAC|CKEXTL|CKQLTL)_" \
-            r"\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+            r"\w_(\w+)_\d{5}_\d{8}_\d{8}\.(HDR|EEF)"
 
     @staticmethod
     def get_mission(hdr):
@@ -33,43 +33,43 @@ class GIPPFile(EarthExplorer):
 
 
 class GippALBD(EarthExplorer):
-    regex = r"\w+_(TEST|PROD)_GIP_L2ALBD_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex = r"\w+_(TEST|PROD)_GIP_L2ALBD_\w_(\w+)_\d{5}_\d{8}_\d{8}\.\w+"
 
 
 class GippDIFT(EarthExplorer):
-    regex = r"\w+_(TEST|PROD)_GIP_L2DIFT_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex = r"\w+_(TEST|PROD)_GIP_L2DIFT_\w_(\w+)_\d{5}_\d{8}_\d{8}\.\w+"
 
 
 class GippDIRT(EarthExplorer):
-    regex = r"\w+_(TEST|PROD)_GIP_L2DIRT_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex = r"\w+_(TEST|PROD)_GIP_L2DIRT_\w_(\w+)_\d{5}_\d{8}_\d{8}\.\w+"
 
 
 class GippTOCR(EarthExplorer):
-    regex = r"\w+_(TEST|PROD)_GIP_L2TOCR_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex = r"\w+_(TEST|PROD)_GIP_L2TOCR_\w_(\w+)_\d{5}_\d{8}_\d{8}\.\w+"
 
 
 class GippWATV(EarthExplorer):
-    regex = r"\w+_(TEST|PROD)_GIP_L2WATV_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex = r"\w+_(TEST|PROD)_GIP_L2WATV_\w_(\w+)_\d{5}_\d{8}_\d{8}\.\w+"
 
 
 class GippCOMM(EarthExplorer):
-    regex = r"\w+_(TEST|PROD)_GIP_L2COMM_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex = r"\w+_(TEST|PROD)_GIP_L2COMM_\w_(\w+)_\d{5}_\d{8}_\d{8}\.\w+"
 
 
 class GippSITE(EarthExplorer):
-    regex = r"\w+_(TEST|PROD)_GIP_L2SITE_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex = r"\w+_(TEST|PROD)_GIP_L2SITE_\w_(\w+)_\d{5}_\d{8}_\d{8}\.\w+"
 
 
 class GippSMAC(EarthExplorer):
-    regex = r"\w+_(TEST|PROD)_GIP_L2SMAC_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex = r"\w+_(TEST|PROD)_GIP_L2SMAC_\w_(\w+)_\d{5}_\d{8}_\d{8}\.\w+"
 
 
 class GippEXTL(EarthExplorer):
-    regex = r"\w+_(TEST|PROD)_GIP_L2EXTL_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex = r"\w+_(TEST|PROD)_GIP_CKEXTL_\w_(\w+)_\d{5}_\d{8}_\d{8}\.\w+"
 
 
 class GippQLTL(EarthExplorer):
-    regex = r"\w+_(TEST|PROD)_GIP_L2QLTL_\w_\w+_\d{5}_\d{8}_\d{8}\.\w+"
+    regex = r"\w+_(TEST|PROD)_GIP_CKQLTL_\w_(\w+)_\d{5}_\d{8}_\d{8}\.\w+"
 
 
 class GippSet(object):
@@ -182,8 +182,9 @@ class GippSet(object):
         :return: List of models in alphabetical order.
         """
         from Common import FileSystem
-        hdrs = FileSystem.find("*.HDR", self.out_path)
-        raw_models = [os.path.basename(hdr).split("_")[5].lower() for hdr in hdrs]
+        import re
+        hdrs = FileSystem.find(GIPPFile.regex, self.out_path)
+        raw_models = [re.search(GIPPFile.regex, h).group(3).replace("_", "").lower() for h in hdrs]
         models = list(set(raw_models))
         return sorted(models)
 
