@@ -27,8 +27,8 @@ class TestWorkplan(unittest.TestCase):
         self.other_l1 = [DummyFiles.L1Generator(root=os.getcwd()).generate()
                          for _ in range(3)]
 
-        self.l2 = DummyFiles.L2Generator(root=os.getcwd(), tile="T11ABC", platform="sentinel2").generate()
-        self.other_l2 = [DummyFiles.L2Generator(root=os.getcwd()).generate() for _ in range(3)]
+        self.l2 = DummyFiles.L2Generator(root=self.outdir, tile="T11ABC", platform="sentinel2").generate()
+        self.other_l2 = [DummyFiles.L2Generator(root=self.outdir).generate() for _ in range(3)]
         self.gipp_dir = os.path.join(os.getcwd(), "gipp_dir")
         FileSystem.create_directory(self.gipp_dir)
         self.gipp = DummyFiles.GippGenerator(root=self.gipp_dir, platform="sentinel2").generate()
@@ -67,6 +67,30 @@ class TestWorkplan(unittest.TestCase):
         wp = Init(self.wdir, self.outdir, l1=self.l1)
         self.assertEqual(wp.log_level, "INFO")
         self.assertEqual(wp.aux_files, [])
+        self.assertTrue(os.path.isdir(self.wdir))
+        self.assertTrue(os.path.isdir(self.outdir))
+        self.assertEqual(wp.l1, self.l1)
+
+    def test_wp_backward(self):
+        wp = Backward(self.wdir, self.outdir, l1=self.l1, l1_list=self.l1_list)
+        self.assertEqual(wp.log_level, "INFO")
+        self.assertEqual(wp.aux_files, [])
+        self.assertTrue(os.path.isdir(self.wdir))
+        self.assertTrue(os.path.isdir(self.outdir))
+        self.assertEqual(wp.l1, self.l1)
+        self.assertTrue(wp.l1_list, self.l1_list)
+
+    def test_wp_nominal(self):
+        wp = Nominal(self.wdir, self.outdir, l1=self.l1, l2_date=self.l2.date, log_level="DEBUG")
+        self.assertEqual(wp.log_level, "DEBUG")
+        self.assertEqual(wp.aux_files, [])
+        self.assertTrue(os.path.isdir(self.wdir))
+        self.assertTrue(os.path.isdir(self.outdir))
+        self.assertEqual(wp.l1, self.l1)
+        self.assertEqual(wp.l2_date, self.l2.date)
+        l2_prods = wp._get_available_l2_products()
+        # TODO Cannot check more because of misaligned dates and validity check. Need to add JPI to dummy-files
+        self.assertEqual([], l2_prods)
 
 
 if __name__ == '__main__':

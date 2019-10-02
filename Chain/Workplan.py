@@ -186,10 +186,34 @@ class Nominal(Workplan):
         import datetime
         assert isinstance(l2_date, datetime.datetime)
         self.l2_date = l2_date
-        self.l2 = None
+        self.l2 = kwargs.get("l2", None)
         self.remaining_l1 = kwargs.get("remaining_l1", [])
         self.nbackward = kwargs.get("nbackward", int(8))
         super(Nominal, self).__init__(wdir, outdir, l1, log_level, **kwargs)
+
+    def _get_available_l2_products(self):
+        """
+        Get the list of available l2 products
+        :return: The list of l2 products currently available that are after the given l1 date
+        """
+        from Start_maja import StartMaja
+        # Find the previous L2 product
+        avail_input_l2 = StartMaja.get_available_products(self.outdir, "l2a", self.tile)
+        # Get only products which are close to the desired l2 date and before the l1 date:
+        l2_prods = [prod for prod in avail_input_l2
+                    if abs(prod.date - self.l2_date) < StartMaja.max_l2_diff and
+                    prod.date < self.date and prod.validity]
+        return l2_prods
+
+    @staticmethod
+    def _get_l2_product(l2_prods):
+        """
+        Get the L2 product used for the execution
+        :return:
+        """
+        # Take the first product:
+        # TODO Verify edge cases
+        return l2_prods[0]
 
     def execute(self, maja, dtm, gipp, conf):
         """
@@ -200,15 +224,9 @@ class Nominal(Workplan):
         :param conf: The full path to the userconf folder
         :return: The return code of the Maja app
         """
-        from Common.FileSystem import symlink, remove_directory
-        from Start_maja import StartMaja
+        from Common.FileSystem import remove_directory
         self.create_working_dir(dtm, gipp)
-        # Find the previous L2 product
-        avail_input_l2 = StartMaja.get_available_products(self.outdir, "l2a", self.tile)
-        # Get only products which are close to the desired l2 date and before the l1 date:
-        l2_prods = [prod for prod in avail_input_l2
-                    if abs(prod.date - self.l2_date) < StartMaja.max_l2_diff and
-                    prod.date < self.date and prod.validity]
+        l2_prods = self._get_available_l2_products()
         if not l2_prods:
             logger.error("Cannot find previous L2 product for date %s in %s" % (self.date, self.outdir))
             if len(self.remaining_l1) >= self.nbackward:
@@ -221,8 +239,7 @@ class Nominal(Workplan):
             return backup_wp.execute(maja, dtm, gipp, conf)
         if len(l2_prods) > 1:
             logger.info("%s products found for date %s" % (len(l2_prods), self.date))
-        # Take the first product:
-        self.l2 = l2_prods[0]
+        self.l2 = self._get_l2_product(l2_prods)
         # Link additional L2 products:
         self.l2.link(self.input_dir)
         return_code = self.launch_maja(maja, wdir=self.wdir, inputdir=self.input_dir, outdir=self.outdir, conf=conf)
