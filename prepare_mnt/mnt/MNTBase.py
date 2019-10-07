@@ -188,6 +188,7 @@ class MNT(object):
         # Names for R1, R2 etc.
         rasters_written = []
         path_alt, path_asp, path_slp = "", "", ""
+        all_paths_alt = []
         for res in mnt_resolutions:
             # ALT:
             bname_alt = basename + "_ALT"
@@ -195,6 +196,7 @@ class MNT(object):
             bname_alt += ".TIF"
             rel_alt = os.path.join(dbl_base, bname_alt)
             path_alt = os.path.join(self.dem_dir, rel_alt)
+            all_paths_alt.append(path_alt)
             ImageIO.gdal_translate(path_alt, mnt_full_res, tr=res["val"])
             rasters_written.append(rel_alt)
             # ASP:
@@ -249,7 +251,7 @@ class MNT(object):
 
         date_start = datetime(1970, 1, 1)
         date_end = datetime(2100, 1, 1)
-        dem_info = DEMInfo(self.site, path_alt)
+        dem_info = DEMInfo(self.site, all_paths_alt[0])
         root = self._get_root()
         self._create_hdr(root, mission_field, basename, rasters_written,
                          dem_info, date_start, date_end, self.dem_version)

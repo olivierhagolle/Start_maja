@@ -171,7 +171,7 @@ class StartMaja(object):
         :return: The path read as string or OSError if not
         """
 
-        param = config.get(section, option)
+        param = os.path.realpath(os.path.expanduser(config.get(section, option)))
         if not p.exists(param):
             raise OSError("%s %s is missing: %s" % (section, option, param))
         return param
@@ -199,14 +199,14 @@ class StartMaja(object):
         rep_gipp = os.path.realpath(os.path.expanduser(config.get("PATH", "repGipp")))
         if not p.isdir(rep_gipp):
             create_directory(rep_gipp)
-        rep_l1 = os.path.realpath(os.path.expanduser(self.__read_config_param(config, "PATH", "repL1")))
+        rep_l1 = self.__read_config_param(config, "PATH", "repL1")
         rep_l2 = os.path.realpath(os.path.expanduser(config.get("PATH", "repL2")))
         if not p.isdir(rep_l2):
             create_directory(rep_l2)
         rep_mnt = os.path.realpath(os.path.expanduser(config.get("PATH", "repMNT")))
         if not p.isdir(rep_mnt):
             create_directory(rep_mnt)
-        exe_maja = os.path.realpath(os.path.expanduser(self.__read_config_param(config, "PATH", "exeMaja")))
+        exe_maja = self.__read_config_param(config, "PATH", "exeMaja")
 
         # CAMS is optional:
         try:
