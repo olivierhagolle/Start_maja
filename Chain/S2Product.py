@@ -66,7 +66,7 @@ class Sentinel2Natif(MajaProduct):
         from prepare_mnt.mnt.SiteInfo import Site
         from Common import FileSystem
         try:
-            band_b2 = FileSystem.find_single(pattern=r"*B0?2*.jp2", path=self.fpath)
+            band_b2 = FileSystem.find_single(pattern=r"*B0?2.jp2$", path=self.fpath)
         except IOError as e:
             raise e
         return Site.from_raster(self.tile, band_b2)
@@ -77,6 +77,27 @@ class Sentinel2Natif(MajaProduct):
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])},
                 {"name": "R2",
                  "val": str(self.mnt_resolution[0] * 2) + " " + str(self.mnt_resolution[1] * 2)}]
+
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        from Common import ImageIO
+        wdir = kwargs.get("wdir", self.fpath)
+        output_bname = "_".join([self.base, synthetic_band.upper() + ".tif"])
+        output_filename = kwargs.get("output_filename", os.path.join(wdir, output_bname))
+        if synthetic_band == "ndvi":
+            b4 = self.find_file(pattern=r"*B0?4.jp2$")
+            b8 = self.find_file(pattern=r"*B0?8.jp2$")
+            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", b4, b8, q=True)
+        elif synthetic_band == "ndsi":
+            b3 = self.find_file(pattern=r"*B0?3.jp2$")
+            b11 = self.find_file(pattern=r"*B11.jp2$")
+            rescaled_filename = os.path.join(wdir, "res_" + output_bname)
+            ImageIO.gdal_translate(rescaled_filename, b11,
+                                   tr=str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1]),
+                                   q=True)
+            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", b3, rescaled_filename, q=True)
+        else:
+            raise ValueError("Unknown synthetic band %s" % synthetic_band)
+        return output_filename
 
 
 class Sentinel2Muscate(MajaProduct):
@@ -159,6 +180,9 @@ class Sentinel2Muscate(MajaProduct):
                 {"name": "R2",
                  "val": str(self.mnt_resolution[0] * 2) + " " + str(self.mnt_resolution[1] * 2)}]
 
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError
+
 
 class Sentinel2SSC(MajaProduct):
     """
@@ -228,3 +252,6 @@ class Sentinel2SSC(MajaProduct):
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])},
                 {"name": "R2",
                  "val": str(self.mnt_resolution[0] * 2) + " " + str(self.mnt_resolution[1] * 2)}]
+
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError

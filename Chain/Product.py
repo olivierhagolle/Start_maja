@@ -114,8 +114,22 @@ class MajaProduct(object):
         return types[platform][ptype]
 
     def get_file(self, **kwargs):
+        """
+        Find file in the root folder
+        :param kwargs: filename The filename to search for
+        :return: The path to the files found
+        """
         from Common.FileSystem import get_file
         return get_file(root=self.fpath, **kwargs)
+
+    def find_file(self, pattern):
+        """
+        Find file of in any folder-depth
+        :param pattern: The pattern to search for
+        :return: The path to the files found
+        """
+        from Common.FileSystem import find
+        return find(path=self.fpath, pattern=pattern)
 
     @property
     def metadata_file(self):
@@ -156,6 +170,9 @@ class MajaProduct(object):
         return MNTFactory(site=self.mnt_site, platform_id=self.platform_str,
                           mission_field=self.type_xml_maja, mnt_resolutions=self.mnt_resolutions_dict,
                           **kwargs).factory()
+
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError
 
     def __lt__(self, other):
         return self.date < other.date

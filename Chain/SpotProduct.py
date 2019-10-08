@@ -78,6 +78,23 @@ class Spot5Muscate(MajaProduct):
         return [{"name": "XS",
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
 
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        from Common import ImageIO
+        wdir = kwargs.get("wdir", self.fpath)
+        output_bname = "_".join([self.base, synthetic_band.upper() + ".tif"])
+        output_filename = kwargs.get("output_filename", os.path.join(wdir, output_bname))
+        if synthetic_band == "ndvi":
+            xs1 = self.find_file(pattern=r"*XS1*.tif$")
+            xs3 = self.find_file(pattern=r"*XS3*.tif$")
+            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", xs1, xs3, q=True)
+        elif synthetic_band == "ndsi":
+            xs2 = self.find_file(pattern=r"*XS2*.tif$")
+            swir = self.find_file(pattern=r"*SWIR*.tif$")
+            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", xs2, swir, q=True)
+        else:
+            raise ValueError("Unknown synthetic band %s" % synthetic_band)
+        return output_filename
+
 
 class Spot4Muscate(MajaProduct):
     """
@@ -141,3 +158,6 @@ class Spot4Muscate(MajaProduct):
     def mnt_resolutions_dict(self):
         return [{"name": "XS",
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
+
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError

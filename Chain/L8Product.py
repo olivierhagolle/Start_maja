@@ -10,7 +10,6 @@ Project:        Start_maja, CNES
 Created on:     Sun Feb  3 17:15:00 2019
 """
 
-import re
 import os
 from datetime import datetime, timedelta
 from Chain.Product import MajaProduct
@@ -80,6 +79,9 @@ class Landsat8Natif(MajaProduct):
     def mnt_resolutions_dict(self):
         return [{"name": "XS",
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
+
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError
 
 
 class Landsat8Muscate(MajaProduct):
@@ -160,6 +162,9 @@ class Landsat8Muscate(MajaProduct):
         return [{"name": "XS",
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
 
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError
+
 
 class Landsat8LC1(MajaProduct):
     """
@@ -218,6 +223,9 @@ class Landsat8LC1(MajaProduct):
         return [{"name": "XS",
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
 
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError
+
 
 class Landsat8LC2(MajaProduct):
     """
@@ -275,3 +283,6 @@ class Landsat8LC2(MajaProduct):
     def mnt_resolutions_dict(self):
         return [{"name": "XS",
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
+
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError

@@ -90,6 +90,9 @@ class VenusNatif(MajaProduct):
         return [{"name": "XS",
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
 
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError
+
 
 class VenusMuscate(MajaProduct):
     """
@@ -170,3 +173,6 @@ class VenusMuscate(MajaProduct):
     def mnt_resolutions_dict(self):
         return [{"name": "XS",
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
+
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError
