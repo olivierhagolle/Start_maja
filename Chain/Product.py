@@ -174,6 +174,29 @@ class MajaProduct(object):
     def get_synthetic_band(self, synthetic_band, **kwargs):
         raise NotImplementedError
 
+    def reproject(self, **kwargs):
+        import os
+        import shutil
+        import tempfile
+        from Common import ImageIO
+        out_dir = kwargs.get("out_dir", self.fpath)
+        patterns = kwargs.get("patterns", [r".(tif|jp2)$"])
+        imgs = [self.find_file(pattern=p) for p in patterns]
+        # Flatten
+        imgs = [i for img in imgs for i in img]
+        outpaths = []
+        for img in imgs:
+            drv = ImageIO.open_tiff(img)
+            epsg = kwargs.get("epsg", ImageIO.get_s2_epsg_code(drv))
+            outpath = os.path.join(out_dir, os.path.basename(img))
+            tmpfile = tempfile.mktemp(prefix="reproject_", suffix=".tif")
+            ImageIO.gdal_warp(tmpfile, img, t_srs="EPSG:" + epsg,
+                              tr=" ".join(map(str, self.base_resolution)),
+                              q=True)
+            shutil.move(tmpfile, outpath)
+            outpaths.append(outpath)
+        return outpaths
+
     def __lt__(self, other):
         return self.date < other.date
 
