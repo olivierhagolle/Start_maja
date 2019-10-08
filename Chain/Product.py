@@ -178,13 +178,15 @@ class MajaProduct(object):
         import os
         import shutil
         import tempfile
-        from Common import ImageIO
+        from Common import ImageIO, FileSystem
         out_dir = kwargs.get("out_dir", self.fpath)
+        assert os.path.isdir(out_dir)
+        out_dir = os.path.join(out_dir, self.base)
+        FileSystem.create_directory(out_dir)
         patterns = kwargs.get("patterns", [r".(tif|jp2)$"])
         imgs = [self.find_file(pattern=p) for p in patterns]
         # Flatten
         imgs = [i for img in imgs for i in img]
-        outpaths = []
         for img in imgs:
             drv = ImageIO.open_tiff(img)
             epsg = kwargs.get("epsg", ImageIO.get_s2_epsg_code(drv))
@@ -194,8 +196,7 @@ class MajaProduct(object):
                               tr=" ".join(map(str, self.base_resolution)),
                               q=True)
             shutil.move(tmpfile, outpath)
-            outpaths.append(outpath)
-        return outpaths
+        return out_dir
 
     def __lt__(self, other):
         return self.date < other.date
