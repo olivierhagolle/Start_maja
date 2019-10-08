@@ -20,7 +20,7 @@ class Spot5Muscate(MajaProduct):
     A Spot 5 muscate product
     """
 
-    base_resolution = (5, -5)
+    base_resolution = (15, -15)
 
     @property
     def platform(self):
@@ -101,7 +101,7 @@ class Spot4Muscate(MajaProduct):
     A Spot 4 muscate product
     """
 
-    base_resolution = (5, -5)
+    base_resolution = (15, -15)
 
     @property
     def platform(self):
