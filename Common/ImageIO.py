@@ -161,6 +161,27 @@ def transform_point(point, old_epsg, new_epsg=4326):
     return new_pt[1], new_pt[0]
 
 
+def get_s2_epsg_code(drv):
+    """
+    Get the Sentinel-2 EPSG Code for the specified driver.
+    The codes range from 32601..60 and 32701..60
+    :param drv: The gdal driver
+    :return: The EPSG-Code as string. E.g. '32630'
+    """
+    # TODO Unittest
+    ul, lr = get_ul_lr(drv)
+    epsg_old = get_epsg(drv)
+    if epsg_old != "4326":
+        lat, lon = transform_point(ul, epsg_old)
+    else:
+        lat, lon = ul
+    lon_mod = int(lon / 6)
+
+    lon_code = str(30 + lon_mod if lon < 0 else 31 - lon_mod).zfill(2)
+    epsg = "327" if lat < 0 else "326"
+    return epsg + lon_code
+
+
 def gdal_buildvrt(vrtpath, *inputs, **options):
     """
     Build a gdalvrt using a subprocess.
