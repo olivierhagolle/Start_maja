@@ -109,7 +109,8 @@ class MajaProduct(object):
         # Note that only s2, l8 and vns are supported:
         types = {"sentinel2": {"natif": "SENTINEL-2_", "muscate": "SENTINEL2_", "ssc": "SENTINEL-2_"},
                  "landsat8": {"lc1": "LANDSAT_8", "lc2": "LANDSAT_8", "muscate": "LANDSAT8"},
-                 "venus": {"natif": "VENuS", "muscate": "VENUS"}
+                 "venus": {"natif": "VENuS", "muscate": "VENUS"},
+                 "spot5": {"muscate": "SPOT5"}
                  }
         return types[platform][ptype]
 
@@ -162,7 +163,8 @@ class MajaProduct(object):
     def platform_str(self):
         platform_choices = {"sentinel2": "S2_",
                             "landsat8": "L8",
-                            "venus": "VE"}
+                            "venus": "VE",
+                            "spot5": "SPOT5"}
         return platform_choices[self.platform]
 
     def get_mnt(self, **kwargs):
