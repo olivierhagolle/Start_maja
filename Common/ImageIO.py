@@ -21,7 +21,7 @@ def open_tiff(tiff_file):
         raise NameError("GDAL could not open file {0}".format(tiff_file))
 
 
-def tiff_to_array(tiff_file, lon_offset_px=0, lat_offset_px=0, array_only=True):
+def tiff_to_array(tiff_file, lon_offset_px=0, lat_offset_px=0, array_only=True, bands_last=False):
     """
     Transforms tiff file into an array.
     Note: Bands index starts at 1, not at 0
@@ -29,12 +29,20 @@ def tiff_to_array(tiff_file, lon_offset_px=0, lat_offset_px=0, array_only=True):
     :param lon_offset_px: Offset for image in x-Direction
     :param lat_offset_px: Offset for image in y-Direction
     :param array_only: Numpy.array with shape (Bands,y-Index,x-Index)
+    :param bands_last: Force creation of 3d arrays with the bands as last shape.
+                       If array is 2d, the 3rd dim will be 1.
     :return:
     """
+    import numpy as np
     gdo = open_tiff(tiff_file)
-    tiff_array = gdo.ReadAsArray(lon_offset_px, lat_offset_px)
+    tiff_array = np.array(gdo.ReadAsArray(lon_offset_px, lat_offset_px))
     if array_only:
         gdo = None
+    if bands_last:
+        if tiff_array.ndim == 3:
+            tiff_array = np.moveaxis(tiff_array, 0, -1)
+        elif tiff_array.ndim == 2:
+            tiff_array = tiff_array[..., np.newaxis]
     return tiff_array, gdo
 
 
@@ -320,6 +328,6 @@ def gdal_retile(dst, *src, **options):
     return_code = FileSystem.run_external_app("gdal_retile.py", options_list + file_list)
     # Get the list of newly created tiles
     bnames = [os.path.basename(s).split(".")[0] for s in src]
-    tiles = [FileSystem.find(pattern=bname + "*", path=dst) for bname in bnames]
+    tiles = [FileSystem.find(pattern=r"%s(_\d){2}\.tif$" % bname, path=dst) for bname in bnames]
     tiles = sorted([item for t in tiles for item in t])
     return return_code, tiles
