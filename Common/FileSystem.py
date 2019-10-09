@@ -178,7 +178,6 @@ def run_external_app(name, args, log_level=logging.DEBUG):
     import subprocess
     full_args = [name] + args
     cmd = " ".join(str(a) for a in full_args)
-    print(cmd)
     # Bug in conda: Windows path prepended in linux versions
     env = os.environ.copy()
     if os.name != "nt" and ";" in env["PATH"]:
