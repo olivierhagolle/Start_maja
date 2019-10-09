@@ -106,11 +106,11 @@ class MajaProduct(object):
     def type_xml_maja(self):
         platform = self.platform
         ptype = self.type
-        # Note that only s2, l8 and vns are supported:
         types = {"sentinel2": {"natif": "SENTINEL-2_", "muscate": "SENTINEL2_", "ssc": "SENTINEL-2_"},
                  "landsat8": {"lc1": "LANDSAT_8", "lc2": "LANDSAT_8", "muscate": "LANDSAT8"},
                  "venus": {"natif": "VENuS", "muscate": "VENUS"},
-                 "spot5": {"muscate": "SPOT5"}
+                 "spot5": {"muscate": "SPOT5"},
+                 "spot4": {"muscate": "SPOT4"}
                  }
         return types[platform][ptype]
 
@@ -164,7 +164,8 @@ class MajaProduct(object):
         platform_choices = {"sentinel2": "S2_",
                             "landsat8": "L8",
                             "venus": "VE",
-                            "spot5": "SPOT5"}
+                            "spot5": "SPOT5",
+                            "spot4": "SPOT4"}
         return platform_choices[self.platform]
 
     def get_mnt(self, **kwargs):
