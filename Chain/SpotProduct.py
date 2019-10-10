@@ -83,14 +83,14 @@ class Spot5Muscate(MajaProduct):
         wdir = kwargs.get("wdir", self.fpath)
         output_bname = "_".join([self.base, synthetic_band.upper() + ".tif"])
         output_filename = kwargs.get("output_filename", os.path.join(wdir, output_bname))
-        if synthetic_band == "ndvi":
-            xs1 = self.find_file(pattern=r"*XS1*.tif$")
-            xs3 = self.find_file(pattern=r"*XS3*.tif$")
-            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", xs1, xs3, q=True)
-        elif synthetic_band == "ndsi":
-            xs2 = self.find_file(pattern=r"*XS2*.tif$")
-            swir = self.find_file(pattern=r"*SWIR*.tif$")
-            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", xs2, swir, q=True)
+        if synthetic_band.lower() == "ndvi":
+            xs1 = self.find_file(pattern=r"*XS1*.tif$")[0]
+            xs3 = self.find_file(pattern=r"*XS3*.tif$")[0]
+            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", xs1, xs3, quiet=True)
+        elif synthetic_band.lower() == "ndsi":
+            xs2 = self.find_file(pattern=r"*XS2*.tif$")[0]
+            swir = self.find_file(pattern=r"*SWIR*.tif$")[0]
+            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", xs2, swir, quiet=True)
         else:
             raise ValueError("Unknown synthetic band %s" % synthetic_band)
         return output_filename

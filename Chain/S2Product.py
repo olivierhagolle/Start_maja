@@ -79,22 +79,25 @@ class Sentinel2Natif(MajaProduct):
                  "val": str(self.mnt_resolution[0] * 2) + " " + str(self.mnt_resolution[1] * 2)}]
 
     def get_synthetic_band(self, synthetic_band, **kwargs):
-        from Common import ImageIO
+        from Common import ImageIO, FileSystem
         wdir = kwargs.get("wdir", self.fpath)
+        remove_temp = kwargs.get("remove_temp", True)
         output_bname = "_".join([self.base, synthetic_band.upper() + ".tif"])
         output_filename = kwargs.get("output_filename", os.path.join(wdir, output_bname))
-        if synthetic_band == "ndvi":
-            b4 = self.find_file(pattern=r"*B0?4.jp2$")
-            b8 = self.find_file(pattern=r"*B0?8.jp2$")
-            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", b4, b8, q=True)
-        elif synthetic_band == "ndsi":
-            b3 = self.find_file(pattern=r"*B0?3.jp2$")
-            b11 = self.find_file(pattern=r"*B11.jp2$")
+        if synthetic_band.lower() == "ndvi":
+            b4 = self.find_file(pattern=r"*B0?4.jp2$")[0]
+            b8 = self.find_file(pattern=r"*B0?8.jp2$")[0]
+            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", b4, b8, quiet=True)
+        elif synthetic_band.lower() == "ndsi":
+            b3 = self.find_file(pattern=r"*B0?3.jp2$")[0]
+            b11 = self.find_file(pattern=r"*B11.jp2$")[0]
             rescaled_filename = os.path.join(wdir, "res_" + output_bname)
             ImageIO.gdal_translate(rescaled_filename, b11,
                                    tr=str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1]),
                                    q=True)
-            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", b3, rescaled_filename, q=True)
+            ImageIO.gdal_calc(output_filename, "(A-B)/(A+B)", b3, rescaled_filename, quiet=True)
+            if remove_temp:
+                FileSystem.remove_file(rescaled_filename)
         else:
             raise ValueError("Unknown synthetic band %s" % synthetic_band)
         return output_filename
