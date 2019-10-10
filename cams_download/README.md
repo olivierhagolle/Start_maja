@@ -1,4 +1,4 @@
-# download_CAMS_daily
+# download_CAMS
 
 This tool is designed to download daily CAMS near-real-time forecast products from ECMWF. Otherwise, the graphical interface provided by ECMWF is available here: http://apps.ecmwf.int/datasets/data/macc-nrealtime/levtype=sfc/
 
@@ -14,9 +14,7 @@ CAMS_MR_yyyymmdd_UTC_hhmm.nc
 CAMS_RH_yyyymmdd_UTC_hhmm.nc
 ```
 
-The files are then converted in one archive using the Earth Explorer format, which was selected as the standard format for MAJA external data. We have a HDR xml file, and a bzipped DBL archive, which contains the three files above for a given time and date. (I regret this choice which complexifies the use of data within MAJA, compared to using the plain netCDF files, but it the current situation)
-
-
+The files are then converted in one archive using the Earth Explorer format, which was selected as the standard format for MAJA external data. 
 
 # Configuration
 
