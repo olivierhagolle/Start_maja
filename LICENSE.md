@@ -3,7 +3,7 @@ Upstream-Name: Start-MAJA
 Upstream-Contact: CNES <peter.kettig@cnes.fr>, CESBIO <olivier.hagolle@cnes.fr>
 
 Files: *
-Copyright: <2016-2018>
+Copyright: <2016-2020>
 	   Université Toulouse III Paul Sabatier, France
 	   CS-Systèmes d'Information, France
 	   Centre national d'études spatiales (CNES), France
