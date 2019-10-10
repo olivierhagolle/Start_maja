@@ -298,7 +298,7 @@ def gdal_calc(dst, calc, *src, **options):
     options_list = ["--calc='%s'" % calc, "--NoDataValue=0"]
     [options_list.extend(["-" + k, v])
      if type(v) is not bool else
-     options_list.extend(["-" + k])
+     options_list.extend(["--" + k])
      for k, v in options.items()]
 
     # Append overwrite by default in order to avoid writing errors:
