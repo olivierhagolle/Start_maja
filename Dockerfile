@@ -1,5 +1,7 @@
 FROM centos:7.2.1511
-MAINTAINER Daniel Kristof <kristofdan@yahoo.com>
+
+LABEL MAINTAINER "MAJA development team"
+LABEL VERSION="3.3.2" Architecture="amd64"
 
 ARG http_proxy
 ARG https_proxy
@@ -16,15 +18,11 @@ RUN mkdir /usr/lbzip2 && cd /usr/lbzip2
 RUN wget http://dl.fedoraproject.org/pub/epel/7/x86_64/l/lbzip2-2.5-1.el7.x86_64.rpm
 RUN rpm -Uvh lbzip2-2.5-1.el7.x86_64.rpm
 
-RUN mkdir /usr/local/maja && cd /usr/local/maja
 
-ADD maja-1.0.0-rhel.7.2.x86_64-release-gcc.tar /usr/local/maja/
-ADD maja-cots-1.0.0-rhel.7.2.x86_64-release-gcc.tar /usr/local/maja/
-
-RUN cd /usr/local/maja/maja-cots-1.0.0-rhel.7.2.x86_64-release-gcc && echo 'Y'|./install.sh
-RUN cd /usr/local/maja/maja-1.0.0-rhel.7.2.x86_64-release-gcc && echo 'Y'|./install.sh
+COPY Maja_3.3.2_noTM.zip /maja.zip
+RUN unzip /maja.zip && /Maja_3.3.2_noTM.run --target /usr/local
 
 RUN cd /opt/maja
 RUN git clone https://github.com/olivierhagolle/Start_maja
 RUN cd Start_maja && rm folders.txt
-ADD folders.txt /opt/maja/Start_maja
+COPY folders.txt /opt/maja/Start_maja
