@@ -43,7 +43,7 @@ class SRTM(MNT):
             output_path = os.path.join(self.raw_dem, filename)
             if not os.path.isfile(output_path):
                 # Download file:
-                FileSystem.download_file(current_url, output_path, log_level=logging.DEBUG)
+                FileSystem.download_file(current_url, output_path, log_level=logging.INFO)
             filenames.append(output_path)
         return filenames
 

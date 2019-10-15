@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Copyright (C) CNES - All Rights Reserved
+Copyright (C) CNES, CS-SI, CESBIO - All Rights Reserved
 This file is subject to the terms and conditions defined in
 file 'LICENSE.md', which is part of this source code package.
 
 Author:         Peter KETTIG <peter.kettig@cnes.fr>
-Project:        Start_maja, CNES
-Created on:     Sun Feb  3 17:15:00 2019
+Project:        Start-MAJA, CNES
 """
 
 import os
@@ -90,6 +89,9 @@ class VenusNatif(MajaProduct):
         return [{"name": "XS",
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
 
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError
+
 
 class VenusMuscate(MajaProduct):
     """
@@ -170,3 +172,6 @@ class VenusMuscate(MajaProduct):
     def mnt_resolutions_dict(self):
         return [{"name": "XS",
                 "val": str(self.mnt_resolution[0]) + " " + str(self.mnt_resolution[1])}]
+
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError

@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Copyright (C) CNES - All Rights Reserved
+Copyright (C) CNES, CS-SI, CESBIO - All Rights Reserved
 This file is subject to the terms and conditions defined in
 file 'LICENSE.md', which is part of this source code package.
 
 Author:         Peter KETTIG <peter.kettig@cnes.fr>
-Project:        Start_maja, CNES
-Created on:     Sun Feb  3 17:15:00 2019
+Project:        Start-MAJA, CNES
 """
 
 
@@ -106,16 +105,31 @@ class MajaProduct(object):
     def type_xml_maja(self):
         platform = self.platform
         ptype = self.type
-        # Note that only s2, l8 and vns are supported:
         types = {"sentinel2": {"natif": "SENTINEL-2_", "muscate": "SENTINEL2_", "ssc": "SENTINEL-2_"},
                  "landsat8": {"lc1": "LANDSAT_8", "lc2": "LANDSAT_8", "muscate": "LANDSAT8"},
-                 "venus": {"natif": "VENuS", "muscate": "VENUS"}
+                 "venus": {"natif": "VENuS", "muscate": "VENUS"},
+                 "spot5": {"muscate": "SPOT5"},
+                 "spot4": {"muscate": "SPOT4"}
                  }
         return types[platform][ptype]
 
     def get_file(self, **kwargs):
+        """
+        Find file in the root folder
+        :param kwargs: filename The filename to search for
+        :return: The path to the files found
+        """
         from Common.FileSystem import get_file
         return get_file(root=self.fpath, **kwargs)
+
+    def find_file(self, pattern):
+        """
+        Find file of in any folder-depth
+        :param pattern: The pattern to search for
+        :return: The path to the files found
+        """
+        from Common.FileSystem import find
+        return find(path=self.fpath, pattern=pattern)
 
     @property
     def metadata_file(self):
@@ -148,7 +162,9 @@ class MajaProduct(object):
     def platform_str(self):
         platform_choices = {"sentinel2": "S2_",
                             "landsat8": "L8",
-                            "venus": "VE"}
+                            "venus": "VE",
+                            "spot5": "SPOT5",
+                            "spot4": "SPOT4"}
         return platform_choices[self.platform]
 
     def get_mnt(self, **kwargs):
@@ -156,6 +172,33 @@ class MajaProduct(object):
         return MNTFactory(site=self.mnt_site, platform_id=self.platform_str,
                           mission_field=self.type_xml_maja, mnt_resolutions=self.mnt_resolutions_dict,
                           **kwargs).factory()
+
+    def get_synthetic_band(self, synthetic_band, **kwargs):
+        raise NotImplementedError
+
+    def reproject(self, **kwargs):
+        import os
+        import shutil
+        import tempfile
+        from Common import ImageIO, FileSystem
+        out_dir = kwargs.get("out_dir", self.fpath)
+        assert os.path.isdir(out_dir)
+        out_dir = os.path.join(out_dir, self.base)
+        FileSystem.create_directory(out_dir)
+        patterns = kwargs.get("patterns", [r".(tif|jp2)$"])
+        imgs = [self.find_file(pattern=p) for p in patterns]
+        # Flatten
+        imgs = [i for img in imgs for i in img]
+        for img in imgs:
+            drv = ImageIO.open_tiff(img)
+            epsg = kwargs.get("epsg", ImageIO.get_s2_epsg_code(drv))
+            outpath = os.path.join(out_dir, os.path.basename(img))
+            tmpfile = tempfile.mktemp(prefix="reproject_", suffix=".tif")
+            ImageIO.gdal_warp(tmpfile, img, t_srs="EPSG:" + epsg,
+                              tr=" ".join(map(str, self.base_resolution)),
+                              q=True)
+            shutil.move(tmpfile, outpath)
+        return out_dir
 
     def __lt__(self, other):
         return self.date < other.date

@@ -1,9 +1,12 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Nov 22 15:03:42 2017
+Copyright (C) CNES, CS-SI, CESBIO - All Rights Reserved
+This file is subject to the terms and conditions defined in
+file 'LICENSE.md', which is part of this source code package.
 
-@author: Peter Kettig
+Author:         Peter KETTIG <peter.kettig@cnes.fr>,
+Project:        Start-MAJA, CNES
 """
 
 
@@ -21,7 +24,7 @@ def open_tiff(tiff_file):
         raise NameError("GDAL could not open file {0}".format(tiff_file))
 
 
-def tiff_to_array(tiff_file, lon_offset_px=0, lat_offset_px=0, array_only=True):
+def tiff_to_array(tiff_file, lon_offset_px=0, lat_offset_px=0, array_only=True, bands_last=False):
     """
     Transforms tiff file into an array.
     Note: Bands index starts at 1, not at 0
@@ -29,12 +32,20 @@ def tiff_to_array(tiff_file, lon_offset_px=0, lat_offset_px=0, array_only=True):
     :param lon_offset_px: Offset for image in x-Direction
     :param lat_offset_px: Offset for image in y-Direction
     :param array_only: Numpy.array with shape (Bands,y-Index,x-Index)
+    :param bands_last: Force creation of 3d arrays with the bands as last shape.
+                       If array is 2d, the 3rd dim will be 1.
     :return:
     """
+    import numpy as np
     gdo = open_tiff(tiff_file)
-    tiff_array = gdo.ReadAsArray(lon_offset_px, lat_offset_px)
+    tiff_array = np.array(gdo.ReadAsArray(lon_offset_px, lat_offset_px))
     if array_only:
         gdo = None
+    if bands_last:
+        if tiff_array.ndim == 3:
+            tiff_array = np.moveaxis(tiff_array, 0, -1)
+        elif tiff_array.ndim == 2:
+            tiff_array = tiff_array[..., np.newaxis]
     return tiff_array, gdo
 
 
@@ -161,6 +172,27 @@ def transform_point(point, old_epsg, new_epsg=4326):
     return new_pt[1], new_pt[0]
 
 
+def get_s2_epsg_code(drv):
+    """
+    Get the Sentinel-2 EPSG Code for the specified driver.
+    The codes range from 32601..60 and 32701..60
+    :param drv: The gdal driver
+    :return: The EPSG-Code as string. E.g. '32630'
+    """
+    # TODO Unittest
+    ul, lr = get_ul_lr(drv)
+    epsg_old = get_epsg(drv)
+    if epsg_old != "4326":
+        lat, lon = transform_point(ul, epsg_old)
+    else:
+        lat, lon = ul
+    lon_mod = int(lon / 6)
+
+    lon_code = str(30 + lon_mod if lon < 0 else 31 - lon_mod).zfill(2)
+    epsg = "327" if lat < 0 else "326"
+    return epsg + lon_code
+
+
 def gdal_buildvrt(vrtpath, *inputs, **options):
     """
     Build a gdalvrt using a subprocess.
@@ -269,7 +301,7 @@ def gdal_calc(dst, calc, *src, **options):
     options_list = ["--calc='%s'" % calc, "--NoDataValue=0"]
     [options_list.extend(["-" + k, v])
      if type(v) is not bool else
-     options_list.extend(["-" + k])
+     options_list.extend(["--" + k])
      for k, v in options.items()]
 
     # Append overwrite by default in order to avoid writing errors:
@@ -299,6 +331,6 @@ def gdal_retile(dst, *src, **options):
     return_code = FileSystem.run_external_app("gdal_retile.py", options_list + file_list)
     # Get the list of newly created tiles
     bnames = [os.path.basename(s).split(".")[0] for s in src]
-    tiles = [FileSystem.find(pattern=bname + "*", path=dst) for bname in bnames]
+    tiles = [FileSystem.find(pattern=r"%s(_\d){2}\.tif$" % bname, path=dst) for bname in bnames]
     tiles = sorted([item for t in tiles for item in t])
     return return_code, tiles

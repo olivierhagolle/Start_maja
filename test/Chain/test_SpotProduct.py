@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Copyright (C) CNES - All Rights Reserved
+Copyright (C) CNES, CS-SI, CESBIO - All Rights Reserved
 This file is subject to the terms and conditions defined in
 file 'LICENSE.md', which is part of this source code package.
 
-Author:         Peter KETTIG <peter.kettig@cnes.fr>
-Project:        Start_maja, CNES
-Created on:     Tue Dec  5 10:26:05 2018
+Author:         Peter KETTIG <peter.kettig@cnes.fr>,
+Project:        Start-MAJA, CNES
 """
 
 import unittest
@@ -83,7 +82,7 @@ class TestSpotProduct(unittest.TestCase):
             FileSystem.create_directory(link_dir)
             p.link(link_dir)
             self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
-            self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '5 -5'}])
+            self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '15 -15'}])
             self.assertEqual(p, p)
             FileSystem.remove_directory(link_dir)
 
@@ -110,7 +109,7 @@ class TestSpotProduct(unittest.TestCase):
             FileSystem.create_directory(link_dir)
             p.link(link_dir)
             self.assertTrue(os.path.islink(os.path.join(link_dir, p.base)))
-            self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '5 -5'}])
+            self.assertEqual(p.mnt_resolutions_dict, [{'name': 'XS', 'val': '15 -15'}])
             self.assertEqual(p, p)
             FileSystem.remove_directory(link_dir)
 
