@@ -76,8 +76,8 @@ class StartMaja(object):
 
         ptype = list(set([prod.type for prod in self.avail_input_l1 + self.avail_input_l2]))
         if len(ptype) != 1:
-            if self.platform == "sentinel2" and len(ptype) == 2:
-                # Case of S2A + S2B --> This is allowed.
+            if sorted(ptype) == ["muscate", "natif"]:
+                # This is allowed.
                 pass
             else:
                 raise IOError("Cannot mix multiple plugin types: %s" % ptype)
@@ -187,11 +187,7 @@ class StartMaja(object):
         :return: The parsed paths for each of the directories. None for the optional ones if not given.
         """
         from Common.FileSystem import create_directory
-        try:
-            import configparser as cfg
-        except ImportError:
-            import ConfigParser as cfg
-
+        import configparser as cfg
         # Parsing configuration file
         config = cfg.ConfigParser()
         config.read(cfg_file)
@@ -272,15 +268,15 @@ class StartMaja(object):
             raise IOError("No L1C products detected for %s in %s" % (self.__site_info, self.path_input_l1))
         else:
             self.logger.info("%s L1C product(s) detected for %s in %s" % (len(avail_input_l1),
-                                                                      self.__site_info,
-                                                                      self.path_input_l1))
+                                                                          self.__site_info,
+                                                                          self.path_input_l1))
         avail_input_l2 = sorted(self.get_available_products(self.path_input_l2, level="L2A", tile=self.tile))
         if not avail_input_l2:
             self.logger.warning("No L2A products detected for %s in %s" % (self.__site_info, self.path_input_l2))
         else:
             self.logger.info("%s L2A product(s) detected for %s in %s" % (len(avail_input_l2),
-                                                                      self.__site_info,
-                                                                      self.path_input_l2))
+                                                                          self.__site_info,
+                                                                          self.path_input_l2))
         return avail_input_l1, avail_input_l2
 
     @staticmethod
@@ -433,11 +429,11 @@ class StartMaja(object):
             if prod in has_l2 or self.overwrite:
                 self.logger.info("Skipping L1 product %s because it was already processed!" % prod.base)
                 continue
-            # Note: i, in this case is the previous product -> Not the current one
+            # Note: i, in this case is the previous product -> Not the current one, which is i+1
             date_gap = prod.date - used_prod_l1[i].date
             if date_gap >= max_l2_diff:
                 self.logger.info("Will not continue time-series. Date gap too large between products %s vs. %s" %
-                             (prod.date, used_prod_l1[i].date))
+                                 (prod.date, used_prod_l1[i].date))
                 index_current_prod = self.avail_input_l1.index(prod)
                 if len(self.avail_input_l1[index_current_prod:]) >= self.nbackward:
                     # Proceed with BACKWARD
