@@ -68,6 +68,7 @@ def __get_item(path, reg):
     """
     import re
     import os
+    path = os.path.abspath(path)
     available_dirs = [f for f in os.listdir(path) if re.search(reg.lower(), f.lower())]
     if not available_dirs:
         raise IOError("Cannot find %s in %s" % (reg, path))
