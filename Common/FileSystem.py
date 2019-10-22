@@ -221,7 +221,7 @@ def download_file(url, filepath, log_level=logging.DEBUG):
     import shutil
     tmp_file = tempfile.mktemp()
     args = ["--retry-connrefused", "--waitretry=1",
-            "--read-timeout=20", "--timeout=15",
+            "--read-timeout=20", "--timeout=15", "--tries=3",
             "-O", tmp_file, url]
     if log_level != logging.DEBUG:
         args.append("-nv")
