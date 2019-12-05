@@ -83,10 +83,11 @@ class MNT(object):
         return slope, aspect
 
     @staticmethod
-    def get_gsw_codes(site):
+    def get_gsw_codes(site, grid_step=10):
         """
         Get the list of GSW files for a given site.
         :param site: The site class
+        :param grid_step: The step size of the grid
         :return: The list of filenames of format 'XX(E/W)_YY(N/S)' needed in order to cover to whole site.
         """
         import math
@@ -94,7 +95,6 @@ class MNT(object):
         if site.ul_latlon[1] > 170 and site.lr_latlon[1] < 160:
             raise ValueError("Cannot wrap around longitude change")
 
-        grid_step = 10
         point = namedtuple("point", ("y", "x"))
         pts = []
         for pt in [site.ul_latlon, site.lr_latlon]:
