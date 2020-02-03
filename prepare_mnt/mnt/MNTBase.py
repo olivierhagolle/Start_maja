@@ -86,6 +86,26 @@ class MNT(object):
         return slope, aspect
 
     @staticmethod
+    def resample_to_full_resolution(image, mnt_resolution, full_resolution, order=3):
+        """
+        Resample an image from the mnt resolution (usually a low one) to the
+        max resolution of a given product (10m for S2).
+        :param image: A numpy image
+        :param mnt_resolution: The input resolution as tuple (res_x, res_y)
+        :param full_resolution: The output resolution as tuple (res_x, res_y)
+        :param order: The spline interpolation order. Default is 3.
+        :return:
+        """
+        from scipy.ndimage import zoom
+        import numpy as np
+
+        zoom_factor = (np.abs(mnt_resolution[0] / full_resolution[0]),
+                       np.abs(mnt_resolution[1] / full_resolution[1]))
+
+        # Order 3 = Cubic interpolation
+        return zoom(image, zoom_factor, order=order)
+
+    @staticmethod
     def get_gsw_codes(site, grid_step=10):
         """
         Get the list of GSW files for a given site.
@@ -171,31 +191,28 @@ class MNT(object):
         from datetime import datetime
         from Common import ImageIO, XMLTools, FileSystem
         from prepare_mnt.mnt.DEMInfo import DEMInfo
-        from scipy.ndimage import zoom
 
         assert len(mnt_resolutions) >= 1
         basename = str("%s_TEST_AUX_REFDE2_%s_%s" % (platform_id, self.site.nom, str(self.dem_version).zfill(4)))
         # Get water data
         self.prepare_water_data()
         # Get mnt data
-        mnt_full_res = self.prepare_mnt()
+        mnt_max_res = self.prepare_mnt()
+        mnt_res = (self.site.res_y, self.site.res_x)
         dbl_base = basename + ".DBL.DIR"
         dbl_dir = os.path.join(self.dem_dir, dbl_base)
         FileSystem.create_directory(dbl_dir)
         hdr = os.path.join(self.dem_dir, basename + ".HDR")
 
         # Calulate gradient mask at MNT resolution:
-        mnt_in, drv = ImageIO.tiff_to_array(mnt_full_res, array_only=False)
+        mnt_in, drv = ImageIO.tiff_to_array(mnt_max_res, array_only=False)
         grad_y_mnt, grad_x_mnt = self.calc_gradient(mnt_in, self.site.res_x, self.site.res_y)
 
-        full_res = (int(mnt_resolutions[0]["val"].split(" ")[0]),
-                    int(mnt_resolutions[0]["val"].split(" ")[1]))
-        zoom_factor = (self.site.res_y / full_res[0],
-                       self.site.res_x / (-1 * full_res[1]))
+        full_res = (int(mnt_resolutions[0]["val"].split(" ")[1]),
+                    int(mnt_resolutions[0]["val"].split(" ")[0]))
 
-        # Order 3 = Cubic interpolation
-        grad_x = zoom(grad_x_mnt, zoom=zoom_factor, order=3)
-        grad_y = zoom(grad_y_mnt, zoom=zoom_factor, order=3)
+        grad_x = self.resample_to_full_resolution(grad_x_mnt, mnt_resolution=mnt_res, full_resolution=full_res, order=3)
+        grad_y = self.resample_to_full_resolution(grad_y_mnt, mnt_resolution=mnt_res, full_resolution=full_res, order=3)
 
         slope, aspect = self.calc_slope_aspect(grad_y, grad_x)
 
@@ -223,7 +240,7 @@ class MNT(object):
             rel_alt = os.path.join(dbl_base, bname_alt)
             path_alt = os.path.join(self.dem_dir, rel_alt)
             all_paths_alt.append(path_alt)
-            ImageIO.gdal_warp(path_alt, mnt_full_res, tr=res["val"], r="cubic")
+            ImageIO.gdal_warp(path_alt, mnt_max_res, tr=res["val"], r="cubic")
             rasters_written.append(rel_alt)
             # ASP:
             bname_asp = basename + "_ASP"
