@@ -218,8 +218,8 @@ class MNT(object):
 
         # Write full res slope and aspect
         geotransform = list(drv.GetGeoTransform())
-        geotransform[1] = float(full_res[0])
-        geotransform[-1] = float(full_res[1])
+        geotransform[1] = float(full_res[1])
+        geotransform[-1] = float(full_res[0])
         projection = drv.GetProjection()
         tmp_asp = tempfile.mktemp(dir=self.wdir, suffix="_asp.tif")
         ImageIO.write_geotiff(aspect, tmp_asp, projection, tuple(geotransform))
