@@ -32,6 +32,9 @@ class MNTFactory:
         from prepare_mnt.mnt.SRTM import SRTM
         # TODO Add more options here: ALOS, TDX, EuDEM...
         if self.mnt_type == "srtm":
+            # SRTM is distributed in 90m.
+            # Thus, all initial calculation has to be done at this resolution:
+            self.site.res_x, self.site.res_y = 90, 90
             return SRTM(site=self.site,
                         **self.kwargs).to_maja_format(platform_id=self.plaform_id,
                                                       mission_field=self.mission_field,
