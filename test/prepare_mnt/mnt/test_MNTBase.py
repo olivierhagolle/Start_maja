@@ -97,7 +97,6 @@ class TestMNTBase(unittest.TestCase):
                  [40, 40, 40, 40, 40],
                  [20, 20, 20, 20, 20]])
         slope, aspect = MNTBase.MNT.calc_slope_aspect(raw, raw_2)
-        print(aspect)
         expected_slope = np.array(
             [[152, 152, 152, 152, 152],
              [154, 154, 154, 154, 154],
@@ -112,6 +111,24 @@ class TestMNTBase(unittest.TestCase):
              [78, 80, 83, 85, 87]])
         np.testing.assert_array_almost_equal(slope, expected_slope)
         np.testing.assert_array_almost_equal(aspect, expected_aspect)
+
+    def test_resample_to_full_resolution(self):
+        import numpy as np
+        res_full = (10, 10)
+        res_mnt = (40, -40)
+
+        img = np.arange(0, 4).reshape(2, 2)
+
+        resampled = MNTBase.MNT.resample_to_full_resolution(img, res_mnt, res_full)
+        expected = np.array([[0, 0, 0, 0, 1, 1, 1, 1],
+                             [0, 0, 0, 1, 1, 1, 1, 1],
+                             [0, 0, 1, 1, 1, 1, 1, 1],
+                             [1, 1, 1, 1, 1, 2, 2, 2],
+                             [1, 1, 1, 2, 2, 2, 2, 2],
+                             [2, 2, 2, 2, 2, 2, 3, 3],
+                             [2, 2, 2, 2, 2, 3, 3, 3],
+                             [2, 2, 2, 2, 3, 3, 3, 3]])
+        np.testing.assert_array_almost_equal(resampled, expected)
 
     def test_gsw_download(self):
         from Common import FileSystem
