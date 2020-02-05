@@ -38,12 +38,12 @@ class MNT(object):
             FileSystem.create_directory(self.wdir)
         self.raw_dem = kwargs.get("raw_dem", None)
         if not self.raw_dem:
-            self.raw_dem = tempfile.mkdtemp(dir=self.wdir, prefix="raw_dem_")
+            self.raw_dem = self.wdir
         if not os.path.exists(self.raw_dem):
             FileSystem.create_directory(self.raw_dem)
         self.raw_gsw = kwargs.get("raw_gsw", None)
         if not self.raw_gsw:
-            self.raw_gsw = tempfile.mkdtemp(dir=self.wdir, prefix="raw_gsw_")
+            self.raw_gsw = self.wdir
         if not os.path.exists(self.raw_gsw):
             FileSystem.create_directory(self.raw_gsw)
         self.gsw_codes = self.get_gsw_codes(self.site)
@@ -80,7 +80,7 @@ class MNT(object):
         norme = np.sqrt(dz_dc * dz_dc + dz_dl * dz_dl)
         slope = np.arctan(norme)
         aspect = np.where(dz_dc > 0, np.arccos(dz_dl / norme), 2 * np.pi - np.arccos(dz_dl / norme))
-        aspect = np.where(slope == 0, 0, aspect)
+        aspect = np.where(slope < 0.0001, 0, aspect)
         slope = np.array(slope * 100., dtype=np.int16)
         aspect = np.array(aspect * 100., dtype=np.int16)
         return slope, aspect
