@@ -22,6 +22,10 @@ class MNTFactory:
         self.mission_field = mission_field
         self.mnt_resolutions = mnt_resolutions
         self.coarse_res = kwargs.get("coarse_res", (240, -240))
+        if type(self.coarse_res) in [float, int, str]:
+            self.coarse_res = (int(self.coarse_res), -1 * int(self.coarse_res))
+        if type(self.coarse_res) != tuple:
+            raise TypeError("Unknown coarse_res type %s: %s" % (type(self.coarse_res), self.coarse_res))
         self.kwargs = kwargs
 
     def factory(self):
