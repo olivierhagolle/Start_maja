@@ -230,11 +230,11 @@ class Nominal(Workplan):
             logger.error("Cannot find previous L2 product for date %s in %s" % (self.date, self.outdir))
             if len(self.remaining_l1) >= self.nbackward:
                 logging.info("Setting up a BACKWARD execution instead.")
-                backup_wp = Backward(self.wdir, self.outdir, self.l1, l1_list=self.remaining_l1,
+                backup_wp = Backward(self.root, self.outdir, self.l1, l1_list=self.remaining_l1[:self.nbackward],
                                      log_level=self.log_level, cams=self.aux_files)
             else:
                 logging.info("Setting up an INIT execution instead.")
-                backup_wp = Init(self.wdir, self.outdir, self.l1, self.log_level, cams=self.aux_files)
+                backup_wp = Init(self.root, self.outdir, self.l1, self.log_level, cams=self.aux_files)
             return backup_wp.execute(maja, dtm, gipp, conf)
         if len(l2_prods) > 1:
             logger.info("%s products found for date %s" % (len(l2_prods), self.date))
