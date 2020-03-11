@@ -71,8 +71,8 @@ class StartMaja(object):
                 raise IOError("Cannot mix multiple platforms: %s" % platform)
             self.platform = platform[0]
         else:
-            assert kwargs.get("platform") in ["sentinel2", "landsat8", "venus"]
             self.platform = kwargs.get("platform")
+        assert self.platform in ["sentinel2", "landsat8", "venus"]
 
         ptype = list(set([prod.type for prod in self.avail_input_l1 + self.avail_input_l2]))
         if len(ptype) != 1:
@@ -117,7 +117,7 @@ class StartMaja(object):
         self.logger.debug("Found GIPP folder: %s" % self.gipp_root)
 
         self.gipp = GippFile.GippSet(self.gipp_root, self.platform, self.ptype, cams=self.use_cams)
-        self.logger.debug("Prepared GIPP for %s %s" % (self.platform, self.ptype))
+        self.logger.debug("Prepared GIPP for %s" % self.gipp.gipp_folder_name)
 
         # Other parameters:
 
@@ -135,7 +135,7 @@ class StartMaja(object):
             self.logger.debug("Found DTM: %s" % self.dtm.hdr)
 
         self.cams_files = []
-        if self.rep_cams:
+        if self.rep_cams and self.use_cams:
             self.logger.debug("Searching for CAMS")
             self.cams_files = self.get_cams_files()
             self.logger.debug("...found %s CAMS files" % len(self.cams_files))
