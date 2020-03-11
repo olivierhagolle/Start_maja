@@ -118,7 +118,7 @@ class GippSet(object):
         self.lut_archive = os.path.join(self.fpath, "lut_archive.zip")
         self.temp_folder = os.path.join(self.fpath, "tempdir")
         self.gipp_folder_name = "%s_%s" % (self.platform.upper(), self.gtype.upper()) + self.cams_suffix
-        self.out_path = self.fpath
+        self.out_path = os.path.join(self.fpath, self.gipp_folder_name)
 
     def __clean_up(self):
         """
