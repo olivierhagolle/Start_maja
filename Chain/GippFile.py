@@ -202,11 +202,14 @@ class GippSet(object):
         """
         from Common import FileSystem
         n_files_per_model = 5
+        expected_n_models = [5, 7] if self.cams_suffix else [1]
         try:
-            n_models = len(self.get_models())
+            found_n_models = len(self.get_models())
         except ValueError:
             return False
         if not os.path.isdir(self.out_path):
+            return False
+        if found_n_models not in expected_n_models:
             return False
         try:
             hdrs = FileSystem.find("*.HDR", self.out_path)
@@ -216,7 +219,7 @@ class GippSet(object):
             return False
         if len(eefs) < 4:
             return False
-        if len(hdrs) != len(dbls) != n_files_per_model * self.n_sat * n_models:
+        if len(hdrs) != len(dbls) != n_files_per_model * self.n_sat * found_n_models:
             return False
 
         return True
