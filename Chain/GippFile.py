@@ -202,7 +202,7 @@ class GippSet(object):
         """
         from Common import FileSystem
         n_files_per_model = 5
-        expected_n_models = [5, 7] if self.cams_suffix else [1]
+        expected_n_models = [6, 8] if self.cams_suffix else [1]
         try:
             found_n_models = len(self.get_models())
         except ValueError:
