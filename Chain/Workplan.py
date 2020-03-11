@@ -106,6 +106,8 @@ class Workplan(object):
         :return: The return code of Maja
         """
         from Common import FileSystem
+
+        logfile = os.path.join(outdir, "%s.log" % self.l1.base.split(".")[0])
         args = ["-w",
                 wdir,
                 "--input",
@@ -120,7 +122,7 @@ class Workplan(object):
                 self.tile,
                 "--loglevel",
                 self.log_level]
-        return FileSystem.run_external_app(maja, args)
+        return FileSystem.run_external_app(maja, args, logfile=logfile)
 
 
 class Init(Workplan):
