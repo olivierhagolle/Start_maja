@@ -191,7 +191,11 @@ class GippGenerator(DummyEarthExplorer):
     """
     Class to create a single dummy GIPP set.
     """
-    def _create_hdr(self, sat, name, start_date, version, model, mission, file_type):
+
+    def __init__(self, root, date=None, tile=None, platform=random_platform()):
+        super(GippGenerator, self).__init__(root, date, tile, platform)
+
+    def _create_hdr(self, out_path, sat, name, start_date, version, model, mission, file_type):
         """
         Create a single HDR or EEF file
         """
@@ -208,7 +212,7 @@ class GippGenerator(DummyEarthExplorer):
                              "{s:_^8}".format(s=model),
                              version, start_date.strftime("%Y%m%d"),
                              self.date.strftime("%Y%m%d")])
-        hdr_name = os.path.join(self.root, basename + file_type)
+        hdr_name = os.path.join(out_path, basename + file_type)
         self.create_dummy_hdr(hdr_name, mission=mission + mission_specifier)
         return basename
 
@@ -223,6 +227,10 @@ class GippGenerator(DummyEarthExplorer):
         mission = self.mission_choices[mission_param][self.platform]
         satellites = [self.mission_short[self.platform]] if self.platform != "sentinel2" else ["S2A", "S2B"]
         with_cams = kwargs.get("cams", True)
+        cams_suffix = "_CAMS" if with_cams else ""
+        out_path = os.path.join(self.root, "_".join([self.platform.upper(), mission_param.upper()])
+                                           + cams_suffix)
+        FileSystem.create_directory(out_path)
         if with_cams:
             models = ["CONTINEN"] + ["ORGANICM", "BLACKCAR", "DUST", "SEASALT", "SULPHATE"]
         else:
@@ -236,11 +244,11 @@ class GippGenerator(DummyEarthExplorer):
         start_date = datetime(2014, 12, 30)
         for sat in satellites:
             for name in eef_types:
-                self._create_hdr(sat, name, start_date, version_str, allsites, mission, ".EEF")
+                self._create_hdr(out_path, sat, name, start_date, version_str, allsites, mission, ".EEF")
             for name in hdr_types:
                 for model in models:
-                    basename = self._create_hdr(sat, name, start_date, version_str, model, mission, ".HDR")
-                    dbl_name = os.path.join(self.root, basename + ".DBL.DIR")
+                    basename = self._create_hdr(out_path, sat, name, start_date, version_str, model, mission, ".HDR")
+                    dbl_name = os.path.join(out_path, basename + ".DBL.DIR")
                     FileSystem.create_directory(dbl_name)
             # For TM: Add an additional set of COMM, EXTL and QLTL files with muscate mission:
             for name in tm_types:
@@ -248,8 +256,8 @@ class GippGenerator(DummyEarthExplorer):
                     continue
                 tm_mission = "SENTINEL2"
                 tm_version_str = str(version + 10000).zfill(5)
-                self._create_hdr(sat, name, start_date, tm_version_str, allsites, tm_mission, ".EEF")
-        return GippSet(self.root, self.platform, mission_param)
+                self._create_hdr(out_path, sat, name, start_date, tm_version_str, allsites, tm_mission, ".EEF")
+        return GippSet(self.root, self.platform, mission_param, cams=with_cams)
 
 
 class ProductGenerator(DummyGenerator):
