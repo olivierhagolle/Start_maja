@@ -78,11 +78,10 @@ class StartMaja(object):
         if len(ptype) != 1:
             if sorted(ptype) == ["muscate", "natif"]:
                 # This is allowed.
+                self.ptype = "tm"
                 pass
             else:
                 raise IOError("Cannot mix multiple plugin types: %s" % ptype)
-        if ptype[0] == "natif" and self.platform == "sentinel2":
-            self.ptype = "tm"
         else:
             self.ptype = ptype[0]
 
