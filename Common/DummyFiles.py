@@ -31,11 +31,6 @@ def random_tile(platform="sentinel2"):
         return random.choice([number, tile])
     elif platform == "venus":
         return ''.join(random.choice(letters) for _ in range(5))
-    elif "SPOT" in platform:
-        tile_id_1 = str(random.randint(0, 999)).zfill(3)
-        tile_id_2 = str(random.randint(0, 999)).zfill(3)
-        tile_id_3 = str(random.randint(0, 9)).zfill(1)
-        return "-".join([tile_id_1, tile_id_2, tile_id_3])
 
     return tile
 
@@ -43,7 +38,7 @@ def random_tile(platform="sentinel2"):
 def random_platform(product_level=None):
     import random
     if product_level == "L1C":
-        return random.choice(["sentinel2", "spot4", "spot5"])
+        return random.choice(["sentinel2"])
     return random.choice(["sentinel2", "venus", "landsat8"])
 
 
@@ -73,10 +68,6 @@ class DummyGenerator(object):
             self.platform = "landsat8"
         elif platform.lower() == "venus":
             self.platform = "venus"
-        elif platform.lower() == "spot4":
-            self.platform = "spot4"
-        elif platform.lower() == "spot5":
-            self.platform = "spot5"
         else:
             raise ValueError("Unknown platform found: %s" % platform)
         if not tile:
@@ -94,16 +85,13 @@ class DummyEarthExplorer(DummyGenerator):
     """
 
     mission_choices = {"tm": {"sentinel2": "SENTINEL-2"},
-                       "muscate": {"sentinel2": "SENTINEL2", "landsat8": "LANDSAT8", "venus": "VENUS",
-                                   "spot4": "SPOT4", "spot5": "SPOT5"},
+                       "muscate": {"sentinel2": "SENTINEL2", "landsat8": "LANDSAT8", "venus": "VENUS"},
                        "natif": {"sentinel2": "SENTINEL-2", "landsat8": "LANDSAT_8", "venus": "VENuS"}
                        }
 
     mission_short = {"sentinel2": "S2_",
                      "venus": "VE",
-                     "landsat8": "L8",
-                     "spot4": "SPOT4",
-                     "spot5": "SPOT5"}
+                     "landsat8": "L8"}
 
     def __init__(self, root, date=None, tile=None, platform=random_platform()):
         super(DummyEarthExplorer, self).__init__(root, date, tile, platform)
@@ -129,9 +117,7 @@ class DummyEarthExplorer(DummyGenerator):
         from xml.etree import ElementTree
         platform_hdr = {"sentinel2": random.choice(["SENTINEL2_", "SENTINEL-2_"]),
                         "venus": random.choice(["VENUS", "VENuS"]),
-                        "landsat8": random.choice(["LANDSAT8", "LANDSAT_8"]),
-                        "spot4": "SPOT4",
-                        "spot5": "SPOT5"}
+                        "landsat8": random.choice(["LANDSAT8", "LANDSAT_8"])}
         mission = mission if mission else platform_hdr[self.platform]
         root = ElementTree.Element("Earth_Explorer_Header")
         sub = ElementTree.SubElement(root, "Fixed_Header")
@@ -261,9 +247,7 @@ class GippGenerator(DummyEarthExplorer):
 
 
 class ProductGenerator(DummyGenerator):
-    platform_options = {"L1C": {"sentinel2": ["S2A", "S2B"],
-                                "spot4": ["SPOT4-HRG2-XS"],
-                                "spot5": ["SPOT5-HRG2-XS"]},
+    platform_options = {"L1C": {"sentinel2": ["S2A", "S2B"]},
                         "L2A": {"sentinel2": ["SENTINEL2B", "SENTINEL2A"],
                                 "landsat8": ["LANDSAT8-OLITIRS"],
                                 "venus": ["VENUS-XS"]}}
