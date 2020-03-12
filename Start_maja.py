@@ -329,20 +329,21 @@ class StartMaja(object):
         return cams
 
     @staticmethod
-    def filter_cams_by_product(cams_files, prod_date, delta_t=timedelta(hours=12)):
+    def filter_cams_by_products(cams_files, prod_dates, delta_t=timedelta(hours=12)):
         """
-        Filter out all CAMS files if they are between the given start_date and end_date
+        Get all CAMS files that are between the given prod_dates +- delta_t
         :param cams_files: The list of cams objects
-        :param prod_date: The product date
+        :param prod_dates: The product dates
         :param delta_t: The maximum time difference a CAMS file can be apart from the product date.
         :return: The cams files available in the given time interval
         """
         cams_filtered = []
-        t_min, t_max = prod_date - delta_t, prod_date + delta_t
-        for cams in cams_files:
-            date = cams.get_date()
-            if t_min <= date <= t_max:
-                cams_filtered.append(cams)
+        for prod_date in prod_dates:
+            t_min, t_max = prod_date - delta_t, prod_date + delta_t
+            for cams in cams_files:
+                date = cams.get_date()
+                if t_min <= date <= t_max:
+                    cams_filtered.append(cams)
         return cams_filtered
 
     def create_workplans(self, max_product_difference=timedelta(hours=6), max_l2_diff=timedelta(days=14)):
@@ -390,23 +391,24 @@ class StartMaja(object):
                                                   l1=used_prod_l1[0],
                                                   l2_date=used_prod_l1[0].date,
                                                   log_level=self.maja_log_level,
-                                                  cams=self.filter_cams_by_product(self.cams_files,
-                                                                                   used_prod_l1[0].date)
+                                                  cams=self.filter_cams_by_products(self.cams_files,
+                                                                                    [used_prod_l1[0].date])
                                                   ))
                 pass
             else:
                 if len(self.avail_input_l1) >= self.nbackward:
                     # Proceed with BACKWARD
                     index_current_prod = self.avail_input_l1.index(used_prod_l1[0])
+                    l1_list = self.avail_input_l1[index_current_prod:index_current_prod + 1 + self.nbackward]
+                    l1 = used_prod_l1[0]
                     workplans.append(Workplan.Backward(wdir=self.rep_work,
                                                        outdir=self.path_input_l2,
-                                                       l1=used_prod_l1[0],
-                                                       l1_list=self.avail_input_l1[index_current_prod:
-                                                                                   index_current_prod + 1 +
-                                                                                   self.nbackward],
+                                                       l1=l1,
+                                                       l1_list=l1_list,
                                                        log_level=self.maja_log_level,
-                                                       cams=self.filter_cams_by_product(self.cams_files,
-                                                                                        used_prod_l1[0].date)
+                                                       cams=self.filter_cams_by_products(self.cams_files,
+                                                                                         [prod.date for prod in
+                                                                                          [l1] + l1_list])
                                                        ))
                     pass
                 else:
@@ -416,8 +418,8 @@ class StartMaja(object):
                                                    outdir=self.path_input_l2,
                                                    l1=used_prod_l1[0],
                                                    log_level=self.maja_log_level,
-                                                   cams=self.filter_cams_by_product(self.cams_files,
-                                                                                    used_prod_l1[0].date)
+                                                   cams=self.filter_cams_by_products(self.cams_files,
+                                                                                    [used_prod_l1[0].date])
                                                    ))
                     pass
                 pass
@@ -439,15 +441,15 @@ class StartMaja(object):
                 index_current_prod = self.avail_input_l1.index(prod)
                 if len(self.avail_input_l1[index_current_prod:]) >= self.nbackward:
                     # Proceed with BACKWARD
+                    l1_list = self.avail_input_l1[index_current_prod:index_current_prod + 1 + self.nbackward]
                     workplans.append(Workplan.Backward(wdir=self.rep_work,
                                                        outdir=self.path_input_l2,
                                                        l1=prod,
-                                                       l1_list=self.avail_input_l1[index_current_prod:
-                                                                                   index_current_prod + 1 +
-                                                                                   self.nbackward],
+                                                       l1_list=l1_list,
                                                        log_level=self.maja_log_level,
-                                                       cams=self.filter_cams_by_product(self.cams_files,
-                                                                                        prod.date)
+                                                       cams=self.filter_cams_by_products(self.cams_files,
+                                                                                         [prod.date for prod in
+                                                                                          [prod] + l1_list])
                                                        ))
                     pass
                 else:
@@ -457,8 +459,8 @@ class StartMaja(object):
                                                    outdir=self.path_input_l2,
                                                    l1=prod,
                                                    log_level=self.maja_log_level,
-                                                   cams=self.filter_cams_by_product(self.cams_files,
-                                                                                    prod.date)
+                                                   cams=self.filter_cams_by_products(self.cams_files,
+                                                                                    [prod.date])
                                                    ))
                     pass
                 pass
@@ -468,10 +470,11 @@ class StartMaja(object):
                                                   l1=prod,
                                                   l2_date=prod.date,
                                                   log_level=self.maja_log_level,
-                                                  cams=self.filter_cams_by_product(self.cams_files, prod.date),
+                                                  cams=self.filter_cams_by_products(self.cams_files, [prod.date]),
                                                   # Fallback parameters:
-                                                  remaining_l1=used_prod_l1[(i+1):],
-                                                  nbackward=self.nbackward
+                                                  remaining_l1=used_prod_l1[(i + 1):],
+                                                  nbackward=self.nbackward,
+                                                  remaining_cams=self.cams_files
                                                   ))
 
         # This should never happen:
@@ -507,11 +510,7 @@ class StartMaja(object):
         for wp in workplans:
             print(wp)
         if not self.skip_confirm:
-            try:
-                if sys.version >= (3, 0):
-                    input("Press Enter to continue...\n")
-            except TypeError:
-                input("Press Enter to continue...\n")
+            input("Press Enter to continue...\n")
         self.logger.info("Beginning workplan execution.")
         for i, wp in enumerate(workplans):
             self.logger.info("Executing workplan #%s/%s" % (i+1, len(workplans)))
