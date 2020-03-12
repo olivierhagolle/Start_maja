@@ -229,7 +229,7 @@ class Nominal(Workplan):
         :return: The return code of the Maja app
         """
         from Common.FileSystem import remove_directory
-        from Start_maja.StartMaja import filter_cams_by_product
+        from Start_maja import StartMaja
         self.create_working_dir(dtm, gipp)
         l2_prods = self._get_available_l2_products()
         if not l2_prods:
@@ -238,7 +238,7 @@ class Nominal(Workplan):
                 logging.info("Setting up a BACKWARD execution instead.")
                 l1_list = self.remaining_l1[:self.nbackward]
                 cams_dates = [prod.date for prod in l1_list + [self.l1]]
-                cams_files = filter_cams_by_product(self.remaining_cams, cams_dates)
+                cams_files = StartMaja.filter_cams_by_products(self.remaining_cams, cams_dates)
                 backup_wp = Backward(self.root, self.outdir, self.l1, l1_list=l1_list,
                                      log_level=self.log_level, cams=[self.aux_files] + cams_files)
             else:
