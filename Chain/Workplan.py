@@ -240,7 +240,7 @@ class Nominal(Workplan):
                 cams_dates = [prod.date for prod in l1_list + [self.l1]]
                 cams_files = StartMaja.filter_cams_by_products(self.remaining_cams, cams_dates)
                 backup_wp = Backward(self.root, self.outdir, self.l1, l1_list=l1_list,
-                                     log_level=self.log_level, cams=[self.aux_files] + cams_files)
+                                     log_level=self.log_level, cams=self.aux_files + cams_files)
             else:
                 logging.info("Setting up an INIT execution instead.")
                 backup_wp = Init(self.root, self.outdir, self.l1, self.log_level, cams=self.aux_files)
