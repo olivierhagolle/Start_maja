@@ -62,7 +62,7 @@ class StartMaja(object):
         self.site = site
         self.path_input_l1, self.path_input_l2, self.__site_info = self.__set_input_paths()
         self.logger.debug("Found %s" % self.__site_info)
-
+        self.logger.debug("Detecting input products...")
         self.avail_input_l1, self.avail_input_l2 = self.__get_all_availables_products()
 
         if not kwargs.get("platform"):
@@ -113,13 +113,12 @@ class StartMaja(object):
         self.use_cams = kwargs.get("cams", False)
         if not p.isdir(self.gipp_root):
             raise OSError("Cannot find GIPP folder: %s" % self.gipp_root)
-        self.logger.debug("Found GIPP folder: %s" % self.gipp_root)
-
+        self.logger.debug("Setting up GIPP folder: %s" % self.gipp_root)
         self.gipp = GippFile.GippSet(self.gipp_root, self.platform, self.ptype, cams=self.use_cams)
-        self.logger.debug("Prepared GIPP for %s" % self.gipp.gipp_folder_name)
+        if not self.gipp.check_completeness():
+            self.logger.debug("Cannot find GIPP for %s. Will attempt to download it." % self.gipp.gipp_folder_name)
 
         # Other parameters:
-
         self.overwrite = kwargs.get("overwrite", False)
         self.maja_log_level = "PROGRESS" if not self.verbose else "DEBUG"
         self.skip_confirm = kwargs.get("skip_confirm", False)
@@ -129,7 +128,7 @@ class StartMaja(object):
             self.dtm = self.get_dtm()
         except OSError:
             self.dtm = None
-            self.logger.debug("Cannot find DTM. Will attempt to download it...")
+            self.logger.debug("Cannot find DTM. Will attempt to download it.")
         else:
             self.logger.debug("Found DTM: %s" % self.dtm.hdr)
 
@@ -418,7 +417,7 @@ class StartMaja(object):
                                                    l1=used_prod_l1[0],
                                                    log_level=self.maja_log_level,
                                                    cams=self.filter_cams_by_products(self.cams_files,
-                                                                                    [used_prod_l1[0].date])
+                                                                                     [used_prod_l1[0].date])
                                                    ))
                     pass
                 pass
@@ -459,7 +458,7 @@ class StartMaja(object):
                                                    l1=prod,
                                                    log_level=self.maja_log_level,
                                                    cams=self.filter_cams_by_products(self.cams_files,
-                                                                                    [prod.date])
+                                                                                     [prod.date])
                                                    ))
                     pass
                 pass
@@ -500,8 +499,10 @@ class StartMaja(object):
             self.dtm = self.get_dtm()
             self.logger.info("DTM Creation succeeded.")
         if not self.gipp.check_completeness():
-            self.logger.debug("Downloading Gipp for %s %s" % (self.platform, self.ptype))
+            self.logger.debug("Attempting to download Gipp for %s" % self.gipp.gipp_folder_name)
             self.gipp.download()
+            self.logger.info("GIPP Creation succeeded.")
+
         workplans = self.create_workplans(self.max_product_difference, self.max_l2_diff)
         self.logger.info("%s workplan(s) successfully created:" % len(workplans))
         # Print without the logging-formatting:
